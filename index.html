@@ -1,0 +1,4229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>DiveLog</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --primary: #3182F6;
+      --primary-light: #E8F3FF;
+      --success: #00C853;
+      --warning: #FF9100;
+      --error: #F44336;
+      --bg: #F7F8FA;
+      --surface: #FFFFFF;
+      --text-primary: #191F28;
+      --text-secondary: #8B95A1;
+      --text-tertiary: #B0B8C1;
+      --border: #E5E8EB;
+      --divider: #F2F4F6;
+      --lv2-color: #FF9100;
+      --lv2-light: #FFF3E0;
+      --lv3-color: #00C853;
+      --lv3-light: #E8F5E9;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    .app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg); position: relative; padding-bottom: 80px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .header { background: var(--surface); padding: 16px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--divider); }
+    .header-back { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: none; font-size: 20px; color: var(--text-primary); cursor: pointer; border-radius: 12px; }
+    .header-title { font-size: 18px; font-weight: 600; flex: 1; }
+    .header-action { color: var(--primary); font-weight: 600; background: none; border: none; font-size: 16px; cursor: pointer; }
+    .tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--surface); border-top: 1px solid var(--divider); display: flex; padding: 8px 0 20px; z-index: 100; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; background: none; border: none; cursor: pointer; color: var(--text-tertiary); }
+    .tab-item.active { color: var(--primary); }
+    .tab-item i { font-size: 22px; }
+    .tab-item span { font-size: 11px; font-weight: 500; }
+    .container { padding: 20px; }
+    .card { background: var(--surface); border-radius: 16px; padding: 20px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .greeting { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+    .greeting-sub { color: var(--text-secondary); font-size: 15px; }
+    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .btn { width: 100%; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 600; border: none; cursor: pointer; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-secondary { background: var(--primary-light); color: var(--primary); }
+    .btn-outline { background: transparent; border: 1px dashed var(--border); color: var(--text-secondary); }
+    .btn-danger { background: #FEE; color: var(--error); }
+    .btn-small { padding: 10px 16px; width: auto; font-size: 14px; }
+    .input-group { margin-bottom: 16px; }
+    .input-label { font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px; display: block; }
+    .input { width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; font-size: 16px; font-family: inherit; background: var(--surface); }
+    .input:focus { outline: none; border-color: var(--primary); }
+    select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238B95A1' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; }
+    .schedule-card { display: flex; justify-content: space-between; align-items: center; }
+    .schedule-info { flex: 1; }
+    .schedule-time { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .schedule-location { font-size: 14px; color: var(--text-secondary); }
+    .schedule-meta { font-size: 13px; color: var(--text-tertiary); margin-top: 4px; }
+    .schedule-arrow { color: var(--text-tertiary); font-size: 18px; }
+    .participant-card { display: flex; align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--divider); }
+    .participant-card:last-child { border-bottom: none; }
+    .participant-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: 600; }
+    .participant-info { flex: 1; }
+    .participant-name { font-weight: 600; font-size: 16px; }
+    .participant-detail { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+    .attendance-badge { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+    .attendance-yes { background: #E8F5E9; color: var(--success); }
+    .attendance-no { background: #FFEBEE; color: var(--error); }
+    .attendance-pending { background: var(--divider); color: var(--text-secondary); }
+    .record-row { background: var(--bg); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .record-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .record-row-title { font-weight: 600; font-size: 14px; color: var(--text-secondary); }
+    .record-row-delete { background: none; border: none; color: var(--error); cursor: pointer; font-size: 18px; }
+    .record-fields { display: grid; grid-template-columns: 1fr 80px 100px; gap: 8px; }
+    .record-note { margin-top: 8px; }
+    .record-note .input { padding: 10px 12px; font-size: 14px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: var(--surface); border-radius: 12px; padding: 16px; text-align: center; }
+    .stat-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+    .stat-value { font-size: 20px; font-weight: 700; color: var(--primary); }
+    .level-card { text-align: center; padding: 24px 20px; }
+    .level-badge { font-size: 32px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    .progress-bar { height: 8px; background: var(--divider); border-radius: 4px; overflow: hidden; margin: 12px 0; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #60A5FA); border-radius: 4px; }
+    .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .quick-btn { background: var(--surface); border-radius: 16px; padding: 20px 12px; text-align: center; border: none; cursor: pointer; }
+    .quick-btn i { font-size: 24px; color: var(--primary); margin-bottom: 8px; display: block; }
+    .quick-btn span { font-size: 13px; font-weight: 500; }
+    .btn-icon-delete { 
+      background: none; 
+      border: none; 
+      color: var(--text-tertiary); 
+      cursor: pointer; 
+      padding: 8px; 
+      margin-left: 4px;
+      border-radius: 8px;
+    }
+    .btn-icon-delete:hover { color: var(--error); background: #FEE; }
+    
+    /* 참가자 탭 */
+    .participant-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+    .participant-tab {
+      padding: 10px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .participant-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    /* 종목 탭 */
+    .discipline-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+    }
+    .disc-tab {
+      padding: 8px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .disc-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    /* 시도 입력 행 */
+    .attempt-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: var(--bg);
+      border-radius: 8px;
+    }
+    .attempt-num {
+      width: 30px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .attempt-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .attempt-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .attempt-delete {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: none;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    .attempt-delete:hover {
+      color: var(--error);
+      background: #FEE;
+    }
+    
+    /* 기록 테이블 */
+    .record-table-container {
+      overflow-x: auto;
+    }
+    .record-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .record-table th, .record-table td {
+      padding: 10px 8px;
+      text-align: center;
+      border-bottom: 1px solid var(--divider);
+    }
+    .record-table th {
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 13px;
+      background: var(--bg);
+    }
+    .record-table .col-name {
+      text-align: left;
+      min-width: 70px;
+      font-weight: 500;
+    }
+    .record-table .col-attempt {
+      min-width: 60px;
+    }
+    .record-table .col-note {
+      min-width: 80px;
+    }
+    .record-table .col-skill {
+      min-width: 50px;
+    }
+    .record-table .col-add-attempt {
+      width: 30px;
+      padding: 4px;
+      border-left: 1px solid var(--divider);
+    }
+    .btn-add-col {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--text-tertiary);
+    }
+    .btn-add-col:hover {
+      color: var(--primary);
+    }
+    .record-table input {
+      width: 100%;
+      padding: 8px 4px;
+      border: none;
+      background: transparent;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .record-table input:focus {
+      outline: none;
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .record-table input::placeholder {
+      color: var(--text-tertiary);
+    }
+    .record-table input.note-input {
+      text-align: left;
+      padding-left: 8px;
+    }
+    .record-table td {
+      border-right: 1px solid var(--divider);
+    }
+    .record-table td:last-child {
+      border-right: none;
+    }
+    
+    /* 스킬 체크 버튼 */
+    .skill-check-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: white;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .skill-check-btn.success {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
+    }
+    .skill-check-btn.fail {
+      background: var(--error);
+      border-color: var(--error);
+      color: white;
+    }
+    
+    /* 스킬 탭 */
+    .disc-tab-skill {
+      background: var(--lv3-light) !important;
+      border-color: var(--lv3-color) !important;
+      color: var(--lv3-color) !important;
+    }
+    .disc-tab-skill.active {
+      background: var(--lv3-color) !important;
+      color: white !important;
+    }
+    
+    /* 일정 선택 아이템 */
+    .schedule-select-item {
+      padding: 16px;
+      border-bottom: 1px solid var(--divider);
+      cursor: pointer;
+    }
+    .schedule-select-item:hover {
+      background: var(--bg);
+    }
+    .schedule-select-item:last-child {
+      border-bottom: none;
+    }
+    .tab-filter { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
+    .filter-chip { padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; white-space: nowrap; }
+    .filter-chip.active { background: var(--primary); border-color: var(--primary); color: white; }
+    .bottom-sheet-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 200; opacity: 0; visibility: hidden; transition: all 0.3s; }
+    .bottom-sheet-overlay.active { opacity: 1; visibility: visible; }
+    .bottom-sheet { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 480px; background: var(--surface); border-radius: 24px 24px 0 0; z-index: 201; transition: transform 0.3s ease; max-height: 90vh; overflow-y: auto; }
+    .bottom-sheet-overlay.active .bottom-sheet { transform: translateX(-50%) translateY(0); }
+    .bottom-sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto; }
+    .bottom-sheet-content { padding: 8px 20px 32px; }
+    .bottom-sheet-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+    .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--text-primary); color: white; padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 500; z-index: 300; opacity: 0; visibility: hidden; transition: all 0.3s; }
+    .toast.show { opacity: 1; visibility: visible; }
+    .login-screen { display: flex; flex-direction: column; min-height: 100vh; padding: 60px 24px 40px; }
+    .login-logo { text-align: center; margin-bottom: 48px; }
+    .login-logo i { font-size: 64px; color: var(--primary); margin-bottom: 16px; }
+    .login-logo h1 { font-size: 32px; font-weight: 700; }
+    .login-logo p { color: var(--text-secondary); margin-top: 8px; }
+    .login-form { flex: 1; }
+    .empty-state { text-align: center; padding: 48px 20px; }
+    .empty-state i { font-size: 48px; color: var(--text-tertiary); margin-bottom: 16px; }
+    .empty-state p { color: var(--text-secondary); }
+    .purpose-buttons { display: flex; gap: 8px; margin-top: 12px; }
+    .purpose-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 500; border: 1px solid var(--border); background: var(--surface); cursor: pointer; }
+    .purpose-btn.selected { background: var(--primary); border-color: var(--primary); color: white; }
+    .chart-container { background: var(--surface); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+    .chart-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .record-list-item { padding: 16px 0; border-bottom: 1px solid var(--divider); }
+    .record-list-item:last-child { border-bottom: none; }
+    .record-date { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .record-entry { display: flex; justify-content: space-between; padding: 4px 0; }
+    .record-discipline { font-size: 14px; color: var(--text-secondary); }
+    .record-value { font-weight: 600; }
+    
+    .discipline-checkbox { display: inline-block; margin: 8px 12px 8px 0; }
+    .discipline-checkbox input { margin-right: 6px; }
+    .batch-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--border); overflow-x: auto; }
+    .batch-tab { padding: 12px 20px; background: none; border: none; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+    .batch-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .batch-tab.skill-tab { color: var(--success); }
+    .batch-tab.skill-tab.active { border-bottom-color: var(--success); }
+    .batch-tab.skill-tab-lv2 { color: var(--lv2-color); }
+    .batch-tab.skill-tab-lv2.active { border-bottom-color: var(--lv2-color); }
+    .batch-table { width: 100%; border-collapse: collapse; }
+    .batch-table th { background: var(--bg); padding: 12px 8px; font-size: 14px; font-weight: 600; text-align: left; }
+    .batch-table td { padding: 12px 8px; border-bottom: 1px solid var(--divider); }
+    .batch-table input { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
+    .batch-table .student-name { font-weight: 500; }
+    .common-disciplines-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--primary-light); color: var(--primary); border-radius: 20px; font-size: 13px; font-weight: 500; margin-top: 8px; }
+    .common-disciplines-badge.skill-badge { background: #E8F5E9; color: var(--success); }
+    .common-disciplines-badge.skill-badge-lv2 { background: var(--lv2-light); color: var(--lv2-color); }
+
+    /* 스킬 테이블 스타일 */
+    .skill-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .skill-table th { background: var(--bg); padding: 8px 4px; font-weight: 600; text-align: center; border-bottom: 2px solid var(--border); }
+    .skill-table th.skill-header { font-size: 11px; }
+    .skill-table th.attempt-header { font-size: 10px; color: var(--text-tertiary); font-weight: 500; }
+    .skill-table td { padding: 8px 4px; border-bottom: 1px solid var(--divider); text-align: center; }
+    .skill-table td.student-name { text-align: left; font-weight: 500; padding-left: 8px; white-space: nowrap; }
+    .skill-cell { 
+      width: 32px; 
+      height: 32px; 
+      border-radius: 8px; 
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: pointer; 
+      font-size: 14px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .skill-cell.empty { background: var(--divider); color: var(--text-tertiary); }
+    .skill-cell.success { background: #E8F5E9; color: var(--success); }
+    .skill-cell.fail { background: #FFEBEE; color: var(--error); }
+    .skill-cell:active { transform: scale(0.9); }
+    
+    .skill-group-header { 
+      background: var(--primary-light) !important; 
+      color: var(--primary); 
+      font-weight: 600 !important;
+    }
+    .skill-group-header-lv2 { 
+      background: var(--lv2-light) !important; 
+      color: var(--lv2-color); 
+      font-weight: 600 !important;
+    }
+
+    /* Lv 진도 차트 스타일 */
+    .lv-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .lv-chart-card { background: var(--surface); border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .chart-header { font-size: 14px; font-weight: 600; margin-bottom: 12px; text-align: center; color: var(--text-primary); display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; user-select: none; }
+    .chart-header:hover { color: var(--primary); }
+    .toggle-icon { font-size: 12px; transition: transform 0.3s ease; color: var(--text-tertiary); }
+    .toggle-icon.open { transform: rotate(180deg); }
+    .donut-container { position: relative; width: 140px; height: 140px; margin: 0 auto 16px; }
+    .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+    .donut-value { font-size: 24px; font-weight: 700; color: var(--primary); line-height: 1; }
+    .donut-value.lv2 { color: var(--lv2-color); }
+    .donut-value.lv3 { color: var(--lv3-color); }
+    .donut-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+    .checklist { border-top: 1px solid var(--divider); padding-top: 0; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; border-top: none; }
+    .checklist.open { max-height: 300px; overflow-y: auto; padding-top: 12px; border-top: 1px solid var(--divider); }
+    .checklist-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--divider); }
+    .checklist-item:last-child { border-bottom: none; }
+    .checklist-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; }
+    .checklist-icon.done { background: #E8F5E9; color: var(--success); }
+    .checklist-icon.undone { background: var(--divider); color: var(--text-tertiary); }
+    .checklist-text { flex: 1; font-size: 12px; line-height: 1.3; }
+    .checklist-text.done { color: var(--text-secondary); text-decoration: line-through; }
+    .checklist-badge { font-size: 11px; padding: 2px 6px; border-radius: 10px; background: var(--bg); color: var(--text-secondary); white-space: nowrap; }
+
+    /* 일정 정보 카드 스타일 개선 */
+    .schedule-info-card { background: var(--surface); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+    .schedule-info-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .schedule-info-row:last-child { margin-bottom: 0; }
+    .schedule-info-row i { color: var(--primary); width: 16px; }
+    .schedule-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+    .btn-edit-disciplines { 
+      background: var(--bg); 
+      border: 1px solid var(--border); 
+      border-radius: 8px; 
+      padding: 8px 12px; 
+      font-size: 13px; 
+      color: var(--text-secondary); 
+      cursor: pointer; 
+      display: flex; 
+      align-items: center; 
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .btn-edit-disciplines:hover { background: var(--divider); color: var(--text-primary); }
+    
+    /* 스킬 섹션 구분 */
+    .skill-section-label { 
+      font-size: 12px; 
+      font-weight: 600; 
+      padding: 8px 12px; 
+      margin: 16px 0 8px; 
+      border-radius: 8px;
+    }
+    .skill-section-label.lv2 { background: var(--lv2-light); color: var(--lv2-color); }
+    .skill-section-label.lv3 { background: #E8F5E9; color: var(--success); }
+
+    /* 일정 카드 아이콘 버튼 */
+    .schedule-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .schedule-card-content { flex: 1; cursor: pointer; }
+    .schedule-icon-buttons { display: flex; gap: 4px; flex-shrink: 0; margin-left: 8px; }
+    .icon-btn { 
+      width: 32px; 
+      height: 32px; 
+      border-radius: 8px; 
+      border: none; 
+      background: var(--bg); 
+      color: var(--text-tertiary); 
+      cursor: pointer; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .icon-btn:hover { background: var(--divider); color: var(--text-secondary); }
+    .icon-btn.danger:hover { background: #FFEBEE; color: var(--error); }
+    .schedule-action-buttons { display: flex; gap: 8px; margin-top: 12px; }
+    .schedule-action-buttons .btn { flex: 1; padding: 10px; font-size: 14px; }
+
+    /* Notion 스타일 기록 테이블 */
+    .record-table-container { margin-top: 16px; }
+    .record-table-wrapper { display: flex; align-items: stretch; }
+    .record-table { 
+      flex: 1;
+      border-collapse: collapse; 
+      background: white; 
+      border-radius: 12px; 
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .record-table th, .record-table td { 
+      border: 1px solid var(--divider); 
+      padding: 12px 8px; 
+      text-align: center;
+      min-width: 60px;
+    }
+    .record-table th { 
+      background: var(--bg); 
+      font-weight: 600; 
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .record-table th.discipline-col {
+      min-width: 70px;
+      background: var(--bg);
+    }
+    .record-table td.discipline-cell {
+      background: var(--bg);
+      font-weight: 600;
+      color: var(--text);
+      position: relative;
+    }
+    .record-table td.discipline-cell .remove-row-btn {
+      position: absolute;
+      left: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      border: none;
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      font-size: 10px;
+      opacity: 0;
+      transition: opacity 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+    .record-table tr:hover td.discipline-cell .remove-row-btn { opacity: 1; }
+    .record-table td.discipline-cell .remove-row-btn:hover { background: #FFEBEE; color: var(--error); }
+    .record-table input.record-input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      text-align: center;
+      font-size: 15px;
+      padding: 4px;
+      outline: none;
+    }
+    .record-table input.record-input:focus {
+      background: rgba(49, 130, 246, 0.05);
+      border-radius: 4px;
+    }
+    .record-table input.record-input::placeholder {
+      color: var(--text-tertiary);
+      font-size: 13px;
+    }
+    .record-table th .remove-col-btn {
+      display: inline-block;
+      margin-left: 4px;
+      width: 16px;
+      height: 16px;
+      border: none;
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      font-size: 9px;
+      opacity: 0;
+      transition: opacity 0.15s;
+      vertical-align: middle;
+      border-radius: 4px;
+    }
+    .record-table th:hover .remove-col-btn { opacity: 1; }
+    .record-table th .remove-col-btn:hover { background: #FFEBEE; color: var(--error); }
+    
+    /* 추가 버튼들 */
+    .add-col-btn {
+      width: 36px;
+      min-width: 36px;
+      background: var(--bg);
+      border: 1px dashed var(--divider);
+      border-left: none;
+      border-radius: 0 12px 12px 0;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      font-size: 14px;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .add-col-btn:hover { background: rgba(49, 130, 246, 0.05); color: var(--primary); }
+    .add-row-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      background: var(--bg);
+      border: 1px dashed var(--divider);
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .add-row-btn:hover { background: rgba(49, 130, 246, 0.05); color: var(--primary); }
+
+    /* 일괄 추가 - 날짜 입력 행 */
+    .bulk-date-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .bulk-date-row .date-input-wrapper {
+      flex: 1;
+      position: relative;
+    }
+    .bulk-date-row .date-display {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      background: var(--surface);
+      text-align: center;
+      font-family: 'SF Mono', Monaco, monospace;
+      letter-spacing: 1px;
+    }
+    .bulk-date-row .date-display:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .bulk-date-row .date-display::placeholder {
+      color: var(--text-tertiary);
+      letter-spacing: 0;
+    }
+    .bulk-date-row .location-input {
+      flex: 1.2;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      background: var(--surface);
+    }
+    .bulk-date-row .location-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .bulk-date-row .remove-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .bulk-date-row .remove-btn:hover {
+      background: #FFEBEE;
+      color: var(--error);
+    }
+
+    /* 일괄 추가 - 날짜 탭 */
+    .bulk-date-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .bulk-date-tab {
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .bulk-date-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .bulk-date-tab.saved {
+      background: #E8F5E9;
+      border-color: var(--success);
+      color: var(--success);
+    }
+    .bulk-date-tab.saved.active {
+      background: var(--success);
+      color: white;
+    }
+
+    /* 날짜 추가 버튼 */
+    .btn-add-date {
+      padding: 8px 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .btn-add-date:hover { background: #2563EB; }
+    
+     /* 챌린지 카드 스타일 */
+    .challenge-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    .challenge-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .challenge-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .challenge-title {
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .challenge-meta {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+    .challenge-streak {
+      background: rgba(255,255,255,0.2);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .challenge-tasks {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .challenge-task {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.15);
+      padding: 14px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .challenge-task:active {
+      transform: scale(0.98);
+    }
+    .challenge-task.completed {
+      background: rgba(255,255,255,0.3);
+    }
+    .task-checkbox {
+      width: 24px;
+      height: 24px;
+      border: 2px solid rgba(255,255,255,0.8);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .task-checkbox.checked {
+      background: white;
+      border-color: white;
+      color: #667eea;
+    }
+    .task-name {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .task-name.completed {
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    /* 캘린더 스타일 */
+    .calendar-container {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .calendar-nav-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--bg);
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .calendar-nav-btn:hover {
+      background: var(--divider);
+      color: var(--text-primary);
+    }
+    .calendar-month {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .calendar-weekday {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+      padding: 8px 0;
+    }
+    .calendar-weekday:first-child {
+      color: #F44336;
+    }
+    .calendar-weekday:last-child {
+      color: #3182F6;
+    }
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      border-radius: 12px;
+      position: relative;
+    }
+    .calendar-day.other-month {
+      color: var(--text-tertiary);
+    }
+    .calendar-day.today {
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+    }
+    .calendar-day.sunday {
+      color: #F44336;
+    }
+    .calendar-day.saturday {
+      color: #3182F6;
+    }
+    .calendar-day.today.sunday,
+    .calendar-day.today.saturday {
+      color: white;
+    }
+    /* 통합 캘린더 인디케이터 */
+    .calendar-indicators {
+      display: flex;
+      gap: 2px;
+      justify-content: center;
+      margin-top: 2px;
+      flex-wrap: wrap;
+      max-width: 28px;
+    }
+    .calendar-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+    .calendar-dot.lesson { background: #3182F6; }      /* 강습: 파랑 */
+    .calendar-dot.personal { background: #8B5CF6; }   /* 개인: 보라 */
+    .calendar-dot.task1 { background: #FF9100; }      /* 혀뿌리: 주황 */
+    .calendar-dot.task2 { background: #00B8D9; }      /* 프렌젤: 하늘 */
+    .calendar-dot.empty { 
+      background: transparent;
+      border: 1px solid var(--border);
+    }
+
+    /* 레전드 2줄 */
+    .calendar-legend {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--divider);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .calendar-legend-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .legend-dot.lesson { background: #3182F6; }
+    .legend-dot.personal { background: #8B5CF6; }
+    .legend-dot.task1 { background: #FF9100; }
+    .legend-dot.task2 { background: #00B8D9; }
+    .legend-dot.empty { border: 1.5px solid var(--border); background: transparent; }
+
+    /* 챌린지 없을 때 */
+    .no-challenge {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-secondary);
+    }
+    /* 캘린더 날짜 선택 스타일 */
+    .calendar-day {
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .calendar-day:hover {
+      background: var(--divider);
+    }
+    .calendar-day.other-month:hover {
+      background: transparent;
+    }
+    .calendar-day.today:hover {
+      background: var(--primary);
+    }
+    .calendar-day.selected {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .calendar-day.today.selected {
+      background: var(--primary);
+      color: white;
+    }
+    .calendar-day.selected.sunday,
+    .calendar-day.selected.saturday {
+      color: var(--primary);
+    }
+
+    /* 선택된 날짜 일정 카드 */
+    .selected-date-header {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .selected-date-header i {
+      color: var(--primary);
+    }
+    .schedule-detail-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .schedule-detail-card .schedule-date-time {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+    .schedule-detail-card .schedule-location,
+    .schedule-detail-card .schedule-instructor {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .my-schedule-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    /* 메모 섹션 스타일 */
+    .memo-section {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--divider);
+    }
+    .memo-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .memo-section-title i {
+      color: var(--primary);
+    }
+    .memo-card {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .memo-card-header {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .memo-card-header.instructor {
+      color: var(--primary);
+    }
+    .memo-card-header.student {
+      color: var(--success);
+    }
+    .memo-card-content {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+    .memo-card-empty {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+    .memo-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      background: var(--surface);
+    }
+    .memo-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .memo-textarea::placeholder {
+      color: var(--text-tertiary);
+    }
+/* 챌린지 상태 카드 */
+    .challenge-status-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .challenge-status-item:first-child {
+      border-bottom: 1px solid var(--divider);
+      padding-bottom: 10px;
+      margin-bottom: 2px;
+    }
+    .challenge-status-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .challenge-status-icon.done {
+      background: #E8F5E9;
+      color: var(--success);
+    }
+    .challenge-status-icon.undone {
+      background: var(--divider);
+      color: var(--text-tertiary);
+    }
+    .challenge-status-text {
+      flex: 1;
+      font-size: 15px;
+    }
+    .challenge-status-text.done {
+      color: var(--success);
+    }
+    /* 캘린더 챌린지 카드 */
+    .calendar-challenge-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      color: white;
+    }
+    .calendar-challenge-card .challenge-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .calendar-challenge-card .challenge-card-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .calendar-challenge-card .challenge-tasks-mini {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .calendar-challenge-card .task-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .calendar-challenge-card .task-badge.done {
+      background: rgba(255,255,255,0.3);
+    }
+    .calendar-challenge-card .task-badge.undone {
+      background: rgba(255,255,255,0.15);
+      opacity: 0.7;
+    }
+    .calendar-challenge-card .challenge-memo-preview {
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .calendar-challenge-card .challenge-memo-empty {
+      font-style: italic;
+      opacity: 0.7;
+    }
+    .calendar-challenge-card .btn-edit-memo {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+    }
+    .calendar-challenge-card .btn-edit-memo:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    /* 로딩 인디케이터 */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+    }
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--divider);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- 로그인 화면 -->
+    <div class="screen active" id="screen-login">
+      <div class="login-screen">
+        <div class="login-logo">
+          <i class="fas fa-water"></i>
+          <h1>DiveLog</h1>
+          <p>프리다이빙 기록을 한눈에</p>
+        </div>
+        <div class="login-form">
+          <div class="input-group">
+            <label class="input-label">연락처</label>
+            <input type="tel" class="input" id="login-phone" placeholder="010-0000-0000" maxlength="13">
+          </div>
+          <button class="btn btn-primary" onclick="handleLogin()">시작하기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 강사 대시보드 -->
+    <div class="screen" id="screen-instructor-home">
+      <div class="container">
+        <div style="padding: 20px 0;">
+          <div class="greeting">안녕하세요, <span id="instructor-name">코치</span>님 👋</div>
+          <div class="greeting-sub">오늘도 좋은 강습 되세요</div>
+        </div>
+        <div class="section-title"><i class="fas fa-calendar-day"></i> 오늘의 일정</div>
+        <div id="today-schedules"></div>
+        <div class="section-title" style="margin-top: 24px;"><i class="fas fa-bolt"></i> 빠른 실행</div>
+        <div class="quick-actions">
+          <button class="quick-btn" onclick="openScheduleForm()"><i class="fas fa-calendar-plus"></i><span>일정 등록</span></button>
+          <button class="quick-btn" style="opacity: 0.4;" onclick="showToast('준비중인 기능입니다')"><i class="fas fa-ellipsis-h"></i><span>준비중</span></button>
+          <button class="quick-btn" onclick="quickRecordInput()"><i class="fas fa-pen"></i><span>최근 강습<br>기록 입력</span></button>
+        </div>
+        <div class="card" style="margin-top: 24px;">
+          <div class="section-title"><i class="fas fa-chart-bar"></i> 이번 주 요약</div>
+          <div id="instructor-stats" style="color: var(--text-secondary);"></div>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <button class="tab-item active" onclick="showScreen('screen-instructor-home')"><i class="fas fa-home"></i><span>홈</span></button>
+        <button class="tab-item" onclick="showScreen('screen-schedule-manage')"><i class="fas fa-calendar"></i><span>일정</span></button>
+        <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
+        <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
+      </div>
+    </div>
+
+    <!-- 강습생 대시보드 -->
+    <div class="screen" id="screen-student-home">
+      <div class="container">
+        <div style="padding: 20px 0;">
+          <div class="greeting">안녕하세요, <span id="student-name">강습생</span>님 🏊‍♂️</div>
+          <div class="greeting-sub">꾸준히 성장하고 있어요!</div>
+        </div>
+
+        <!-- 챌린지 섹션 -->
+        <div id="challenge-section" style="display: none;">
+          <div class="section-title"><i class="fas fa-fire"></i> 진행 중인 챌린지</div>
+          <div id="challenge-cards"></div>
+        </div>
+
+        <!-- 레벨별 진도 차트 섹션 -->
+        <div id="level-progress-section" style="display: none;">
+          <div class="section-title" id="level-progress-title"><i class="fas fa-graduation-cap"></i> Level 진도</div>
+          <div id="level-progress-summary" style="color: var(--text-secondary); font-size: 14px; margin: -8px 0 16px; padding-left: 24px;"></div>
+          <div class="lv-charts">
+            <div class="lv-chart-card">
+              <div class="chart-header" onclick="toggleChecklist('skills')">
+                스킬 체크리스트
+                <i class="fas fa-chevron-down toggle-icon" id="skills-toggle-icon"></i>
+              </div>
+              <div class="donut-container">
+                <canvas id="skills-chart"></canvas>
+                <div class="donut-center">
+                  <div class="donut-value" id="skills-progress-value">0/0</div>
+                  <div class="donut-label">완료</div>
+                </div>
+              </div>
+              <div class="checklist" id="skills-checklist"></div>
+            </div>
+            
+            <div class="lv-chart-card">
+              <div class="chart-header" onclick="toggleChecklist('records')">
+                기록 달성
+                <i class="fas fa-chevron-down toggle-icon" id="records-toggle-icon"></i>
+              </div>
+              <div class="donut-container">
+                <canvas id="records-chart"></canvas>
+                <div class="donut-center">
+                  <div class="donut-value" id="records-progress-value">0/0</div>
+                  <div class="donut-label">달성</div>
+                </div>
+              </div>
+              <div class="checklist" id="records-checklist"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title"><i class="fas fa-trophy"></i> 종목별 최고 기록</div>
+        <div class="stat-grid" id="best-records"></div>
+        <div class="section-title"><i class="fas fa-calendar"></i> 다가오는 일정</div>
+        <div id="upcoming-schedules"></div>
+      </div>
+      <div class="tab-bar">
+        <button class="tab-item active" onclick="showScreen('screen-student-home')"><i class="fas fa-home"></i><span>홈</span></button>
+        <button class="tab-item" onclick="showScreen('screen-student-schedule')"><i class="fas fa-calendar"></i><span>일정</span></button>
+        <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
+        <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
+      </div>
+    </div>
+
+    <!-- 일정 관리 (강사) -->
+    <div class="screen" id="screen-schedule-manage">
+      <div class="header">
+        <button class="header-back" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">일정 관리</span>
+        <button class="header-action" onclick="openScheduleForm()">추가</button>
+      </div>
+      <div class="container">
+        <div id="schedule-list">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <button class="tab-item" onclick="showScreen('screen-instructor-home')"><i class="fas fa-home"></i><span>홈</span></button>
+        <button class="tab-item active"><i class="fas fa-calendar"></i><span>일정</span></button>
+        <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
+        <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
+      </div>
+    </div>
+
+    <!-- 참가자 관리 -->
+    <div class="screen" id="screen-participants">
+      <div class="header">
+        <button class="header-back" onclick="showScreen('screen-schedule-manage')"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">참가자 관리</span>
+        <button class="header-action" onclick="openAddParticipant()">추가</button>
+      </div>
+      <div class="container">
+        <div class="card" style="margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <i class="fas fa-calendar" style="color: var(--primary);"></i>
+            <span id="participant-schedule-date" style="font-weight: 600;"></span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary);">
+            <i class="fas fa-map-marker-alt"></i>
+            <span id="participant-schedule-location"></span>
+          </div>
+        </div>
+        <div class="section-title">강습</div>
+        <div class="card" id="lesson-participants">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+        <div class="section-title" style="margin-top: 20px;">펀다이빙</div>
+        <div class="card" id="fun-participants">
+          <div style="text-align: center; color: var(--text-secondary); padding: 20px;">펀다이빙 참가자가 없습니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 강습생 일정 -->
+    <div class="screen" id="screen-student-schedule">
+      <div class="header">
+        <button class="header-back" onclick="showScreen('screen-student-home')"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">일정</span>
+      </div>
+      <div class="container">
+        <div id="available-schedules">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <button class="tab-item" onclick="showScreen('screen-student-home')"><i class="fas fa-home"></i><span>홈</span></button>
+        <button class="tab-item active"><i class="fas fa-calendar"></i><span>일정</span></button>
+        <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
+        <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
+      </div>
+    </div>
+
+    <!-- 나의 기록 -->
+    <div class="screen" id="screen-my-records">
+      <div class="header">
+        <button class="header-back" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">나의 기록</span>
+        <div style="display: flex; gap: 8px;">
+          <button class="header-action" style="color: var(--text-secondary);" onclick="openPersonalBulkAdd()">일괄</button>
+          <button class="header-action" onclick="openPersonalRecordAdd()">추가</button>
+        </div>
+      </div>
+      <div class="container">
+        <!-- 성장 그래프 -->
+        <div class="card" id="growth-chart-card">
+          <div class="section-title" style="margin-bottom: 12px;"><i class="fas fa-chart-line"></i> 성장 그래프</div>
+          <div class="discipline-tabs" id="chart-discipline-tabs">
+            <button class="disc-tab active" data-disc="STA" onclick="selectChartDiscipline('STA')">STA</button>
+            <button class="disc-tab" data-disc="DYNB" onclick="selectChartDiscipline('DYNB')">DYNB</button>
+            <button class="disc-tab" data-disc="FIM" onclick="selectChartDiscipline('FIM')">FIM</button>
+            <button class="disc-tab" data-disc="CWTB" onclick="selectChartDiscipline('CWTB')">CWTB</button>
+          </div>
+          <div style="height: 200px; position: relative;">
+            <canvas id="growth-chart"></canvas>
+          </div>
+        </div>
+        
+        <div class="section-title" style="margin-top: 20px;"><i class="fas fa-trophy"></i> 종목별 최고 기록</div>
+        <div class="card" id="my-best-records">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+        <div class="section-title" style="margin-top: 20px;"><i class="fas fa-list"></i> 전체 기록</div>
+        <div class="card" id="my-all-records">
+          <div style="text-align: center; color: var(--text-secondary); padding: 20px;">기록이 없습니다</div>
+        </div>
+      </div>
+      <div class="tab-bar" id="my-records-tabbar">
+        <!-- 동적으로 렌더링 -->
+      </div>
+    </div>
+
+    <!-- Bottom Sheet: 일정 등록 -->
+    <div class="bottom-sheet-overlay" id="sheet-schedule">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-title" id="schedule-form-title">새 일정 등록</div>
+          <input type="hidden" id="edit-schedule-id">
+          <div class="input-group">
+            <label class="input-label">날짜</label>
+            <input type="date" class="input" id="schedule-date">
+          </div>
+          <div class="input-group">
+            <label class="input-label">시간</label>
+            <input type="time" class="input" id="schedule-time">
+          </div>
+          <div class="input-group">
+            <label class="input-label">장소</label>
+            <input type="text" class="input" id="schedule-location" placeholder="장소를 입력하세요">
+          </div>
+          <button class="btn btn-primary" onclick="saveSchedule()">저장하기</button>
+          <button class="btn btn-secondary" style="margin-top: 8px;" onclick="closeBottomSheet('sheet-schedule')">취소</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Sheet: 참가자 추가 -->
+    <div class="bottom-sheet-overlay" id="sheet-add-participant">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-title">참가자 추가</div>
+          <div class="input-group">
+            <label class="input-label">강습생 선택</label>
+            <select class="input" id="participant-student"></select>
+          </div>
+          <div class="input-group">
+            <label class="input-label">참가 목적</label>
+            <div class="purpose-buttons">
+              <button class="purpose-btn selected" data-purpose="강습" onclick="selectPurpose(this)">강습</button>
+              <button class="purpose-btn" data-purpose="펀다이빙" onclick="selectPurpose(this)">펀다이빙</button>
+            </div>
+          </div>
+          <div class="input-group" id="lesson-level-group">
+            <label class="input-label">강습 레벨</label>
+            <select class="input" id="participant-level">
+              <option value="2">Level 2</option>
+              <option value="3">Level 3</option>
+              <option value="4">Level 4</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="addParticipant()">추가하기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 일정 관리 (강사용) -->
+    <div class="screen" id="screen-schedule-manage">
+      <div class="header">
+        <button class="header-back" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">일정 관리</span>
+        <button class="header-action" onclick="openScheduleForm()">추가</button>
+      </div>
+      <div class="container">
+        <div id="schedule-list">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <button class="tab-item" onclick="showScreen('screen-instructor-home')"><i class="fas fa-home"></i><span>홈</span></button>
+        <button class="tab-item active"><i class="fas fa-calendar"></i><span>일정</span></button>
+        <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
+        <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
+      </div>
+    </div>
+
+    <!-- 참가자 관리 -->
+    <div class="screen" id="screen-participants">
+      <div class="header">
+        <button class="header-back" onclick="showScreen('screen-schedule-manage')"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">참가자 관리</span>
+        <button class="header-action" onclick="openAddParticipant()">추가</button>
+      </div>
+      <div class="container">
+        <div class="card" style="margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <i class="fas fa-calendar" style="color: var(--primary);"></i>
+            <span id="participant-schedule-date" style="font-weight: 600;"></span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary);">
+            <i class="fas fa-map-marker-alt"></i>
+            <span id="participant-schedule-location"></span>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="margin-bottom: 20px;" onclick="openBatchRecordInput()">
+          <i class="fas fa-pen"></i> 일괄 기록 입력
+        </button>
+        <div class="section-title">강습</div>
+        <div class="card" id="lesson-participants"></div>
+        <div class="section-title" style="margin-top: 20px;">펀다이빙</div>
+        <div class="card" id="fun-participants"></div>
+      </div>
+    </div>
+
+    <!-- 강습생 일정 화면 -->
+    <div class="screen" id="screen-student-schedule">
+      <div class="header">
+        <button class="header-back" onclick="showScreen('screen-student-home')"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">일정</span>
+      </div>
+      <div class="container">
+        <div id="student-schedule-list">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <button class="tab-item" onclick="showScreen('screen-student-home')"><i class="fas fa-home"></i><span>홈</span></button>
+        <button class="tab-item active"><i class="fas fa-calendar"></i><span>일정</span></button>
+        <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
+        <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
+      </div>
+    </div>
+
+    <!-- 일괄 기록 입력 화면 (강습) -->
+    <div class="screen" id="screen-batch-record">
+      <div class="header">
+        <button class="header-back" onclick="closeBatchRecord()"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">기록 일괄 입력</span>
+      </div>
+      <div class="container">
+        <!-- 일정 정보 -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <i class="fas fa-calendar" style="color: var(--primary);"></i>
+            <span id="batch-schedule-date" style="font-weight: 600;"></span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary);">
+            <i class="fas fa-map-marker-alt"></i>
+            <span id="batch-schedule-location"></span>
+          </div>
+          <!-- 종목 선택 표시 -->
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px;" id="batch-selected-disciplines"></div>
+        </div>
+        
+        <!-- 종목 탭 (동적) -->
+        <div class="discipline-tabs" id="batch-discipline-tabs"></div>
+        
+        <!-- 기록 테이블 -->
+        <div class="card" id="batch-record-table-card">
+          <div class="record-table-container">
+            <table class="record-table" id="batch-record-table">
+              <thead>
+                <tr>
+                  <th class="col-name">학생명</th>
+                  <th class="col-attempt">1차</th>
+                  <th class="col-attempt">2차</th>
+                  <th class="col-add-attempt"><button class="btn-add-col" onclick="addBatchAttemptColumn()">+</button></th>
+                  <th class="col-note">메모</th>
+                </tr>
+              </thead>
+              <tbody id="batch-record-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 스킬 체크 테이블 -->
+        <div class="card" id="batch-skill-table-card" style="display: none;">
+          <div class="record-table-container">
+            <table class="record-table" id="batch-skill-table">
+              <thead>
+                <tr>
+                  <th class="col-name">학생명</th>
+                </tr>
+              </thead>
+              <tbody id="batch-skill-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 저장 버튼 -->
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+          <button class="btn btn-secondary" style="flex: 1;" onclick="saveBatchRecords(false)">저장하고 계속</button>
+          <button class="btn btn-primary" style="flex: 1;" onclick="saveBatchRecords(true)">저장하고 완료</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 개인 기록 개별 추가 화면 -->
+    <div class="screen" id="screen-personal-record">
+      <div class="header">
+        <button class="header-back" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">개인 기록 입력</span>
+      </div>
+      <div class="container">
+        <!-- 날짜/장소 정보 -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-calendar" style="color: var(--primary);"></i>
+                <span id="personal-date-display" style="font-weight: 600;"></span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; color: var(--text-secondary);">
+                <i class="fas fa-map-marker-alt"></i>
+                <span id="personal-location-display"></span>
+              </div>
+            </div>
+            <button class="btn btn-outline btn-small" onclick="openPersonalDateEdit()">+ 날짜</button>
+          </div>
+        </div>
+        
+        <!-- 기록 테이블 -->
+        <div class="card">
+          <div class="record-table-container">
+            <table class="record-table" id="personal-record-table">
+              <thead>
+                <tr>
+                  <th class="col-name">종목</th>
+                  <th class="col-attempt">1차</th>
+                  <th class="col-attempt">2차</th>
+                </tr>
+              </thead>
+              <tbody id="personal-record-tbody"></tbody>
+            </table>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <button class="btn btn-outline btn-small" style="flex: 1;" onclick="addPersonalAttemptColumn()">
+              <i class="fas fa-plus"></i> 시도 추가
+            </button>
+            <button class="btn btn-outline btn-small" style="flex: 1;" onclick="openAddDisciplineSheet()">
+              <i class="fas fa-plus"></i> 종목 추가
+            </button>
+          </div>
+        </div>
+        
+        <!-- 메모 -->
+        <div class="card" style="margin-top: 16px;">
+          <div class="section-title"><i class="fas fa-sticky-note"></i> 메모</div>
+          <textarea class="input" id="personal-memo" rows="3" placeholder="이 다이빙에 대한 메모를 남겨보세요... (컨디션, 느낀점, 개선할 점 등)"></textarea>
+        </div>
+        
+        <!-- 저장 버튼 -->
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+          <button class="btn btn-secondary" style="flex: 1;" onclick="savePersonalRecord(false)">저장하고 계속</button>
+          <button class="btn btn-primary" style="flex: 1;" onclick="savePersonalRecord(true)">저장하고 완료</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 개인 기록 일괄 추가 화면 -->
+    <div class="screen" id="screen-personal-bulk">
+      <div class="header">
+        <button class="header-back" onclick="showScreen('screen-my-records')"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">일괄 기록 추가</span>
+      </div>
+      <div class="container">
+        <!-- 안내 -->
+        <div class="card" style="background: var(--primary-light); margin-bottom: 16px;">
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <i class="fas fa-info-circle" style="color: var(--primary); margin-top: 2px;"></i>
+            <div style="font-size: 14px; color: var(--text-secondary);">
+              과거 다이빙 기록을 한번에 입력할 수 있습니다.<br>
+              날짜는 <strong>YYMMDD</strong> 형식으로 입력하세요.<br>
+              예: 231112 → 2023-11-12
+            </div>
+          </div>
+        </div>
+        
+        <!-- 날짜/장소 목록 -->
+        <div class="section-title"><i class="fas fa-calendar"></i> 날짜/장소 목록</div>
+        <div id="bulk-date-list"></div>
+        <button class="btn btn-outline" style="margin-top: 8px;" onclick="addBulkDateRow()">
+          <i class="fas fa-plus"></i> 날짜 추가
+        </button>
+        
+        <button class="btn btn-primary" style="margin-top: 20px;" onclick="proceedToBulkRecordInput()">
+          다음: 기록 입력
+        </button>
+      </div>
+      <div class="tab-bar" id="bulk-tabbar">
+        <!-- 동적으로 렌더링 -->
+      </div>
+    </div>
+
+    <!-- 개인 기록 일괄 입력 화면 (2단계) -->
+    <div class="screen" id="screen-personal-bulk-input">
+      <div class="header">
+        <button class="header-back" onclick="showScreen('screen-personal-bulk')"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">일괄 기록 입력</span>
+      </div>
+      <div class="container">
+        <!-- 날짜 탭 -->
+        <div class="participant-tabs" id="bulk-date-tabs"></div>
+        
+        <!-- 기록 테이블 -->
+        <div class="card">
+          <div class="record-table-container">
+            <table class="record-table" id="bulk-record-table">
+              <thead>
+                <tr>
+                  <th class="col-name">종목</th>
+                  <th class="col-attempt">1차</th>
+                  <th class="col-attempt">2차</th>
+                  <th class="col-add-attempt"><button class="btn-add-col" onclick="addBulkAttemptColumn()">+</button></th>
+                </tr>
+              </thead>
+              <tbody id="bulk-record-tbody"></tbody>
+            </table>
+          </div>
+          <button class="btn btn-outline" style="margin-top: 12px;" onclick="openBulkAddDisciplineSheet()">
+            <i class="fas fa-plus"></i> 종목 추가
+          </button>
+        </div>
+        
+        <!-- 저장 버튼 -->
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+          <button class="btn btn-secondary" style="flex: 1;" onclick="saveBulkRecords(false)">저장하고 계속</button>
+          <button class="btn btn-primary" style="flex: 1;" onclick="saveBulkRecords(true)">저장하고 완료</button>
+        </div>
+      </div>
+      <div class="tab-bar" id="bulk-input-tabbar">
+        <!-- 동적으로 렌더링 -->
+      </div>
+    </div>
+
+    <!-- 내 기록 화면 -->
+    <div class="screen" id="screen-my-records">
+      <div class="header">
+        <button class="header-back" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">나의 기록</span>
+      </div>
+      <div class="container">
+        <div class="section-title"><i class="fas fa-trophy"></i> 종목별 최고 기록</div>
+        <div class="card" id="my-best-records"></div>
+        <div class="section-title" style="margin-top: 20px;"><i class="fas fa-list"></i> 전체 기록</div>
+        <div class="card" id="my-all-records"></div>
+      </div>
+      <div class="tab-bar" id="my-records-tabbar"></div>
+    </div>
+
+    <!-- 마이페이지 -->
+    <div class="screen" id="screen-mypage">
+      <div class="header">
+        <button class="header-back" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">마이페이지</span>
+      </div>
+      <div class="container">
+        <div class="card" style="display: flex; align-items: center; gap: 16px;">
+          <div class="participant-avatar" style="width: 60px; height: 60px; font-size: 24px;" id="mypage-avatar"></div>
+          <div style="flex: 1;">
+            <div style="font-size: 20px; font-weight: 700;" id="mypage-name"></div>
+            <div style="color: var(--text-secondary); margin-top: 4px;" id="mypage-phone"></div>
+            <div style="color: var(--text-tertiary); font-size: 14px; margin-top: 2px;" id="mypage-info"></div>
+          </div>
+        </div>
+        <button class="btn btn-danger" style="margin-top: 20px;" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+
+    <!-- 토스트 -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Bottom Sheet: 일정 등록 -->
+    <div class="bottom-sheet-overlay" id="sheet-schedule">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-title" id="schedule-form-title">새 일정 등록</div>
+          <input type="hidden" id="edit-schedule-id">
+          <div class="input-group">
+            <label class="input-label">날짜</label>
+            <input type="date" class="input" id="schedule-date">
+          </div>
+          <div class="input-group">
+            <label class="input-label">시간</label>
+            <input type="time" class="input" id="schedule-time">
+          </div>
+          <div class="input-group">
+            <label class="input-label">장소</label>
+            <input type="text" class="input" id="schedule-location" placeholder="장소를 입력하세요">
+          </div>
+          <button class="btn btn-primary" onclick="saveSchedule()">저장하기</button>
+          <button class="btn btn-secondary" style="margin-top: 8px;" onclick="closeBottomSheet('sheet-schedule')">취소</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Sheet: 참가자 추가 -->
+    <div class="bottom-sheet-overlay" id="sheet-add-participant">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-title">참가자 추가</div>
+          <div class="input-group">
+            <label class="input-label">강습생 선택</label>
+            <select class="input" id="participant-student"></select>
+          </div>
+          <div class="input-group">
+            <label class="input-label">참가 목적</label>
+            <div class="purpose-buttons">
+              <button class="purpose-btn selected" data-purpose="강습" onclick="selectPurpose(this)">강습</button>
+              <button class="purpose-btn" data-purpose="펀다이빙" onclick="selectPurpose(this)">펀다이빙</button>
+            </div>
+          </div>
+          <div class="input-group" id="lesson-level-group">
+            <label class="input-label">강습 레벨</label>
+            <select class="input" id="participant-level">
+              <option value="2">Level 2</option>
+              <option value="3">Level 3</option>
+              <option value="4">Level 4</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="addParticipant()">추가하기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Sheet: 강습생 일정 신청 -->
+    <div class="bottom-sheet-overlay" id="sheet-register">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-title">일정 신청</div>
+          <div class="input-group">
+            <label class="input-label">참가 목적</label>
+            <div class="purpose-buttons">
+              <button class="purpose-btn selected" data-purpose="강습" onclick="selectRegisterPurpose(this)">강습</button>
+              <button class="purpose-btn" data-purpose="펀다이빙" onclick="selectRegisterPurpose(this)">펀다이빙</button>
+            </div>
+          </div>
+          <div class="input-group" id="register-level-group">
+            <label class="input-label">수강 레벨</label>
+            <select class="input" id="register-level">
+              <option value="2">Level 2</option>
+              <option value="3">Level 3</option>
+              <option value="4">Level 4</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="registerSchedule()">신청하기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Sheet: 최근 일정 선택 (강사용) -->
+    <div class="bottom-sheet-overlay" id="sheet-select-schedule">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-title">일정 선택</div>
+          <div id="recent-schedule-list" style="max-height: 300px; overflow-y: auto;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Sheet: 개인 기록 추가 (날짜/장소 입력) -->
+    <div class="bottom-sheet-overlay" id="sheet-personal-add">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-title">개인 기록 추가</div>
+          <div class="input-group">
+            <label class="input-label">날짜 *</label>
+            <input type="date" class="input" id="personal-add-date">
+          </div>
+          <div class="input-group">
+            <label class="input-label">시간</label>
+            <input type="time" class="input" id="personal-add-time">
+          </div>
+          <div class="input-group">
+            <label class="input-label">장소</label>
+            <input type="text" class="input" id="personal-add-location" placeholder="장소를 입력하세요">
+          </div>
+          <div class="input-group">
+            <label class="input-label">종목 선택</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="personal-discipline-checks">
+              <label style="display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" value="STA" checked> STA
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" value="DYNB" checked> DYNB
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" value="FIM" checked> FIM
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" value="CWTB" checked> CWTB
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" value="DNF"> DNF
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" value="CNF"> CNF
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" value="DYN"> DYN
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" value="CWT"> CWT
+              </label>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="startPersonalRecordInput()">다음: 기록 입력</button>
+          <button class="btn btn-secondary" style="margin-top: 8px;" onclick="closeBottomSheet('sheet-personal-add')">취소</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Sheet: 종목 추가 -->
+    <div class="bottom-sheet-overlay" id="sheet-add-discipline">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-title">종목 추가</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 12px;" id="add-discipline-options"></div>
+          <button class="btn btn-primary" style="margin-top: 16px;" onclick="confirmAddDiscipline()">추가하기</button>
+          <button class="btn btn-secondary" style="margin-top: 8px;" onclick="closeBottomSheet('sheet-add-discipline')">취소</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Sheet: 일괄 종목 추가 -->
+    <div class="bottom-sheet-overlay" id="sheet-bulk-add-discipline">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-title">종목 추가</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 12px;" id="bulk-add-discipline-options"></div>
+          <button class="btn btn-primary" style="margin-top: 16px;" onclick="confirmBulkAddDiscipline()">추가하기</button>
+          <button class="btn btn-secondary" style="margin-top: 8px;" onclick="closeBottomSheet('sheet-bulk-add-discipline')">취소</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Sheet: 강습 종목 추가 -->
+    <div class="bottom-sheet-overlay" id="sheet-batch-add-discipline">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-title">종목 추가</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 12px;" id="batch-add-discipline-options"></div>
+          <button class="btn btn-primary" style="margin-top: 16px;" onclick="confirmBatchAddDiscipline()">추가하기</button>
+          <button class="btn btn-secondary" style="margin-top: 8px;" onclick="closeBottomSheet('sheet-batch-add-discipline')">취소</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== Supabase 초기화 ====================
+    const SUPABASE_URL = 'https://dnndjqlbjudnjpwescfl.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRubmRqcWxianVkbmpwd2VzY2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MzE2NzMsImV4cCI6MjA4MTUwNzY3M30.0x3vKhKzZyn5MPDSoNJgbOvU-LGZ7q34N44DjWLQWz0';
+    
+    // Supabase 클라이언트 생성 (db로 명명하여 충돌 방지)
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ==================== 전역 변수 ====================
+    let currentUser = null;
+    let currentScheduleId = null;
+    let currentRegId = null;
+    let allSchedules = [];
+    let screenHistory = [];
+    let skillsDonutChart = null;
+    let recordsDonutChart = null;
+
+    // ==================== 초기화 ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      const phoneInput = document.getElementById('login-phone');
+      
+      // 전화번호 자동 포맷팅
+      phoneInput.addEventListener('input', function(e) {
+        // 숫자만 추출
+        let v = e.target.value.replace(/\D/g, '');
+        
+        // 11자리 제한
+        if (v.length > 11) v = v.slice(0, 11);
+        
+        // 하이픈 추가
+        if (v.length > 3 && v.length <= 7) {
+          v = v.slice(0, 3) + '-' + v.slice(3);
+        } else if (v.length > 7) {
+          v = v.slice(0, 3) + '-' + v.slice(3, 7) + '-' + v.slice(7);
+        }
+        
+        e.target.value = v;
+      });
+
+      const overlays = document.querySelectorAll('.bottom-sheet-overlay');
+      overlays.forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+          if (e.target === this) closeBottomSheet(this.id);
+        });
+      });
+    });
+
+    // ==================== 유틸리티 함수 ====================
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function showScreen(id) {
+      const currentScreen = document.querySelector('.screen.active');
+      if (currentScreen && currentScreen.id !== id) {
+        screenHistory.push(currentScreen.id);
+      }
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      window.scrollTo(0, 0);
+      
+      // 화면별 로드 함수 호출
+      if (id === 'screen-instructor-home') loadInstructorDashboard();
+      else if (id === 'screen-student-home') loadStudentDashboard();
+      else if (id === 'screen-mypage') loadMypage();
+      else if (id === 'screen-schedule-manage') loadScheduleManage();
+      else if (id === 'screen-student-schedule') loadStudentSchedule();
+      else if (id === 'screen-my-records') loadMyRecords();
+    }
+
+    function goBack() {
+      if (screenHistory.length > 0) {
+        const prevScreen = screenHistory.pop();
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(prevScreen).classList.add('active');
+      } else {
+        if (currentUser && currentUser.user_type === '강사') showScreen('screen-instructor-home');
+        else showScreen('screen-student-home');
+      }
+    }
+
+    function openBottomSheet(id) {
+      document.getElementById(id).classList.add('active');
+    }
+
+    function closeBottomSheet(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      return (d.getMonth()+1) + '월 ' + d.getDate() + '일 (' + days[d.getDay()] + ')';
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return '';
+      const parts = timeStr.split(':');
+      const h = parseInt(parts[0]);
+      const m = parts[1];
+      return (h < 12 ? '오전 ' : '오후 ') + (h > 12 ? h - 12 : h) + ':' + m;
+    }
+
+    // ==================== 로그인/로그아웃 ====================
+    async function handleLogin() {
+      const phone = document.getElementById('login-phone').value;
+      
+      // 유효성 검사: 010-0000-0000 형식 (13자)
+      if (!phone || phone.length < 13) {
+        showToast('연락처를 정확히 입력해주세요');
+        return;
+      }
+      
+      console.log('로그인 시도:', phone);
+      
+      try {
+        // Supabase에서 사용자 조회
+        const { data, error } = await db
+          .from('users')
+          .select('*')
+          .eq('phone', phone)
+          .single();
+        
+        console.log('Supabase 응답:', { data, error });
+        
+        if (error) {
+          console.error('Supabase 에러:', error);
+          showToast('등록되지 않은 연락처입니다.');
+          return;
+        }
+        
+        if (!data) {
+          showToast('등록되지 않은 연락처입니다.');
+          return;
+        }
+        
+        currentUser = data;
+        console.log('로그인 성공:', currentUser);
+        
+        if (currentUser.user_type === '강사') {
+          showScreen('screen-instructor-home');
+        } else {
+          showScreen('screen-student-home');
+        }
+      } catch (err) {
+        console.error('로그인 오류:', err);
+        showToast('로그인 실패: ' + err.message);
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      screenHistory = [];
+      showScreen('screen-login');
+      document.getElementById('login-phone').value = '';
+    }
+
+    // ==================== 강사 대시보드 ====================
+    async function loadInstructorDashboard() {
+      document.getElementById('instructor-name').textContent = currentUser.name;
+      await loadTodaySchedules();
+      await loadInstructorStats();
+    }
+
+    async function loadTodaySchedules() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // 오늘 일정 조회
+        const { data: schedules, error } = await db
+          .from('schedules')
+          .select('*')
+          .eq('instructor_id', currentUser.user_id)
+          .eq('date', today);
+        
+        if (error) throw error;
+        
+        const container = document.getElementById('today-schedules');
+        
+        if (!schedules || schedules.length === 0) {
+          container.innerHTML = '<div class="card" style="text-align: center; color: var(--text-secondary);">오늘 일정이 없습니다</div>';
+          return;
+        }
+        
+        // 각 일정에 참가자 수 추가
+        let html = '';
+        for (const s of schedules) {
+          // 참가자 수 조회
+          const { count } = await db
+            .from('registrations')
+            .select('*', { count: 'exact', head: true })
+            .eq('schedule_id', s.schedule_id);
+          
+          html += `<div class="card schedule-card" style="cursor:pointer;" onclick="openParticipants('${s.schedule_id}')">`;
+          html += '<div class="schedule-info">';
+          html += `<div class="schedule-time">${formatTime(s.time)} · ${s.location}</div>`;
+          html += `<div class="schedule-meta">참가자 ${count || 0}명</div>`;
+          html += '</div>';
+          html += '<i class="fas fa-chevron-right schedule-arrow"></i>';
+          html += '</div>';
+        }
+        
+        container.innerHTML = html;
+        allSchedules = schedules;
+      } catch (err) {
+        console.error('일정 로드 오류:', err);
+        document.getElementById('today-schedules').innerHTML = '<div class="card" style="text-align: center; color: var(--error);">일정을 불러오지 못했습니다</div>';
+      }
+    }
+
+    async function loadInstructorStats() {
+      try {
+        // 이번 주 시작일 계산
+        const now = new Date();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+        const weekStartStr = weekStart.toISOString().split('T')[0];
+        
+        // 이번 주 일정 수
+        const { count: weekLessons } = await db
+          .from('schedules')
+          .select('*', { count: 'exact', head: true })
+          .eq('instructor_id', currentUser.user_id)
+          .gte('date', weekStartStr);
+        
+        // 이번 주 일정 ID 조회
+        const { data: weekSchedules } = await db
+          .from('schedules')
+          .select('schedule_id')
+          .eq('instructor_id', currentUser.user_id)
+          .gte('date', weekStartStr);
+        
+        let weekStudents = 0;
+        let weekRecords = 0;
+        
+        if (weekSchedules && weekSchedules.length > 0) {
+          const scheduleIds = weekSchedules.map(s => s.schedule_id);
+          
+          // 이번 주 참가자 수
+          const { count: studentCount } = await db
+            .from('registrations')
+            .select('*', { count: 'exact', head: true })
+            .in('schedule_id', scheduleIds);
+          weekStudents = studentCount || 0;
+          
+          // 이번 주 reg_id 조회
+          const { data: regs } = await db
+            .from('registrations')
+            .select('reg_id')
+            .in('schedule_id', scheduleIds);
+          
+          if (regs && regs.length > 0) {
+            const regIds = regs.map(r => r.reg_id);
+            
+            // 이번 주 기록 수
+            const { count: recordCount } = await db
+              .from('dive_records')
+              .select('*', { count: 'exact', head: true })
+              .in('reg_id', regIds);
+            weekRecords = recordCount || 0;
+          }
+        }
+        
+        document.getElementById('instructor-stats').innerHTML = 
+          `강습 ${weekLessons || 0}회 · 강습생 ${weekStudents}명 · 기록 ${weekRecords}건`;
+      } catch (err) {
+        console.error('통계 로드 오류:', err);
+        document.getElementById('instructor-stats').innerHTML = '통계를 불러오지 못했습니다';
+      }
+    }
+
+    // ==================== 강습생 대시보드 ====================
+    async function loadStudentDashboard() {
+      document.getElementById('student-name').textContent = currentUser.name;
+      
+      // 최고 기록 조회
+      await loadBestRecords();
+      
+      // 다가오는 일정 조회
+      await loadUpcomingSchedules();
+    }
+
+    async function loadBestRecords() {
+      try {
+        // 학생의 등록 목록 조회
+        const { data: regs } = await db
+          .from('registrations')
+          .select('reg_id')
+          .eq('student_id', currentUser.user_id);
+        
+        const disciplines = ['STA', 'CWTB', 'DYNB'];
+        let bestHtml = '';
+        
+        if (regs && regs.length > 0) {
+          const regIds = regs.map(r => r.reg_id);
+          
+          for (const disc of disciplines) {
+            // 각 종목별 최고 기록 조회
+            const { data: records } = await db
+              .from('dive_records')
+              .select('value')
+              .in('reg_id', regIds)
+              .eq('discipline', disc)
+              .order('value', { ascending: false })
+              .limit(1);
+            
+            let val = '-';
+            if (records && records.length > 0) {
+              val = disc === 'STA' ? records[0].value : records[0].value + 'm';
+            }
+            
+            bestHtml += `<div class="stat-card">
+              <div class="stat-label">${disc}</div>
+              <div class="stat-value">${val}</div>
+            </div>`;
+          }
+        } else {
+          for (const disc of disciplines) {
+            bestHtml += `<div class="stat-card">
+              <div class="stat-label">${disc}</div>
+              <div class="stat-value">-</div>
+            </div>`;
+          }
+        }
+        
+        document.getElementById('best-records').innerHTML = bestHtml;
+      } catch (err) {
+        console.error('최고 기록 로드 오류:', err);
+      }
+    }
+
+    async function loadUpcomingSchedules() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // 학생의 등록된 일정 조회
+        const { data: regs } = await db
+          .from('registrations')
+          .select(`
+            reg_id,
+            purpose,
+            schedule_id,
+            schedules (
+              schedule_id,
+              date,
+              time,
+              location
+            )
+          `)
+          .eq('student_id', currentUser.user_id);
+        
+        const container = document.getElementById('upcoming-schedules');
+        
+        if (!regs || regs.length === 0) {
+          container.innerHTML = '<div class="card" style="text-align: center; color: var(--text-secondary);">예정된 일정이 없습니다</div>';
+          return;
+        }
+        
+        // 미래 일정만 필터링
+        const upcoming = regs
+          .filter(r => r.schedules && r.schedules.date >= today)
+          .sort((a, b) => new Date(a.schedules.date) - new Date(b.schedules.date))
+          .slice(0, 3);
+        
+        if (upcoming.length === 0) {
+          container.innerHTML = '<div class="card" style="text-align: center; color: var(--text-secondary);">예정된 일정이 없습니다</div>';
+          return;
+        }
+        
+        let html = '';
+        for (const r of upcoming) {
+          const s = r.schedules;
+          html += `<div class="card schedule-card">
+            <div class="schedule-info">
+              <div class="schedule-time">${formatDate(s.date)} ${formatTime(s.time)}</div>
+              <div class="schedule-location">${s.location} · ${r.purpose}</div>
+            </div>
+            <i class="fas fa-chevron-right schedule-arrow"></i>
+          </div>`;
+        }
+        
+        container.innerHTML = html;
+      } catch (err) {
+        console.error('일정 로드 오류:', err);
+        document.getElementById('upcoming-schedules').innerHTML = '<div class="card" style="text-align: center; color: var(--error);">일정을 불러오지 못했습니다</div>';
+      }
+    }
+
+    // ==================== 마이페이지 ====================
+    function loadMypage() {
+      document.getElementById('mypage-avatar').textContent = currentUser.name ? currentUser.name.charAt(0) : '?';
+      document.getElementById('mypage-name').textContent = currentUser.name;
+      document.getElementById('mypage-phone').textContent = currentUser.phone;
+      document.getElementById('mypage-info').textContent = 'Level ' + (currentUser.cert_level === 'X' ? '1' : currentUser.cert_level) + ' · ' + currentUser.user_type;
+    }
+
+    // ==================== 일정 관리 (강사) ====================
+    async function loadScheduleManage() {
+      try {
+        const { data: schedules, error } = await db
+          .from('schedules')
+          .select('*')
+          .eq('instructor_id', currentUser.user_id)
+          .order('date', { ascending: false });
+        
+        if (error) throw error;
+        
+        allSchedules = schedules || [];
+        renderScheduleList();
+      } catch (err) {
+        console.error('일정 로드 오류:', err);
+        document.getElementById('schedule-list').innerHTML = 
+          '<div class="card" style="text-align: center; color: var(--error);">일정을 불러오지 못했습니다</div>';
+      }
+    }
+
+    async function renderScheduleList() {
+      const container = document.getElementById('schedule-list');
+      
+      if (allSchedules.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-times"></i><p>일정이 없습니다</p></div>';
+        return;
+      }
+      
+      let html = '';
+      for (const s of allSchedules) {
+        // 참가자 수 조회
+        const { count } = await db
+          .from('registrations')
+          .select('*', { count: 'exact', head: true })
+          .eq('schedule_id', s.schedule_id);
+        
+        html += `<div class="card">
+          <div class="schedule-card" style="margin-bottom: 12px;">
+            <div class="schedule-info">
+              <div class="schedule-time">${formatDate(s.date)} ${formatTime(s.time)}</div>
+              <div class="schedule-location">${s.location} · 참가자 ${count || 0}명</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <button class="btn btn-secondary btn-small" style="flex: 1;" onclick="openParticipants('${s.schedule_id}')">
+              <i class="fas fa-users"></i> 참가자
+            </button>
+            <button class="btn btn-primary btn-small" style="flex: 1;" onclick="openLessonRecordInput('${s.schedule_id}')">
+              <i class="fas fa-pen"></i> 기록 입력
+            </button>
+          </div>
+          <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid var(--divider);">
+            <button class="btn btn-outline btn-small" style="flex: 1;" onclick="openScheduleForm('${s.schedule_id}')">
+              <i class="fas fa-edit"></i> 수정
+            </button>
+            <button class="btn btn-danger btn-small" style="flex: 1;" onclick="deleteSchedule('${s.schedule_id}')">
+              <i class="fas fa-trash"></i> 삭제
+            </button>
+          </div>
+        </div>`;
+      }
+      
+      container.innerHTML = html;
+    }
+
+    async function deleteSchedule(scheduleId) {
+      if (!confirm('이 일정을 삭제하시겠습니까? 관련 참가자 정보도 함께 삭제됩니다.')) return;
+      
+      try {
+        // 먼저 관련 기록 삭제
+        const { data: regs } = await db
+          .from('registrations')
+          .select('reg_id')
+          .eq('schedule_id', scheduleId);
+        
+        if (regs && regs.length > 0) {
+          const regIds = regs.map(r => r.reg_id);
+          await db.from('dive_records').delete().in('reg_id', regIds);
+          await db.from('skill_records').delete().in('reg_id', regIds);
+          await db.from('registrations').delete().eq('schedule_id', scheduleId);
+        }
+        
+        // 일정 삭제
+        const { error } = await db
+          .from('schedules')
+          .delete()
+          .eq('schedule_id', scheduleId);
+        
+        if (error) throw error;
+        
+        showToast('일정이 삭제되었습니다');
+        loadScheduleManage();
+      } catch (err) {
+        console.error('일정 삭제 오류:', err);
+        showToast('삭제 실패: ' + err.message);
+      }
+    }
+
+    function openScheduleForm(scheduleId) {
+      document.getElementById('schedule-form-title').textContent = scheduleId ? '일정 수정' : '새 일정 등록';
+      document.getElementById('edit-schedule-id').value = scheduleId || '';
+      
+      if (scheduleId) {
+        const s = allSchedules.find(x => x.schedule_id === scheduleId);
+        if (s) {
+          document.getElementById('schedule-date').value = s.date;
+          document.getElementById('schedule-time').value = s.time;
+          document.getElementById('schedule-location').value = s.location;
+        }
+      } else {
+        document.getElementById('schedule-date').value = '';
+        document.getElementById('schedule-time').value = '';
+        document.getElementById('schedule-location').value = '';
+      }
+      
+      openBottomSheet('sheet-schedule');
+    }
+
+    async function saveSchedule() {
+      const scheduleId = document.getElementById('edit-schedule-id').value;
+      const date = document.getElementById('schedule-date').value;
+      const time = document.getElementById('schedule-time').value;
+      const location = document.getElementById('schedule-location').value;
+      
+      if (!date || !time || !location) {
+        showToast('모든 항목을 입력해주세요');
+        return;
+      }
+      
+      try {
+        if (scheduleId) {
+          // 수정
+          const { error } = await db
+            .from('schedules')
+            .update({ date, time, location })
+            .eq('schedule_id', scheduleId);
+          
+          if (error) throw error;
+          showToast('일정이 수정되었습니다');
+        } else {
+          // 새로 생성
+          const newId = 'SCH_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          const { error } = await db
+            .from('schedules')
+            .insert({
+              schedule_id: newId,
+              instructor_id: currentUser.user_id,
+              date,
+              time,
+              location
+            });
+          
+          if (error) throw error;
+          showToast('일정이 등록되었습니다');
+        }
+        
+        closeBottomSheet('sheet-schedule');
+        loadScheduleManage();
+        loadTodaySchedules();
+      } catch (err) {
+        console.error('일정 저장 오류:', err);
+        showToast('저장 실패: ' + err.message);
+      }
+    }
+
+    // ==================== 참가자 관리 ====================
+    async function openParticipants(scheduleId) {
+      currentScheduleId = scheduleId;
+      const s = allSchedules.find(x => x.schedule_id === scheduleId);
+      
+      if (s) {
+        document.getElementById('participant-schedule-date').textContent = formatDate(s.date) + ' ' + formatTime(s.time);
+        document.getElementById('participant-schedule-location').textContent = s.location;
+      }
+      
+      showScreen('screen-participants');
+      await loadParticipants();
+    }
+
+    async function loadParticipants() {
+      try {
+        // 참가자 목록 조회 (users 테이블과 조인)
+        const { data: regs, error } = await db
+          .from('registrations')
+          .select(`
+            reg_id,
+            student_id,
+            purpose,
+            lesson_level,
+            attendance,
+            users!registrations_student_id_fkey (
+              user_id,
+              name,
+              cert_level
+            )
+          `)
+          .eq('schedule_id', currentScheduleId);
+        
+        if (error) throw error;
+        
+        const lessons = [];
+        const funs = [];
+        
+        for (const r of (regs || [])) {
+          const participant = {
+            reg_id: r.reg_id,
+            student_id: r.student_id,
+            purpose: r.purpose,
+            lesson_level: r.lesson_level,
+            attendance: r.attendance,
+            student_name: r.users?.name || '알 수 없음',
+            student_cert: r.users?.cert_level || 'X'
+          };
+          
+          if (r.purpose === '강습') lessons.push(participant);
+          else funs.push(participant);
+        }
+        
+        document.getElementById('lesson-participants').innerHTML = lessons.length === 0 
+          ? '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">강습 참가자가 없습니다</div>'
+          : lessons.map(p => renderParticipantCard(p)).join('');
+        
+        document.getElementById('fun-participants').innerHTML = funs.length === 0
+          ? '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">펀다이빙 참가자가 없습니다</div>'
+          : funs.map(p => renderParticipantCard(p)).join('');
+          
+      } catch (err) {
+        console.error('참가자 로드 오류:', err);
+        document.getElementById('lesson-participants').innerHTML = 
+          '<div style="text-align: center; color: var(--error); padding: 20px;">참가자를 불러오지 못했습니다</div>';
+      }
+    }
+
+    function renderParticipantCard(p) {
+      const attClass = p.attendance === 'Y' ? 'attendance-yes' : p.attendance === 'N' ? 'attendance-no' : 'attendance-pending';
+      const attText = p.attendance === 'Y' ? '출석' : p.attendance === 'N' ? '불참' : '미정';
+      
+      return `<div class="participant-card">
+        <div class="participant-avatar">${p.student_name ? p.student_name.charAt(0) : '?'}</div>
+        <div class="participant-info">
+          <div class="participant-name">${p.student_name}</div>
+          <div class="participant-detail">Lv.${p.student_cert || 'X'}${p.lesson_level ? ' · Lv.' + p.lesson_level + ' 수강중' : ''}</div>
+        </div>
+        <div class="attendance-badge ${attClass}" onclick="toggleAttendance('${p.reg_id}', '${p.attendance}')" style="cursor: pointer;">${attText}</div>
+        <button class="btn-icon-delete" onclick="deleteParticipant('${p.reg_id}')" title="삭제">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>`;
+    }
+
+    async function deleteParticipant(regId) {
+      if (!confirm('이 참가자를 삭제하시겠습니까?')) return;
+      
+      try {
+        // 관련 기록 삭제
+        await db.from('dive_records').delete().eq('reg_id', regId);
+        await db.from('skill_records').delete().eq('reg_id', regId);
+        
+        // 참가자 삭제
+        const { error } = await db
+          .from('registrations')
+          .delete()
+          .eq('reg_id', regId);
+        
+        if (error) throw error;
+        
+        showToast('참가자가 삭제되었습니다');
+        loadParticipants();
+      } catch (err) {
+        console.error('참가자 삭제 오류:', err);
+        showToast('삭제 실패: ' + err.message);
+      }
+    }
+
+    async function toggleAttendance(regId, currentStatus) {
+      const nextStatus = currentStatus === 'Y' ? 'N' : currentStatus === 'N' ? '미정' : 'Y';
+      
+      try {
+        const { error } = await db
+          .from('registrations')
+          .update({ attendance: nextStatus })
+          .eq('reg_id', regId);
+        
+        if (error) throw error;
+        await loadParticipants();
+      } catch (err) {
+        console.error('출석 변경 오류:', err);
+        showToast('출석 변경 실패');
+      }
+    }
+
+    async function openAddParticipant() {
+      try {
+        // 강습생 목록 조회
+        const { data: students, error } = await db
+          .from('users')
+          .select('user_id, name, phone')
+          .eq('user_type', '강습생');
+        
+        if (error) throw error;
+        
+        const select = document.getElementById('participant-student');
+        let html = '<option value="">강습생을 선택하세요</option>';
+        for (const s of (students || [])) {
+          html += `<option value="${s.user_id}">${s.name} (${s.phone})</option>`;
+        }
+        select.innerHTML = html;
+        
+        openBottomSheet('sheet-add-participant');
+      } catch (err) {
+        console.error('강습생 목록 로드 오류:', err);
+        showToast('강습생 목록을 불러오지 못했습니다');
+      }
+    }
+
+    function selectPurpose(btn) {
+      document.querySelectorAll('#sheet-add-participant .purpose-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('lesson-level-group').style.display = btn.dataset.purpose === '강습' ? 'block' : 'none';
+    }
+
+    async function addParticipant() {
+      const studentId = document.getElementById('participant-student').value;
+      const purposeBtn = document.querySelector('#sheet-add-participant .purpose-btn.selected');
+      const purpose = purposeBtn.dataset.purpose;
+      const level = purpose === '강습' ? parseInt(document.getElementById('participant-level').value) : null;
+      
+      if (!studentId) {
+        showToast('강습생을 선택해주세요');
+        return;
+      }
+      
+      try {
+        const regId = 'REG_' + studentId + '_' + Date.now();
+        const { error } = await db
+          .from('registrations')
+          .insert({
+            reg_id: regId,
+            schedule_id: currentScheduleId,
+            student_id: studentId,
+            purpose,
+            lesson_level: level,
+            attendance: 'Y'
+          });
+        
+        if (error) throw error;
+        
+        showToast('참가자가 추가되었습니다');
+        closeBottomSheet('sheet-add-participant');
+        await loadParticipants();
+      } catch (err) {
+        console.error('참가자 추가 오류:', err);
+        showToast('추가 실패: ' + (err.message || '이미 등록된 참가자일 수 있습니다'));
+      }
+    }
+
+    // ==================== 강습생 일정 ====================
+    async function loadStudentSchedule() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // 열린 일정 조회
+        const { data: schedules, error } = await db
+          .from('schedules')
+          .select(`
+            schedule_id,
+            date,
+            time,
+            location,
+            instructor_id,
+            users!schedules_instructor_id_fkey (name)
+          `)
+          .gte('date', today)
+          .order('date', { ascending: true });
+        
+        if (error) throw error;
+        
+        // 내가 이미 신청한 일정 조회
+        const { data: myRegs } = await db
+          .from('registrations')
+          .select('schedule_id, purpose')
+          .eq('student_id', currentUser.user_id);
+        
+        const myScheduleIds = myRegs ? myRegs.map(r => r.schedule_id) : [];
+        
+        const container = document.getElementById('available-schedules');
+        
+        if (!schedules || schedules.length === 0) {
+          container.innerHTML = '<div class="card" style="text-align: center; color: var(--text-secondary);">예정된 일정이 없습니다</div>';
+          return;
+        }
+        
+        let html = '';
+        for (const s of schedules) {
+          const isRegistered = myScheduleIds.includes(s.schedule_id);
+          const myReg = myRegs ? myRegs.find(r => r.schedule_id === s.schedule_id) : null;
+          
+          html += `<div class="card schedule-card">
+            <div class="schedule-info">
+              <div class="schedule-time">${formatDate(s.date)} ${formatTime(s.time)}</div>
+              <div class="schedule-location">${s.location} · ${s.users?.name || '강사'}</div>
+            </div>
+            ${isRegistered 
+              ? `<span class="my-schedule-badge" style="cursor: pointer;" onclick="cancelRegistration('${myReg?.reg_id}')">${myReg?.purpose === '펀다이빙' ? '펀다이빙' : '강습'} 신청완료</span>` 
+              : `<button class="btn btn-small btn-primary" onclick="openRegisterSheet('${s.schedule_id}')">신청</button>`
+            }
+          </div>`;
+        }
+        
+        container.innerHTML = html;
+      } catch (err) {
+        console.error('일정 로드 오류:', err);
+        document.getElementById('available-schedules').innerHTML = 
+          '<div class="card" style="text-align: center; color: var(--error);">일정을 불러오지 못했습니다</div>';
+      }
+    }
+
+    let pendingScheduleId = null;
+    
+    function openRegisterSheet(scheduleId) {
+      pendingScheduleId = scheduleId;
+      // 기본값 설정
+      document.querySelectorAll('#sheet-register .purpose-btn').forEach(b => b.classList.remove('selected'));
+      document.querySelector('#sheet-register .purpose-btn[data-purpose="강습"]').classList.add('selected');
+      document.getElementById('register-level-group').style.display = 'block';
+      document.getElementById('register-level').value = currentUser.in_training_level || '2';
+      openBottomSheet('sheet-register');
+    }
+    
+    function selectRegisterPurpose(btn) {
+      document.querySelectorAll('#sheet-register .purpose-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('register-level-group').style.display = btn.dataset.purpose === '강습' ? 'block' : 'none';
+    }
+
+    async function registerSchedule() {
+      const purposeBtn = document.querySelector('#sheet-register .purpose-btn.selected');
+      const purpose = purposeBtn.dataset.purpose;
+      const level = purpose === '강습' ? parseInt(document.getElementById('register-level').value) : null;
+      
+      try {
+        const regId = 'REG_' + currentUser.user_id + '_' + Date.now();
+        const { error } = await db
+          .from('registrations')
+          .insert({
+            reg_id: regId,
+            schedule_id: pendingScheduleId,
+            student_id: currentUser.user_id,
+            purpose,
+            lesson_level: level,
+            attendance: 'Y'
+          });
+        
+        if (error) throw error;
+        
+        showToast('일정 신청 완료!');
+        closeBottomSheet('sheet-register');
+        loadStudentSchedule();
+        loadUpcomingSchedules();
+      } catch (err) {
+        console.error('일정 신청 오류:', err);
+        showToast('신청 실패: ' + (err.message || '이미 신청했을 수 있습니다'));
+      }
+    }
+
+    async function cancelRegistration(regId) {
+      if (!confirm('일정 신청을 취소하시겠습니까?')) return;
+      
+      try {
+        const { error } = await db
+          .from('registrations')
+          .delete()
+          .eq('reg_id', regId);
+        
+        if (error) throw error;
+        
+        showToast('신청이 취소되었습니다');
+        loadStudentSchedule();
+        loadUpcomingSchedules();
+      } catch (err) {
+        console.error('신청 취소 오류:', err);
+        showToast('취소 실패: ' + err.message);
+      }
+    }
+
+    // ==================== 나의 기록 ====================
+    async function loadMyRecords() {
+      // 탭바 렌더링
+      const isInstructor = currentUser.user_type === '강사';
+      document.getElementById('my-records-tabbar').innerHTML = `
+        <button class="tab-item" onclick="showScreen('${isInstructor ? 'screen-instructor-home' : 'screen-student-home'}')"><i class="fas fa-home"></i><span>홈</span></button>
+        <button class="tab-item" onclick="showScreen('${isInstructor ? 'screen-schedule-manage' : 'screen-student-schedule'}')"><i class="fas fa-calendar"></i><span>일정</span></button>
+        <button class="tab-item active"><i class="fas fa-chart-line"></i><span>내기록</span></button>
+        <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
+      `;
+      
+      try {
+        let allRecords = [];
+        
+        // 1. 강습 기록 조회 (registrations → dive_records)
+        const { data: regs } = await db
+          .from('registrations')
+          .select('reg_id, schedule_id')
+          .eq('student_id', currentUser.user_id);
+        
+        if (regs && regs.length > 0) {
+          const regIds = regs.map(r => r.reg_id);
+          const scheduleIds = regs.map(r => r.schedule_id);
+          
+          // 일정 날짜 조회
+          const { data: schedules } = await db
+            .from('schedules')
+            .select('schedule_id, date')
+            .in('schedule_id', scheduleIds);
+          
+          const scheduleMap = {};
+          for (const s of (schedules || [])) {
+            scheduleMap[s.schedule_id] = s.date;
+          }
+          
+          // reg_id → schedule_id 매핑
+          const regToSchedule = {};
+          for (const r of regs) {
+            regToSchedule[r.reg_id] = r.schedule_id;
+          }
+          
+          // 강습 기록
+          const { data: lessonRecords } = await db
+            .from('dive_records')
+            .select('record_id, reg_id, discipline, attempt, value, note')
+            .in('reg_id', regIds);
+          
+          for (const r of (lessonRecords || [])) {
+            const scheduleId = regToSchedule[r.reg_id];
+            const date = scheduleMap[scheduleId] || '날짜 없음';
+            allRecords.push({
+              ...r,
+              date,
+              type: '강습'
+            });
+          }
+        }
+        
+        // 2. 개인 기록 조회 (personal_dive_records)
+        const { data: personalRecords } = await db
+          .from('personal_dive_records')
+          .select(`
+            record_id,
+            personal_schedule_id,
+            discipline,
+            attempt,
+            value,
+            personal_schedules!personal_dive_records_personal_schedule_id_fkey (date)
+          `)
+          .eq('user_id', currentUser.user_id);
+        
+        for (const r of (personalRecords || [])) {
+          allRecords.push({
+            record_id: r.record_id,
+            discipline: r.discipline,
+            attempt: r.attempt,
+            value: r.value,
+            date: r.personal_schedules?.date || '날짜 없음',
+            type: '개인'
+          });
+        }
+        
+        // 기록이 없는 경우
+        if (allRecords.length === 0) {
+          document.getElementById('my-best-records').innerHTML = 
+            '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">기록이 없습니다</div>';
+          document.getElementById('my-all-records').innerHTML = 
+            '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">기록이 없습니다</div>';
+          document.getElementById('growth-chart-card').style.display = 'none';
+          return;
+        }
+        
+        // 성장 그래프용 데이터 저장
+        allRecordsForChart = allRecords;
+        document.getElementById('growth-chart-card').style.display = 'block';
+        renderGrowthChart();
+        
+        // 종목별 최고 기록 계산
+        const bestByDiscipline = {};
+        for (const r of allRecords) {
+          const val = parseFloat(r.value) || 0;
+          if (!bestByDiscipline[r.discipline] || val > bestByDiscipline[r.discipline]) {
+            bestByDiscipline[r.discipline] = val;
+          }
+        }
+        
+        const disciplines = ['STA', 'DYNB', 'FIM', 'CWTB', 'DNF', 'CNF', 'DYN', 'CWT'];
+        let bestHtml = '';
+        for (const d of disciplines) {
+          const best = bestByDiscipline[d];
+          const val = best ? (d === 'STA' ? best + 's' : best + 'm') : '-';
+          bestHtml += `<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--divider);">
+            <span style="font-weight: 500;">${d}</span>
+            <span style="color: var(--primary); font-weight: 600;">${val}</span>
+          </div>`;
+        }
+        
+        document.getElementById('my-best-records').innerHTML = bestHtml;
+        
+        // 날짜별 그룹핑 (날짜별 최고 기록만)
+        const recordsByDate = {};
+        for (const r of allRecords) {
+          if (!recordsByDate[r.date]) {
+            recordsByDate[r.date] = {};
+          }
+          const val = parseFloat(r.value) || 0;
+          if (!recordsByDate[r.date][r.discipline] || val > recordsByDate[r.date][r.discipline].value) {
+            recordsByDate[r.date][r.discipline] = {
+              value: val,
+              type: r.type
+            };
+          }
+        }
+        
+        // 날짜 정렬 (최신순)
+        const sortedDates = Object.keys(recordsByDate).sort((a, b) => b.localeCompare(a));
+        
+        // 연도별로 그룹핑
+        const recordsByYear = {};
+        for (const date of sortedDates) {
+          const year = date.substring(0, 4);
+          if (!recordsByYear[year]) {
+            recordsByYear[year] = [];
+          }
+          recordsByYear[year].push(date);
+        }
+        
+        let allHtml = '';
+        const sortedYears = Object.keys(recordsByYear).sort((a, b) => b - a);
+        
+        for (const year of sortedYears) {
+          const shortYear = year.substring(2); // '2025' -> '25'
+          allHtml += `<div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 16px 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid var(--primary);">
+            📆 ${shortYear}년
+          </div>`;
+          
+          for (const date of recordsByYear[year].slice(0, 15)) { // 연도당 최대 15일
+            const dateRecords = recordsByDate[date];
+            const dateFormatted = formatDateCompact(date);
+            
+            allHtml += `<div style="margin-bottom: 12px; margin-left: 8px;">
+              <div style="font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 6px;">
+                ${dateFormatted}
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px;">`;
+            
+            for (const [disc, data] of Object.entries(dateRecords)) {
+              const val = disc === 'STA' ? data.value + 's' : data.value + 'm';
+              const typeColor = data.type === '개인' ? 'var(--warning)' : 'var(--primary)';
+              allHtml += `<div style="background: var(--bg); padding: 6px 10px; border-radius: 8px; display: flex; align-items: center; gap: 4px;">
+                <span style="font-weight: 500; font-size: 12px;">${disc}</span>
+                <span style="color: ${typeColor}; font-weight: 600; font-size: 13px;">${val}</span>
+              </div>`;
+            }
+            
+            allHtml += `</div></div>`;
+          }
+        }
+        
+        document.getElementById('my-all-records').innerHTML = allHtml || 
+          '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">기록이 없습니다</div>';
+        
+      } catch (err) {
+        console.error('기록 로드 오류:', err);
+        document.getElementById('my-best-records').innerHTML = 
+          '<div style="text-align: center; color: var(--error); padding: 20px;">기록을 불러오지 못했습니다</div>';
+      }
+    }
+    
+    function formatDateShort(dateStr) {
+      if (!dateStr || dateStr === '날짜 없음') return dateStr;
+      const d = new Date(dateStr);
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const weekday = weekdays[d.getDay()];
+      return `${month}월 ${day}일 (${weekday})`;
+    }
+    
+    function formatDateCompact(dateStr) {
+      if (!dateStr || dateStr === '날짜 없음') return dateStr;
+      const d = new Date(dateStr);
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const weekday = weekdays[d.getDay()];
+      return `${month}/${day} (${weekday})`;
+    }
+
+    // ==================== 임시 함수들 ====================
+    function quickRecordInput() {
+      // 개인 기록 입력 화면으로 이동
+      document.getElementById('personal-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('personal-location').value = '';
+      currentPersonalDiscipline = 'STA';
+      personalAttempts = [{ value: '', note: '' }];
+      renderPersonalAttempts();
+      updatePersonalDisciplineUI();
+      showScreen('screen-personal-record');
+    }
+
+    // ==================== 강습 기록 입력 (표 형태) ====================
+    let batchParticipants = [];
+    let currentBatchDiscipline = 'STA';
+    let batchDisciplines = ['STA', 'DYNB', 'FIM', 'CWTB']; // 선택된 종목들
+    let batchSkillItems = []; // 스킬 항목들 (강습 레벨에 따라)
+    let batchAttemptCount = 2;
+    let batchRecords = {};
+    let batchSkills = {};
+    let currentBatchScheduleId = null;
+
+    // 진입점 1: 홈 → 최근 강습 기록 입력
+    async function quickRecordInput() {
+      if (currentUser.user_type !== '강사') {
+        openPersonalRecordAdd();
+        return;
+      }
+      
+      try {
+        const { data: schedules, error } = await db
+          .from('schedules')
+          .select('schedule_id, date, time, location')
+          .eq('instructor_id', currentUser.user_id)
+          .order('date', { ascending: false })
+          .limit(5);
+        
+        if (error) throw error;
+        
+        if (!schedules || schedules.length === 0) {
+          showToast('등록된 일정이 없습니다');
+          return;
+        }
+        
+        let html = '';
+        for (const s of schedules) {
+          html += `<div class="schedule-select-item" onclick="openLessonRecordInput('${s.schedule_id}'); closeBottomSheet('sheet-select-schedule');">
+            <div style="font-weight: 600;">${formatDate(s.date)} ${formatTime(s.time)}</div>
+            <div style="color: var(--text-secondary); font-size: 14px;">${s.location}</div>
+          </div>`;
+        }
+        document.getElementById('recent-schedule-list').innerHTML = html;
+        openBottomSheet('sheet-select-schedule');
+      } catch (err) {
+        console.error('일정 로드 오류:', err);
+        showToast('일정을 불러오지 못했습니다');
+      }
+    }
+
+    // 진입점 2: 일정 카드 → 기록 입력
+    async function openLessonRecordInput(scheduleId) {
+      currentBatchScheduleId = scheduleId;
+      
+      try {
+        const { data: schedule } = await db
+          .from('schedules')
+          .select('*')
+          .eq('schedule_id', scheduleId)
+          .single();
+        
+        if (schedule) {
+          document.getElementById('batch-schedule-date').textContent = formatDate(schedule.date) + ' ' + formatTime(schedule.time);
+          document.getElementById('batch-schedule-location').textContent = schedule.location;
+        }
+        
+        const { data: regs, error } = await db
+          .from('registrations')
+          .select(`
+            reg_id,
+            student_id,
+            purpose,
+            lesson_level,
+            users!registrations_student_id_fkey (name, cert_level)
+          `)
+          .eq('schedule_id', scheduleId);
+        
+        if (error) throw error;
+        
+        if (!regs || regs.length === 0) {
+          showToast('참가자가 없습니다');
+          return;
+        }
+        
+        batchParticipants = regs.map(r => ({
+          reg_id: r.reg_id,
+          student_id: r.student_id,
+          name: r.users?.name || '알 수 없음',
+          purpose: r.purpose,
+          lesson_level: r.lesson_level
+        }));
+        
+        // 강습 레벨에 따른 스킬 항목 설정
+        const lessonLevels = batchParticipants.filter(p => p.purpose === '강습').map(p => p.lesson_level);
+        batchSkillItems = [];
+        if (lessonLevels.includes(3)) {
+          batchSkillItems = ['중성부력', '프리폴'];
+        }
+        
+        // 초기화
+        batchRecords = {};
+        batchSkills = {};
+        batchAttemptCount = 2;
+        batchDisciplines = ['STA', 'DYNB', 'FIM', 'CWTB'];
+        currentBatchDiscipline = 'STA';
+        
+        for (const p of batchParticipants) {
+          batchRecords[p.reg_id] = {};
+          batchSkills[p.reg_id] = {};
+        }
+        
+        // 기존 기록 로드
+        await loadExistingBatchRecords();
+        
+        renderBatchDisciplineTabs();
+        renderBatchSelectedDisciplines();
+        renderBatchTable();
+        
+        showScreen('screen-batch-record');
+      } catch (err) {
+        console.error('기록 입력 오류:', err);
+        showToast('참가자 로드 실패');
+      }
+    }
+
+    // 스킬 종목 영어↔한국어 매핑
+    const SKILL_NAME_MAP = {
+      // 영어 → 한국어
+      'neutral_buoyancy': '중성부력',
+      'freefall': '프리폴',
+      'arms_only_15m': '암스온리 15m',
+      'buddy_10_15m': '버디 10-15m',
+      'lanyard_removal': '렌야드 제거',
+      'no_mask_10m': '노마스크 10m',
+      'rescue_towing': '레스큐+토잉',
+      'theory_test': '이론 평가',
+      'rescue_5_10m': '레스큐 5-10m',
+      // 한국어 → 영어 (저장용)
+      '중성부력': 'neutral_buoyancy',
+      '프리폴': 'freefall',
+      '암스온리 15m': 'arms_only_15m',
+      '버디 10-15m': 'buddy_10_15m',
+      '렌야드 제거': 'lanyard_removal',
+      '노마스크 10m': 'no_mask_10m',
+      '레스큐+토잉': 'rescue_towing',
+      '이론 평가': 'theory_test',
+      '레스큐 5-10m': 'rescue_5_10m'
+    };
+
+    // 스킬명을 한국어로 변환
+    function toKoreanSkillName(name) {
+      return SKILL_NAME_MAP[name] || name;
+    }
+
+    // 스킬명을 영어로 변환 (DB 저장용)
+    function toEnglishSkillName(name) {
+      return SKILL_NAME_MAP[name] || name;
+    }
+
+    // 기존 기록 로드
+    async function loadExistingBatchRecords() {
+      const regIds = batchParticipants.map(p => p.reg_id);
+      
+      try {
+        // 다이브 기록 로드
+        const { data: diveRecords } = await db
+          .from('dive_records')
+          .select('*')
+          .in('reg_id', regIds);
+        
+        if (diveRecords) {
+          for (const r of diveRecords) {
+            if (!batchRecords[r.reg_id]) batchRecords[r.reg_id] = {};
+            if (!batchRecords[r.reg_id][r.discipline]) {
+              batchRecords[r.reg_id][r.discipline] = { attempts: [], note: '', recordIds: [] };
+            }
+            
+            const attemptIdx = (r.attempt || 1) - 1;
+            const valStr = r.value?.toString() || '';
+            batchRecords[r.reg_id][r.discipline].attempts[attemptIdx] = valStr;
+            // record_id 저장 (이미 저장된 기록 표시)
+            batchRecords[r.reg_id][r.discipline].recordIds[attemptIdx] = r.record_id;
+            if (r.note) {
+              batchRecords[r.reg_id][r.discipline].note = r.note;
+            }
+            
+            // 시도 수 업데이트
+            if (r.attempt > batchAttemptCount) {
+              batchAttemptCount = r.attempt;
+            }
+            
+            // 종목 추가
+            if (!batchDisciplines.includes(r.discipline)) {
+              batchDisciplines.push(r.discipline);
+            }
+          }
+        }
+        
+        // 스킬 기록 로드
+        const { data: skillRecords } = await db
+          .from('skill_records')
+          .select('*')
+          .in('reg_id', regIds);
+        
+        if (skillRecords) {
+          for (const r of skillRecords) {
+            if (!batchSkills[r.reg_id]) batchSkills[r.reg_id] = {};
+            
+            // 한국어로 변환
+            const koreanName = toKoreanSkillName(r.discipline);
+            const result = r.result === 'Y' ? 'success' : 'fail';
+            
+            batchSkills[r.reg_id][koreanName] = result;
+            // record_id 저장 (이미 저장된 표시)
+            batchSkills[r.reg_id][koreanName + '_recordId'] = r.record_id;
+            
+            // 스킬 종목 추가 (한국어로)
+            if (!batchSkillItems.includes(koreanName)) {
+              batchSkillItems.push(koreanName);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('기존 기록 로드 오류:', err);
+      }
+    }
+
+    function renderBatchDisciplineTabs() {
+      let html = '';
+      for (const disc of batchDisciplines) {
+        const active = disc === currentBatchDiscipline ? 'active' : '';
+        html += `<button class="disc-tab ${active}" data-disc="${disc}" onclick="selectBatchDiscipline('${disc}')">${disc}</button>`;
+      }
+      // 스킬 탭 (있으면)
+      if (batchSkillItems.length > 0) {
+        const active = currentBatchDiscipline === 'SKILL' ? 'active' : '';
+        html += `<button class="disc-tab disc-tab-skill ${active}" data-disc="SKILL" onclick="selectBatchDiscipline('SKILL')">스킬</button>`;
+      }
+      document.getElementById('batch-discipline-tabs').innerHTML = html;
+    }
+
+    function renderBatchSelectedDisciplines() {
+      let html = '';
+      for (const disc of batchDisciplines) {
+        html += `<span style="padding: 4px 10px; background: var(--primary-light); color: var(--primary); border-radius: 12px; font-size: 13px; font-weight: 500;">${disc}</span>`;
+      }
+      if (batchSkillItems.length > 0) {
+        html += `<span style="padding: 4px 10px; background: var(--lv3-light); color: var(--lv3-color); border-radius: 12px; font-size: 13px; font-weight: 500;">${batchSkillItems.join(', ')}</span>`;
+      }
+      html += `<button style="padding: 4px 10px; background: var(--bg); border: 1px dashed var(--border); border-radius: 12px; font-size: 13px; cursor: pointer;" onclick="openBatchAddDisciplineSheet()">+ 수정</button>`;
+      document.getElementById('batch-selected-disciplines').innerHTML = html;
+    }
+
+    function openBatchAddDisciplineSheet() {
+      const allDiscs = ['STA', 'DYNB', 'FIM', 'CWTB', 'DNF', 'CNF', 'DYN', 'CWT'];
+      const allSkills = {
+        'Lv2': ['레스큐 5-10m', '이론 평가'],
+        'Lv3': ['렌야드 제거', '노마스크 10m', '레스큐+토잉', '중성부력', '프리폴', '암스온리 15m', '버디 10-15m', '이론 평가']
+      };
+      
+      // 참가자들의 레슨 레벨 확인
+      const lessonLevels = batchParticipants.filter(p => p.purpose === '강습').map(p => p.lesson_level);
+      const hasLv2 = lessonLevels.includes(2);
+      const hasLv3 = lessonLevels.includes(3);
+      
+      let html = '<div style="margin-bottom: 20px;">';
+      html += '<div style="font-weight: 600; margin-bottom: 12px;">기록 종목</div>';
+      html += '<div style="display: flex; flex-wrap: wrap; gap: 4px;">';
+      
+      for (const d of allDiscs) {
+        const checked = batchDisciplines.includes(d) ? 'checked' : '';
+        html += `<label style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px;">
+          <input type="checkbox" value="${d}" data-type="disc" ${checked}> ${d}
+        </label>`;
+      }
+      html += '</div></div>';
+      
+      // 스킬 종목
+      if (hasLv2 || hasLv3) {
+        html += '<div style="border-top: 1px solid var(--divider); padding-top: 16px;">';
+        html += '<div style="font-weight: 600; margin-bottom: 12px;">스킬 종목</div>';
+        
+        if (hasLv2) {
+          html += '<div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Lv2</div>';
+          html += '<div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px;">';
+          for (const s of allSkills['Lv2']) {
+            const checked = batchSkillItems.includes(s) ? 'checked' : '';
+            html += `<label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px;">
+              <input type="checkbox" value="${s}" data-type="skill" ${checked}> ${s}
+            </label>`;
+          }
+          html += '</div>';
+        }
+        
+        if (hasLv3) {
+          html += '<div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Lv3</div>';
+          html += '<div style="display: flex; flex-wrap: wrap; gap: 4px;">';
+          for (const s of allSkills['Lv3']) {
+            const checked = batchSkillItems.includes(s) ? 'checked' : '';
+            html += `<label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px;">
+              <input type="checkbox" value="${s}" data-type="skill" ${checked}> ${s}
+            </label>`;
+          }
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+      
+      document.getElementById('batch-add-discipline-options').innerHTML = html;
+      openBottomSheet('sheet-batch-add-discipline');
+    }
+
+    function confirmBatchAddDiscipline() {
+      const selectedDiscs = [];
+      const selectedSkills = [];
+      
+      document.querySelectorAll('#batch-add-discipline-options input:checked').forEach(cb => {
+        if (cb.dataset.type === 'disc') {
+          selectedDiscs.push(cb.value);
+        } else if (cb.dataset.type === 'skill') {
+          selectedSkills.push(cb.value);
+        }
+      });
+      
+      if (selectedDiscs.length === 0) {
+        showToast('최소 1개 기록 종목을 선택하세요');
+        return;
+      }
+      
+      batchDisciplines = selectedDiscs;
+      batchSkillItems = selectedSkills;
+      
+      if (!batchDisciplines.includes(currentBatchDiscipline) && currentBatchDiscipline !== 'SKILL') {
+        currentBatchDiscipline = batchDisciplines[0];
+      }
+      if (currentBatchDiscipline === 'SKILL' && batchSkillItems.length === 0) {
+        currentBatchDiscipline = batchDisciplines[0];
+      }
+      
+      closeBottomSheet('sheet-batch-add-discipline');
+      renderBatchDisciplineTabs();
+      renderBatchSelectedDisciplines();
+      renderBatchTable();
+    }
+
+    function closeBatchRecord() {
+      if (currentBatchScheduleId) {
+        currentScheduleId = currentBatchScheduleId;
+        showScreen('screen-schedule-manage');
+      } else {
+        goBack();
+      }
+    }
+
+    function selectBatchDiscipline(disc) {
+      saveBatchCurrentInput();
+      currentBatchDiscipline = disc;
+      renderBatchDisciplineTabs();
+      renderBatchTable();
+    }
+
+    function updateBatchDisciplineUI() {
+      renderBatchDisciplineTabs();
+      
+      const isSkill = currentBatchDiscipline === 'SKILL';
+      document.getElementById('batch-record-table-card').style.display = isSkill ? 'none' : 'block';
+      document.getElementById('batch-skill-table-card').style.display = isSkill ? 'block' : 'none';
+      
+      if (isSkill) {
+        renderBatchSkillTable();
+      }
+    }
+
+    function renderBatchTable() {
+      if (currentBatchDiscipline === 'SKILL') {
+        document.getElementById('batch-record-table-card').style.display = 'none';
+        document.getElementById('batch-skill-table-card').style.display = 'block';
+        renderBatchSkillTable();
+        return;
+      }
+      
+      document.getElementById('batch-record-table-card').style.display = 'block';
+      document.getElementById('batch-skill-table-card').style.display = 'none';
+      
+      // 헤더 렌더링
+      let headerHtml = '<tr><th class="col-name">학생명</th>';
+      for (let i = 1; i <= batchAttemptCount; i++) {
+        headerHtml += `<th class="col-attempt">${i}차</th>`;
+      }
+      headerHtml += `<th class="col-add-attempt"><button class="btn-add-col" onclick="addBatchAttemptColumn()">+</button></th>`;
+      headerHtml += '<th class="col-note">메모</th></tr>';
+      document.querySelector('#batch-record-table thead').innerHTML = headerHtml;
+      
+      // 바디 렌더링
+      let bodyHtml = '';
+      for (const p of batchParticipants) {
+        const records = batchRecords[p.reg_id]?.[currentBatchDiscipline] || { attempts: [], note: '' };
+        
+        bodyHtml += `<tr data-reg-id="${p.reg_id}">
+          <td class="col-name">${p.name}</td>`;
+        
+        for (let i = 0; i < batchAttemptCount; i++) {
+          const val = records.attempts[i] || '';
+          bodyHtml += `<td><input type="number" value="${val}" data-attempt="${i}" placeholder="-"></td>`;
+        }
+        
+        bodyHtml += `<td></td>`;
+        bodyHtml += `<td><input type="text" class="note-input" value="${records.note || ''}" data-note="true" placeholder=""></td>
+        </tr>`;
+      }
+      
+      document.getElementById('batch-record-tbody').innerHTML = bodyHtml;
+    }
+
+    function renderBatchSkillTable() {
+      if (batchSkillItems.length === 0) return;
+      
+      // 헤더
+      let headerHtml = '<tr><th class="col-name">학생명</th>';
+      for (const skill of batchSkillItems) {
+        headerHtml += `<th class="col-skill">${skill}</th>`;
+      }
+      headerHtml += '</tr>';
+      document.querySelector('#batch-skill-table thead').innerHTML = headerHtml;
+      
+      // 바디
+      let bodyHtml = '';
+      for (const p of batchParticipants) {
+        if (p.purpose !== '강습') continue; // 강습생만
+        
+        bodyHtml += `<tr data-reg-id="${p.reg_id}">
+          <td class="col-name">${p.name}</td>`;
+        
+        for (const skill of batchSkillItems) {
+          const status = batchSkills[p.reg_id]?.[skill] || '';
+          const successClass = status === 'success' ? 'success' : '';
+          const failClass = status === 'fail' ? 'fail' : '';
+          
+          bodyHtml += `<td>
+            <button class="skill-check-btn ${successClass} ${failClass}" 
+                    onclick="toggleSkill('${p.reg_id}', '${skill}', this)">
+              ${status === 'success' ? '✓' : status === 'fail' ? '✗' : ''}
+            </button>
+          </td>`;
+        }
+        
+        bodyHtml += '</tr>';
+      }
+      
+      document.getElementById('batch-skill-tbody').innerHTML = bodyHtml;
+    }
+
+    function toggleSkill(regId, skillName, btn) {
+      if (!batchSkills[regId]) batchSkills[regId] = {};
+      
+      const current = batchSkills[regId][skillName] || '';
+      let next = '';
+      
+      if (current === '') next = 'success';
+      else if (current === 'success') next = 'fail';
+      else next = '';
+      
+      batchSkills[regId][skillName] = next;
+      
+      btn.className = 'skill-check-btn ' + (next === 'success' ? 'success' : next === 'fail' ? 'fail' : '');
+      btn.textContent = next === 'success' ? '✓' : next === 'fail' ? '✗' : '';
+    }
+
+    function addBatchAttemptColumn() {
+      saveBatchCurrentInput();
+      batchAttemptCount++;
+      renderBatchTable();
+    }
+
+    function saveBatchCurrentInput() {
+      if (currentBatchDiscipline === 'SKILL') return;
+      
+      const rows = document.querySelectorAll('#batch-record-tbody tr');
+      rows.forEach(row => {
+        const regId = row.dataset.regId;
+        if (!regId) return;
+        
+        if (!batchRecords[regId]) batchRecords[regId] = {};
+        if (!batchRecords[regId][currentBatchDiscipline]) {
+          batchRecords[regId][currentBatchDiscipline] = { attempts: [], note: '' };
+        }
+        
+        const inputs = row.querySelectorAll('input');
+        const attempts = [];
+        let note = '';
+        
+        inputs.forEach(input => {
+          if (input.dataset.note) {
+            note = input.value;
+          } else if (input.dataset.attempt !== undefined) {
+            attempts[parseInt(input.dataset.attempt)] = input.value;
+          }
+        });
+        
+        batchRecords[regId][currentBatchDiscipline] = { attempts, note };
+      });
+    }
+
+    async function saveBatchRecords(finish = false) {
+      saveBatchCurrentInput();
+      
+      try {
+        const regIds = batchParticipants.map(p => p.reg_id);
+        
+        // 1. 기존 기록 전체 삭제
+        await db.from('dive_records').delete().in('reg_id', regIds);
+        await db.from('skill_records').delete().in('reg_id', regIds);
+        
+        // 2. 현재 입력된 값들 전체 새로 저장
+        let totalSaved = 0;
+        
+        // 다이브 기록 저장
+        for (const regId of Object.keys(batchRecords)) {
+          for (const discipline of Object.keys(batchRecords[regId])) {
+            const data = batchRecords[regId][discipline];
+            
+            for (let i = 0; i < data.attempts.length; i++) {
+              const val = data.attempts[i];
+              if (!val || val === '') continue;
+              
+              const recordId = 'DR_' + regId + '_' + discipline + '_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 5);
+              
+              const { error } = await db
+                .from('dive_records')
+                .insert({
+                  record_id: recordId,
+                  reg_id: regId,
+                  discipline: discipline,
+                  attempt: i + 1,
+                  value: parseFloat(val),
+                  note: i === 0 ? data.note : null
+                });
+              
+              if (!error) totalSaved++;
+            }
+          }
+        }
+        
+        // 스킬 기록 저장
+        for (const regId of Object.keys(batchSkills)) {
+          for (const skillName of Object.keys(batchSkills[regId])) {
+            if (skillName.endsWith('_recordId')) continue;
+            
+            const result = batchSkills[regId][skillName];
+            if (!result) continue;
+            
+            const englishName = toEnglishSkillName(skillName);
+            const recordId = 'SR_' + regId + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            
+            const { error } = await db
+              .from('skill_records')
+              .insert({
+                record_id: recordId,
+                reg_id: regId,
+                discipline: englishName,
+                attempt: 1,
+                result: result === 'success' ? 'Y' : 'N',
+                note: null
+              });
+            
+            if (!error) totalSaved++;
+          }
+        }
+        
+        showToast(`${totalSaved}개 기록이 저장되었습니다`);
+        
+        if (finish) {
+          closeBatchRecord();
+        } else {
+          // 3. DB에서 다시 로드해서 UI 갱신
+          batchRecords = {};
+          batchSkills = {};
+          for (const p of batchParticipants) {
+            batchRecords[p.reg_id] = {};
+            batchSkills[p.reg_id] = {};
+          }
+          await loadExistingBatchRecords();
+          renderBatchTable();
+        }
+      } catch (err) {
+        console.error('저장 오류:', err);
+        showToast('저장 실패: ' + err.message);
+      }
+    }
+
+    // ==================== 개인 기록 입력 ====================
+    let personalDate = '';
+    let personalTime = '';
+    let personalLocation = '';
+    let personalDisciplines = ['STA', 'DYNB', 'FIM', 'CWTB'];
+    let personalAttemptCount = 2;
+    let personalRecords = {}; // { discipline: [val1, val2, ...] }
+    let personalMemo = '';
+
+    // 개별 추가 진입점
+    function openPersonalRecordAdd() {
+      document.getElementById('personal-add-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('personal-add-time').value = '';
+      document.getElementById('personal-add-location').value = '';
+      
+      // 체크박스 초기화
+      document.querySelectorAll('#personal-discipline-checks input').forEach(cb => {
+        cb.checked = ['STA', 'DYNB', 'FIM', 'CWTB'].includes(cb.value);
+      });
+      
+      openBottomSheet('sheet-personal-add');
+    }
+
+    function startPersonalRecordInput() {
+      personalDate = document.getElementById('personal-add-date').value;
+      personalTime = document.getElementById('personal-add-time').value;
+      personalLocation = document.getElementById('personal-add-location').value;
+      
+      if (!personalDate) {
+        showToast('날짜를 선택해주세요');
+        return;
+      }
+      
+      // 선택된 종목
+      personalDisciplines = [];
+      document.querySelectorAll('#personal-discipline-checks input:checked').forEach(cb => {
+        personalDisciplines.push(cb.value);
+      });
+      
+      if (personalDisciplines.length === 0) {
+        showToast('종목을 선택해주세요');
+        return;
+      }
+      
+      // 초기화
+      personalAttemptCount = 2;
+      personalRecords = {};
+      for (const d of personalDisciplines) {
+        personalRecords[d] = [];
+      }
+      personalMemo = '';
+      
+      closeBottomSheet('sheet-personal-add');
+      renderPersonalRecordScreen();
+      showScreen('screen-personal-record');
+    }
+
+    function renderPersonalRecordScreen() {
+      // 날짜/장소 표시
+      document.getElementById('personal-date-display').textContent = formatDate(personalDate) + (personalTime ? ' ' + formatTime(personalTime) : '');
+      document.getElementById('personal-location-display').textContent = personalLocation || '장소 미입력';
+      
+      // 테이블 헤더
+      let headerHtml = '<tr><th class="col-name">종목</th>';
+      for (let i = 1; i <= personalAttemptCount; i++) {
+        headerHtml += `<th class="col-attempt">${i}차</th>`;
+      }
+      headerHtml += '</tr>';
+      document.querySelector('#personal-record-table thead').innerHTML = headerHtml;
+      
+      // 테이블 바디
+      let bodyHtml = '';
+      for (const disc of personalDisciplines) {
+        const records = personalRecords[disc] || [];
+        
+        bodyHtml += `<tr data-disc="${disc}">
+          <td class="col-name">${disc}</td>`;
+        
+        for (let i = 0; i < personalAttemptCount; i++) {
+          const val = records[i] || '';
+          bodyHtml += `<td><input type="number" value="${val}" data-attempt="${i}" placeholder="-"></td>`;
+        }
+        
+        bodyHtml += '</tr>';
+      }
+      
+      document.getElementById('personal-record-tbody').innerHTML = bodyHtml;
+      document.getElementById('personal-memo').value = personalMemo;
+    }
+
+    function addPersonalAttemptColumn() {
+      savePersonalCurrentInput();
+      personalAttemptCount++;
+      renderPersonalRecordScreen();
+    }
+
+    function openAddDisciplineSheet() {
+      const allDiscs = ['STA', 'DYNB', 'FIM', 'CWTB', 'DNF', 'CNF', 'DYN', 'CWT'];
+      let html = '';
+      
+      for (const d of allDiscs) {
+        const checked = personalDisciplines.includes(d) ? 'checked disabled' : '';
+        html += `<label style="display: flex; align-items: center; gap: 8px; padding: 8px;">
+          <input type="checkbox" value="${d}" ${checked}> ${d}
+        </label>`;
+      }
+      
+      document.getElementById('add-discipline-options').innerHTML = html;
+      openBottomSheet('sheet-add-discipline');
+    }
+
+    function confirmAddDiscipline() {
+      document.querySelectorAll('#add-discipline-options input:checked:not(:disabled)').forEach(cb => {
+        if (!personalDisciplines.includes(cb.value)) {
+          personalDisciplines.push(cb.value);
+          personalRecords[cb.value] = [];
+        }
+      });
+      
+      closeBottomSheet('sheet-add-discipline');
+      renderPersonalRecordScreen();
+    }
+
+    function openPersonalDateEdit() {
+      const newDate = prompt('날짜 (YYYY-MM-DD):', personalDate);
+      if (newDate) {
+        personalDate = newDate;
+        renderPersonalRecordScreen();
+      }
+    }
+
+    function savePersonalCurrentInput() {
+      const rows = document.querySelectorAll('#personal-record-tbody tr');
+      rows.forEach(row => {
+        const disc = row.dataset.disc;
+        if (!disc) return;
+        
+        const inputs = row.querySelectorAll('input');
+        const attempts = [];
+        
+        inputs.forEach(input => {
+          if (input.dataset.attempt !== undefined) {
+            attempts[parseInt(input.dataset.attempt)] = input.value;
+          }
+        });
+        
+        personalRecords[disc] = attempts;
+      });
+      
+      personalMemo = document.getElementById('personal-memo')?.value || '';
+    }
+
+    async function savePersonalRecord(finish = false) {
+      savePersonalCurrentInput();
+      
+      try {
+        const personalScheduleId = 'PS_' + currentUser.user_id + '_' + Date.now();
+        
+        const { error: scheduleError } = await db
+          .from('personal_schedules')
+          .insert({
+            personal_schedule_id: personalScheduleId,
+            date: personalDate,
+            time: personalTime || null,
+            location: personalLocation || null,
+            common_disciplines: personalDisciplines.join(',')
+          });
+        
+        if (scheduleError) throw scheduleError;
+        
+        let totalSaved = 0;
+        
+        for (const disc of Object.keys(personalRecords)) {
+          const attempts = personalRecords[disc];
+          
+          for (let i = 0; i < attempts.length; i++) {
+            const val = attempts[i];
+            if (!val || val === '') continue;
+            
+            const recordId = 'PDR_' + currentUser.user_id + '_' + Date.now() + '_' + disc + '_' + i;
+            
+            const { error } = await db
+              .from('personal_dive_records')
+              .insert({
+                record_id: recordId,
+                personal_schedule_id: personalScheduleId,
+                user_id: currentUser.user_id,
+                discipline: disc,
+                attempt: i + 1,
+                value: parseFloat(val)
+              });
+            
+            if (!error) totalSaved++;
+          }
+        }
+        
+        showToast(`${totalSaved}개 기록이 저장되었습니다`);
+        
+        if (finish) {
+          showScreen('screen-my-records');
+        } else {
+          personalRecords = {};
+          for (const d of personalDisciplines) {
+            personalRecords[d] = [];
+          }
+          renderPersonalRecordScreen();
+        }
+      } catch (err) {
+        console.error('개인 기록 저장 오류:', err);
+        showToast('저장 실패: ' + err.message);
+      }
+    }
+
+    // ==================== 개인 기록 일괄 추가 ====================
+    let bulkDates = [];
+    let currentBulkDateIndex = 0;
+    let bulkRecords = {};
+    let bulkDisciplines = ['CWTB', 'FIM'];
+    let bulkAttemptCount = 2;
+
+    function openPersonalBulkAdd() {
+      bulkDates = [{ date: '', location: '' }];
+      bulkRecords = {};
+      bulkDisciplines = ['CWTB', 'FIM'];
+      bulkAttemptCount = 2;
+      renderBulkDateList();
+      renderBulkTabbar();
+      showScreen('screen-personal-bulk');
+    }
+
+    function renderBulkTabbar() {
+      const isInstructor = currentUser.user_type === '강사';
+      const html = `
+        <button class="tab-item" onclick="showScreen('${isInstructor ? 'screen-instructor-home' : 'screen-student-home'}')"><i class="fas fa-home"></i><span>홈</span></button>
+        <button class="tab-item" onclick="showScreen('${isInstructor ? 'screen-schedule-manage' : 'screen-student-schedule'}')"><i class="fas fa-calendar"></i><span>일정</span></button>
+        <button class="tab-item active"><i class="fas fa-chart-line"></i><span>내기록</span></button>
+        <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
+      `;
+      const tabbar1 = document.getElementById('bulk-tabbar');
+      const tabbar2 = document.getElementById('bulk-input-tabbar');
+      if (tabbar1) tabbar1.innerHTML = html;
+      if (tabbar2) tabbar2.innerHTML = html;
+    }
+
+    function renderBulkDateList() {
+      let html = '';
+      bulkDates.forEach((d, idx) => {
+        html += `<div class="card" style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; padding: 12px;">
+          <input type="text" class="input" style="flex: 0.4;" placeholder="YYMMDD" value="${d.date}" 
+                 onchange="bulkDates[${idx}].date = this.value">
+          <input type="text" class="input" style="flex: 0.6;" placeholder="장소" value="${d.location}"
+                 onchange="bulkDates[${idx}].location = this.value">
+          ${bulkDates.length > 1 ? `<button class="attempt-delete" onclick="removeBulkDateRow(${idx})"><i class="fas fa-times"></i></button>` : ''}
+        </div>`;
+      });
+      document.getElementById('bulk-date-list').innerHTML = html;
+    }
+
+    function addBulkDateRow() {
+      bulkDates.push({ date: '', location: '' });
+      renderBulkDateList();
+    }
+
+    function removeBulkDateRow(idx) {
+      bulkDates.splice(idx, 1);
+      renderBulkDateList();
+    }
+
+    function proceedToBulkRecordInput() {
+      bulkDates = bulkDates.filter(d => d.date && d.date.length === 6);
+      
+      if (bulkDates.length === 0) {
+        showToast('날짜를 입력해주세요 (YYMMDD 형식)');
+        return;
+      }
+      
+      currentBulkDateIndex = 0;
+      bulkRecords = {};
+      bulkAttemptCount = 2;
+      
+      for (let i = 0; i < bulkDates.length; i++) {
+        bulkRecords[i] = {};
+        for (const d of bulkDisciplines) {
+          bulkRecords[i][d] = [];
+        }
+      }
+      
+      renderBulkDateTabs();
+      renderBulkRecordTable();
+      renderBulkTabbar();
+      showScreen('screen-personal-bulk-input');
+    }
+
+    function renderBulkDateTabs() {
+      let html = '';
+      bulkDates.forEach((d, idx) => {
+        const label = d.date.substring(0, 2) + '-' + d.date.substring(2, 4) + '-' + d.date.substring(4, 6) + ' ' + (d.location || '');
+        const active = idx === currentBulkDateIndex ? 'active' : '';
+        html += `<button class="participant-tab ${active}" onclick="selectBulkDate(${idx})">${label}</button>`;
+      });
+      document.getElementById('bulk-date-tabs').innerHTML = html;
+    }
+
+    function selectBulkDate(idx) {
+      saveBulkCurrentInput();
+      currentBulkDateIndex = idx;
+      renderBulkDateTabs();
+      renderBulkRecordTable();
+    }
+
+    function renderBulkRecordTable() {
+      // 헤더
+      let headerHtml = '<tr><th class="col-name">종목</th>';
+      for (let i = 1; i <= bulkAttemptCount; i++) {
+        headerHtml += `<th class="col-attempt">${i}차</th>`;
+      }
+      headerHtml += `<th class="col-add-attempt"><button class="btn-add-col" onclick="addBulkAttemptColumn()">+</button></th></tr>`;
+      document.querySelector('#bulk-record-table thead').innerHTML = headerHtml;
+      
+      // 바디
+      let bodyHtml = '';
+      for (const disc of bulkDisciplines) {
+        const records = bulkRecords[currentBulkDateIndex]?.[disc] || [];
+        
+        bodyHtml += `<tr data-disc="${disc}">
+          <td class="col-name">${disc}</td>`;
+        
+        for (let i = 0; i < bulkAttemptCount; i++) {
+          bodyHtml += `<td><input type="number" value="${records[i] || ''}" data-attempt="${i}" placeholder="-"></td>`;
+        }
+        
+        bodyHtml += `<td></td></tr>`;
+      }
+      
+      document.getElementById('bulk-record-tbody').innerHTML = bodyHtml;
+    }
+
+    function addBulkAttemptColumn() {
+      saveBulkCurrentInput();
+      bulkAttemptCount++;
+      renderBulkRecordTable();
+    }
+
+    function openBulkAddDisciplineSheet() {
+      const allDiscs = ['STA', 'DYNB', 'FIM', 'CWTB', 'DNF', 'CNF', 'DYN', 'CWT'];
+      let html = '';
+      
+      for (const d of allDiscs) {
+        const checked = bulkDisciplines.includes(d) ? 'checked' : '';
+        html += `<label style="display: flex; align-items: center; gap: 8px; padding: 8px;">
+          <input type="checkbox" value="${d}" ${checked}> ${d}
+        </label>`;
+      }
+      
+      document.getElementById('bulk-add-discipline-options').innerHTML = html;
+      openBottomSheet('sheet-bulk-add-discipline');
+    }
+
+    function confirmBulkAddDiscipline() {
+      const selected = [];
+      document.querySelectorAll('#bulk-add-discipline-options input:checked').forEach(cb => {
+        selected.push(cb.value);
+      });
+      
+      if (selected.length === 0) {
+        showToast('최소 1개 종목을 선택하세요');
+        return;
+      }
+      
+      // 새로 추가된 종목 초기화
+      for (const disc of selected) {
+        if (!bulkDisciplines.includes(disc)) {
+          for (let i = 0; i < bulkDates.length; i++) {
+            if (!bulkRecords[i]) bulkRecords[i] = {};
+            bulkRecords[i][disc] = [];
+          }
+        }
+      }
+      
+      bulkDisciplines = selected;
+      closeBottomSheet('sheet-bulk-add-discipline');
+      renderBulkRecordTable();
+    }
+
+    function saveBulkCurrentInput() {
+      const rows = document.querySelectorAll('#bulk-record-tbody tr');
+      rows.forEach(row => {
+        const disc = row.dataset.disc;
+        if (!disc) return;
+        
+        const inputs = row.querySelectorAll('input');
+        const attempts = [];
+        
+        inputs.forEach(input => {
+          if (input.dataset.attempt !== undefined) {
+            attempts[parseInt(input.dataset.attempt)] = input.value;
+          }
+        });
+        
+        if (!bulkRecords[currentBulkDateIndex]) bulkRecords[currentBulkDateIndex] = {};
+        bulkRecords[currentBulkDateIndex][disc] = attempts;
+      });
+    }
+
+    async function saveBulkRecords(finish = false) {
+      saveBulkCurrentInput();
+      
+      try {
+        let totalSaved = 0;
+        
+        for (let dateIdx = 0; dateIdx < bulkDates.length; dateIdx++) {
+          const dateInfo = bulkDates[dateIdx];
+          const fullDate = '20' + dateInfo.date.substring(0, 2) + '-' + dateInfo.date.substring(2, 4) + '-' + dateInfo.date.substring(4, 6);
+          
+          const personalScheduleId = 'PS_' + currentUser.user_id + '_' + Date.now() + '_' + dateIdx;
+          
+          await db.from('personal_schedules').insert({
+            personal_schedule_id: personalScheduleId,
+            date: fullDate,
+            time: null,
+            location: dateInfo.location || null,
+            common_disciplines: bulkDisciplines.join(',')
+          });
+          
+          const dateRecords = bulkRecords[dateIdx] || {};
+          
+          for (const disc of Object.keys(dateRecords)) {
+            const attempts = dateRecords[disc];
+            
+            for (let i = 0; i < attempts.length; i++) {
+              const val = attempts[i];
+              if (!val || val === '') continue;
+              
+              const recordId = 'PDR_' + currentUser.user_id + '_' + Date.now() + '_' + dateIdx + '_' + disc + '_' + i;
+              
+              const { error } = await db.from('personal_dive_records').insert({
+                record_id: recordId,
+                personal_schedule_id: personalScheduleId,
+                user_id: currentUser.user_id,
+                discipline: disc,
+                attempt: i + 1,
+                value: parseFloat(val)
+              });
+              
+              if (!error) totalSaved++;
+            }
+          }
+        }
+        
+        showToast(`${totalSaved}개 기록이 저장되었습니다`);
+        
+        if (finish) {
+          showScreen('screen-my-records');
+        }
+      } catch (err) {
+        console.error('일괄 저장 오류:', err);
+        showToast('저장 실패: ' + err.message);
+      }
+    }
+
+    // ==================== 성장 그래프 ====================
+    let growthChart = null;
+    let currentChartDiscipline = 'STA';
+    let allRecordsForChart = [];
+
+    function selectChartDiscipline(disc) {
+      currentChartDiscipline = disc;
+      document.querySelectorAll('#chart-discipline-tabs .disc-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.disc === disc);
+      });
+      renderGrowthChart();
+    }
+
+    function renderGrowthChart() {
+      const ctx = document.getElementById('growth-chart');
+      if (!ctx) return;
+      
+      const discRecords = allRecordsForChart.filter(r => r.discipline === currentChartDiscipline);
+      
+      if (discRecords.length === 0) {
+        if (growthChart) {
+          growthChart.destroy();
+          growthChart = null;
+        }
+        return;
+      }
+      
+      const dateMap = {};
+      for (const r of discRecords) {
+        const val = parseFloat(r.value) || 0;
+        if (!dateMap[r.date] || val > dateMap[r.date]) {
+          dateMap[r.date] = val;
+        }
+      }
+      
+      const sortedDates = Object.keys(dateMap).sort();
+      const labels = sortedDates.map(d => {
+        const date = new Date(d);
+        return (date.getMonth() + 1) + '/' + date.getDate();
+      });
+      const data = sortedDates.map(d => dateMap[d]);
+      
+      if (growthChart) {
+        growthChart.destroy();
+      }
+      
+      growthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: currentChartDiscipline,
+            data: data,
+            borderColor: '#3182F6',
+            backgroundColor: 'rgba(49, 130, 246, 0.1)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#3182F6'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#E5E8EB' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function toggleChecklist(type) {
+      const checklist = document.getElementById(type + '-checklist');
+      const icon = document.getElementById(type + '-toggle-icon');
+      
+      if (checklist && icon) {
+        if (checklist.classList.contains('open')) {
+          checklist.classList.remove('open');
+          icon.classList.remove('open');
+        } else {
+          checklist.classList.add('open');
+          icon.classList.add('open');
+        }
+      }
+    }
+  </script>
+</body>
+</html>
