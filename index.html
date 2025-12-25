@@ -155,6 +155,49 @@
       color: white;
     }
     
+    /* 기록 일괄 입력 종목 탭 (태그 형태) */
+    .batch-tabs-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .batch-tabs-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .batch-tabs-label { font-size: 11px; color: var(--text-tertiary); min-width: 24px; }
+    .batch-disc-tag {
+      padding: 4px 12px;
+      background: var(--primary-light);
+      border: none;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary);
+      cursor: pointer;
+    }
+    .batch-disc-tag.active {
+      background: var(--primary);
+      color: white;
+    }
+    .batch-skill-tag {
+      padding: 4px 10px;
+      border: none;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .batch-skill-tag.lv2 {
+      background: var(--lv2-light);
+      color: var(--lv2-color);
+    }
+    .batch-skill-tag.lv2.active {
+      background: var(--lv2-color);
+      color: white;
+    }
+    .batch-skill-tag.lv3 {
+      background: var(--lv3-light);
+      color: var(--lv3-color);
+    }
+    .batch-skill-tag.lv3.active {
+      background: var(--lv3-color);
+      color: white;
+    }
+    
     /* 시도 입력 행 */
     .attempt-row {
       display: flex;
@@ -1774,7 +1817,7 @@
         <span class="header-title">기록 일괄 입력</span>
       </div>
       <div class="container">
-        <!-- 일정 정보 -->
+        <!-- 일정 정보 (간소화) -->
         <div class="card" style="margin-bottom: 16px;">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
             <i class="fas fa-calendar" style="color: var(--primary);"></i>
@@ -1784,15 +1827,20 @@
             <i class="fas fa-map-marker-alt"></i>
             <span id="batch-schedule-location"></span>
           </div>
-          <!-- 종목 선택 표시 -->
-          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px;" id="batch-selected-disciplines"></div>
         </div>
         
-        <!-- 종목 탭 (동적) -->
-        <div class="discipline-tabs" id="batch-discipline-tabs"></div>
-        
-        <!-- 기록 테이블 -->
+        <!-- 기록 입력 카드 -->
         <div class="card" id="batch-record-table-card">
+          <!-- 기록 헤더 + 종목 수정 -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div class="section-title" style="margin: 0;"><i class="fas fa-clipboard-list"></i> 기록</div>
+            <button style="padding: 4px 10px; background: var(--bg); border: 1px dashed var(--border); border-radius: 10px; font-size: 12px; cursor: pointer;" onclick="openBatchAddDisciplineSheet()">종목 수정</button>
+          </div>
+          
+          <!-- 종목 탭 (compact) -->
+          <div id="batch-discipline-tabs" style="margin-bottom: 12px;"></div>
+          
+          <!-- 기록 테이블 -->
           <div class="record-table-container">
             <table class="record-table" id="batch-record-table">
               <thead>
@@ -1809,7 +1857,7 @@
           </div>
         </div>
         
-        <!-- 스킬 체크 테이블 -->
+        <!-- 스킬 체크 테이블 (숨김 - 사용 안 함) -->
         <div class="card" id="batch-skill-table-card" style="display: none;">
           <div class="record-table-container">
             <table class="record-table" id="batch-skill-table">
@@ -3872,24 +3920,28 @@
         
         const s = reg.schedules;
         
-        // 같은 일정의 다른 참가자 조회
+        // 같은 일정의 다른 참가자 조회 (lesson_level 포함)
         const { data: otherParticipants } = await db
           .from('registrations')
-          .select('student_id, purpose, users!registrations_student_id_fkey(name)')
+          .select('student_id, purpose, lesson_level, users!registrations_student_id_fkey(name)')
           .eq('schedule_id', reg.schedule_id)
           .neq('student_id', currentUser.user_id);
         
         // 참가자 목록 생성 (목적별로 분류)
-        const lessonParticipants = {}; // { level: [names] }
+        const lv3Participants = [];
+        const lv2Participants = [];
         const funDiveParticipants = [];
         
         // 본인 추가
         if (reg.purpose === '펀다이빙') {
           funDiveParticipants.push(currentUser.name);
+        } else if (reg.lesson_level === 3) {
+          lv3Participants.push(currentUser.name);
+        } else if (reg.lesson_level === 2) {
+          lv2Participants.push(currentUser.name);
         } else {
-          const level = reg.lesson_level || '?';
-          if (!lessonParticipants[level]) lessonParticipants[level] = [];
-          lessonParticipants[level].push(currentUser.name);
+          // 레벨 미지정 강습은 Lv2로 간주
+          lv2Participants.push(currentUser.name);
         }
         
         // 다른 참가자 추가
@@ -3898,24 +3950,31 @@
             const name = p.users?.name || '학생';
             if (p.purpose === '펀다이빙') {
               funDiveParticipants.push(name);
+            } else if (p.lesson_level === 3) {
+              lv3Participants.push(name);
+            } else if (p.lesson_level === 2) {
+              lv2Participants.push(name);
             } else {
-              // 강습인 경우 레벨 정보가 없으므로 기본값 사용
-              const level = '?';
-              if (!lessonParticipants[level]) lessonParticipants[level] = [];
-              lessonParticipants[level].push(name);
+              lv2Participants.push(name);
             }
           }
         }
         
-        // 참가자 HTML 생성
+        // 참가자 HTML 생성 (Lv3 → Lv2 → 펀다이빙 순서)
         let participantsHtml = '';
-        for (const level of Object.keys(lessonParticipants).sort()) {
-          const names = lessonParticipants[level].join(', ');
-          const levelText = level === '?' ? '강습' : `Lv${level} 강습`;
+        if (lv3Participants.length > 0) {
           participantsHtml += `
             <div style="display: flex; align-items: flex-start; gap: 8px; color: var(--text-secondary); margin-top: 4px;">
               <i class="fas fa-graduation-cap" style="margin-top: 3px;"></i>
-              <span>${levelText}: ${names}</span>
+              <span>Lv3 강습: ${lv3Participants.join(', ')}</span>
+            </div>
+          `;
+        }
+        if (lv2Participants.length > 0) {
+          participantsHtml += `
+            <div style="display: flex; align-items: flex-start; gap: 8px; color: var(--text-secondary); margin-top: 4px;">
+              <i class="fas fa-graduation-cap" style="margin-top: 3px;"></i>
+              <span>Lv2 강습: ${lv2Participants.join(', ')}</span>
             </div>
           `;
         }
@@ -3933,6 +3992,13 @@
         const disciplines = s.common_disciplines ? s.common_disciplines.split(',') : [];
         const skillItems = s.common_skill_disciplines ? s.common_skill_disciplines.split(',') : [];
         
+        // Lv2, Lv3 스킬 분류
+        const lv2Skills = ['rescue_5_10m', 'theory_test_lv2'];
+        const lv3Skills = ['lanyard_remove', 'no_mask_10m', 'rescue_towing', 'neutral_buoyancy', 'freefall', 'arms_only_15m', 'buddy_10_15m', 'theory_test'];
+        
+        const lv2SkillItems = skillItems.filter(sk => lv2Skills.includes(sk));
+        const lv3SkillItems = skillItems.filter(sk => lv3Skills.includes(sk));
+        
         if (disciplines.length > 0) {
           disciplinesHtml += `
             <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
@@ -3941,11 +4007,19 @@
             </div>
           `;
         }
-        if (skillItems.length > 0) {
+        if (lv3SkillItems.length > 0) {
           disciplinesHtml += `
             <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
-              <span style="color: var(--text-tertiary); font-size: 13px;">스킬종목</span>
-              ${skillItems.map(sk => `<span style="padding: 2px 8px; background: var(--lv3-light); color: var(--lv3-color); border-radius: 10px; font-size: 12px;">${toKoreanSkillName(sk)}</span>`).join('')}
+              <span style="color: var(--text-tertiary); font-size: 13px;">Lv3 스킬</span>
+              ${lv3SkillItems.map(sk => `<span style="padding: 2px 8px; background: var(--lv3-light); color: var(--lv3-color); border-radius: 10px; font-size: 12px;">${toKoreanSkillName(sk)}</span>`).join('')}
+            </div>
+          `;
+        }
+        if (lv2SkillItems.length > 0) {
+          disciplinesHtml += `
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+              <span style="color: var(--text-tertiary); font-size: 13px;">Lv2 스킬</span>
+              ${lv2SkillItems.map(sk => `<span style="padding: 2px 8px; background: var(--lv2-light); color: var(--lv2-color); border-radius: 10px; font-size: 12px;">${toKoreanSkillName(sk)}</span>`).join('')}
             </div>
           `;
         }
@@ -4346,6 +4420,12 @@
     let batchRecords = {};
     let batchSkills = {};
     let currentBatchScheduleId = null;
+    
+    // 원본 데이터 (변경 감지용)
+    let batchOriginalRecords = {};
+    let batchOriginalSkills = {};
+    let batchOriginalScheduleNote = '';
+    let batchOriginalStudentNotes = {};
 
     // 진입점 1: 홈 → 최근 강습 기록 입력
     async function quickRecordInput() {
@@ -4411,10 +4491,12 @@
           
           // 일정 총평 노트 로드
           document.getElementById('batch-schedule-note').value = schedule.note || '';
+          batchOriginalScheduleNote = schedule.note || '';
         } else {
           batchDisciplines = [];
           batchSkillItems = [];
           document.getElementById('batch-schedule-note').value = '';
+          batchOriginalScheduleNote = '';
         }
         
         const { data: regs, error } = await db
@@ -4445,9 +4527,17 @@
           note_instructor: r.note_instructor || ''
         }));
         
+        // 학생별 피드백 원본 저장
+        batchOriginalStudentNotes = {};
+        for (const p of batchParticipants) {
+          batchOriginalStudentNotes[p.reg_id] = p.note_instructor || '';
+        }
+        
         // 초기화
         batchRecords = {};
         batchSkills = {};
+        batchOriginalRecords = {};
+        batchOriginalSkills = {};
         batchAttemptCount = 2;
         currentBatchDiscipline = batchDisciplines.length > 0 ? batchDisciplines[0] : 'STA';
         
@@ -4490,22 +4580,23 @@
 
     // 스킬 종목 영어↔한국어 매핑
     const SKILL_NAME_MAP = {
-      // 영어 → 한국어
+      // 영어 → 한국어 (DB에서 읽어올 때)
       'neutral_buoyancy': '중성부력',
       'freefall': '프리폴',
       'arms_only_15m': '암스온리 15m',
       'buddy_10_15m': '버디 10-15m',
-      'lanyard_removal': '렌야드 제거',
+      'lanyard_remove': '렌야드 제거',
       'no_mask_10m': '노마스크 10m',
       'rescue_towing': '레스큐+토잉',
       'theory_test': '이론 평가',
       'rescue_5_10m': '레스큐 5-10m',
-      // 한국어 → 영어 (저장용)
+      'theory_test_lv2': '이론 평가',
+      // 한국어 → 영어 (DB에 저장할 때)
       '중성부력': 'neutral_buoyancy',
       '프리폴': 'freefall',
       '암스온리 15m': 'arms_only_15m',
       '버디 10-15m': 'buddy_10_15m',
-      '렌야드 제거': 'lanyard_removal',
+      '렌야드 제거': 'lanyard_remove',
       '노마스크 10m': 'no_mask_10m',
       '레스큐+토잉': 'rescue_towing',
       '이론 평가': 'theory_test',
@@ -4594,36 +4685,54 @@
             }
           }
         }
+        
+        // 원본 데이터 깊은 복사 (변경 감지용)
+        batchOriginalRecords = JSON.parse(JSON.stringify(batchRecords));
+        batchOriginalSkills = JSON.parse(JSON.stringify(batchSkills));
+        
       } catch (err) {
         console.error('기존 기록 로드 오류:', err);
       }
     }
 
     function renderBatchDisciplineTabs() {
-      let html = '';
-      // 기록 종목 탭
+      // Lv2, Lv3 스킬 분류
+      const lv2SkillNames = ['레스큐 5-10m', '이론 평가'];
+      const lv3SkillNames = ['렌야드 제거', '노마스크 10m', '레스큐+토잉', '중성부력', '프리폴', '암스온리 15m', '버디 10-15m'];
+      
+      const lv2Skills = batchSkillItems.filter(sk => lv2SkillNames.includes(sk));
+      let lv3Skills = batchSkillItems.filter(sk => lv3SkillNames.includes(sk));
+      // 이론 평가 처리 (Lv2에 없으면 Lv3에 추가)
+      if (batchSkillItems.includes('이론 평가') && !lv2Skills.includes('이론 평가')) {
+        lv3Skills.push('이론 평가');
+      }
+      
+      let html = '<div style="display: flex; flex-wrap: wrap; gap: 6px;">';
+      
+      // 기록 종목
       for (const disc of batchDisciplines) {
         const active = disc === currentBatchDiscipline ? 'active' : '';
-        html += `<button class="disc-tab ${active}" data-disc="${disc}" onclick="selectBatchDiscipline('${disc}')">${disc}</button>`;
+        html += `<button class="batch-disc-tag ${active}" onclick="selectBatchDiscipline('${disc}')">${disc}</button>`;
       }
-      // 스킬 종목 탭 (각 스킬별로)
-      for (const skill of batchSkillItems) {
+      
+      // Lv3 스킬 먼저
+      for (const skill of lv3Skills) {
         const active = currentBatchDiscipline === skill ? 'active' : '';
-        html += `<button class="disc-tab disc-tab-skill ${active}" data-disc="${skill}" onclick="selectBatchDiscipline('${skill}')">${skill}</button>`;
+        html += `<button class="batch-skill-tag lv3 ${active}" onclick="selectBatchDiscipline('${skill}')">${skill}</button>`;
       }
+      
+      // Lv2 스킬
+      for (const skill of lv2Skills) {
+        const active = currentBatchDiscipline === skill ? 'active' : '';
+        html += `<button class="batch-skill-tag lv2 ${active}" onclick="selectBatchDiscipline('${skill}')">${skill}</button>`;
+      }
+      
+      html += '</div>';
       document.getElementById('batch-discipline-tabs').innerHTML = html;
     }
 
     function renderBatchSelectedDisciplines() {
-      let html = '';
-      for (const disc of batchDisciplines) {
-        html += `<span style="padding: 4px 10px; background: var(--primary-light); color: var(--primary); border-radius: 12px; font-size: 13px; font-weight: 500;">${disc}</span>`;
-      }
-      if (batchSkillItems.length > 0) {
-        html += `<span style="padding: 4px 10px; background: var(--lv3-light); color: var(--lv3-color); border-radius: 12px; font-size: 13px; font-weight: 500;">${batchSkillItems.join(', ')}</span>`;
-      }
-      html += `<button style="padding: 4px 10px; background: var(--bg); border: 1px dashed var(--border); border-radius: 12px; font-size: 13px; cursor: pointer;" onclick="openBatchAddDisciplineSheet()">+ 수정</button>`;
-      document.getElementById('batch-selected-disciplines').innerHTML = html;
+      // 상단 카드에서 종목 표시 제거됨 - 이제 사용하지 않음
     }
 
     function openBatchAddDisciplineSheet() {
@@ -4871,102 +4980,132 @@
       saveBatchCurrentInput();
       
       try {
-        const regIds = batchParticipants.map(p => p.reg_id);
-        
-        // 1. 기존 기록 전체 삭제
-        await db.from('dive_records').delete().in('reg_id', regIds);
-        await db.from('skill_records').delete().in('reg_id', regIds);
-        
-        // 2. 현재 입력된 값들 전체 새로 저장
         let totalSaved = 0;
+        let totalUpdated = 0;
+        let totalDeleted = 0;
         
-        // 다이브 기록 저장
+        // ===== 다이브 기록 처리 =====
         for (const regId of Object.keys(batchRecords)) {
           for (const discipline of Object.keys(batchRecords[regId])) {
             const data = batchRecords[regId][discipline];
+            const originalData = batchOriginalRecords[regId]?.[discipline] || { attempts: [], recordIds: [] };
             
-            for (let i = 0; i < data.attempts.length; i++) {
-              const val = data.attempts[i];
-              if (!val || val === '') continue;
+            for (let i = 0; i < Math.max(data.attempts.length, originalData.attempts.length); i++) {
+              const newVal = data.attempts[i] || '';
+              const oldVal = originalData.attempts[i] || '';
+              const existingRecordId = originalData.recordIds?.[i];
               
-              const recordId = 'DR_' + regId + '_' + discipline + '_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 5);
-              
-              const { error } = await db
-                .from('dive_records')
-                .insert({
+              // 값이 없어진 경우 (삭제)
+              if (oldVal && !newVal && existingRecordId) {
+                await db.from('dive_records').delete().eq('record_id', existingRecordId);
+                totalDeleted++;
+              }
+              // 새로운 값 (추가)
+              else if (newVal && !existingRecordId) {
+                const recordId = 'DR_' + regId + '_' + discipline + '_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 5);
+                await db.from('dive_records').insert({
                   record_id: recordId,
                   reg_id: regId,
                   discipline: discipline,
                   attempt: i + 1,
-                  value: parseFloat(val),
+                  value: parseFloat(newVal),
                   note: i === 0 ? data.note : null
                 });
-              
-              if (!error) totalSaved++;
+                totalSaved++;
+              }
+              // 값이 변경된 경우 (업데이트)
+              else if (newVal && existingRecordId && newVal !== oldVal) {
+                await db.from('dive_records').update({
+                  value: parseFloat(newVal),
+                  note: i === 0 ? data.note : null
+                }).eq('record_id', existingRecordId);
+                totalUpdated++;
+              }
+              // 노트만 변경된 경우
+              else if (i === 0 && newVal && existingRecordId && data.note !== originalData.note) {
+                await db.from('dive_records').update({ note: data.note || null }).eq('record_id', existingRecordId);
+                totalUpdated++;
+              }
             }
           }
         }
         
-        // 스킬 기록 저장 (시도별로)
+        // ===== 스킬 기록 처리 =====
         for (const regId of Object.keys(batchSkills)) {
           for (const skillName of Object.keys(batchSkills[regId])) {
             const data = batchSkills[regId][skillName];
             if (!data || !data.attempts) continue;
             
+            const originalData = batchOriginalSkills[regId]?.[skillName] || { attempts: [], recordIds: [] };
             const englishName = toEnglishSkillName(skillName);
             
-            for (let i = 0; i < data.attempts.length; i++) {
-              const result = data.attempts[i];
-              if (!result || result === '') continue;
+            for (let i = 0; i < Math.max(data.attempts.length, originalData.attempts.length); i++) {
+              const newVal = data.attempts[i] || '';
+              const oldVal = originalData.attempts[i] || '';
+              const existingRecordId = originalData.recordIds?.[i];
               
-              const recordId = 'SR_' + regId + '_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 5);
-              
-              const { error } = await db
-                .from('skill_records')
-                .insert({
+              // 값이 없어진 경우 (삭제)
+              if (oldVal && !newVal && existingRecordId) {
+                await db.from('skill_records').delete().eq('record_id', existingRecordId);
+                totalDeleted++;
+              }
+              // 새로운 값 (추가)
+              else if (newVal && !existingRecordId) {
+                const recordId = 'SR_' + regId + '_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 5);
+                await db.from('skill_records').insert({
                   record_id: recordId,
                   reg_id: regId,
                   discipline: englishName,
                   attempt: i + 1,
-                  result: result === 'Y' ? 'Y' : 'N',
+                  result: newVal === 'Y' ? 'Y' : 'N',
                   note: null
                 });
-              
-              if (!error) totalSaved++;
+                totalSaved++;
+              }
+              // 값이 변경된 경우 (업데이트)
+              else if (newVal && existingRecordId && newVal !== oldVal) {
+                await db.from('skill_records').update({
+                  result: newVal === 'Y' ? 'Y' : 'N'
+                }).eq('record_id', existingRecordId);
+                totalUpdated++;
+              }
             }
           }
         }
         
-        // 3. 노트 저장
-        // 일정 총평 저장 (schedules.note)
+        // ===== 노트 처리 (변경된 경우만) =====
         const scheduleNote = document.getElementById('batch-schedule-note').value.trim();
-        await db
-          .from('schedules')
-          .update({ note: scheduleNote || null })
-          .eq('schedule_id', currentBatchScheduleId);
+        if (scheduleNote !== batchOriginalScheduleNote) {
+          await db.from('schedules').update({ note: scheduleNote || null }).eq('schedule_id', currentBatchScheduleId);
+        }
         
-        // 학생별 피드백 저장 (registrations.note_instructor)
         for (const p of batchParticipants) {
           const noteInput = document.getElementById(`batch-note-${p.reg_id}`);
           const noteValue = noteInput ? noteInput.value.trim() : '';
-          await db
-            .from('registrations')
-            .update({ note_instructor: noteValue || null })
-            .eq('reg_id', p.reg_id);
+          const originalNote = batchOriginalStudentNotes[p.reg_id] || '';
+          
+          if (noteValue !== originalNote) {
+            await db.from('registrations').update({ note_instructor: noteValue || null }).eq('reg_id', p.reg_id);
+          }
         }
         
-        // 4. Users Best 기록 업데이트 (모든 학생)
-        await updateUsersBestRecords();
+        // Users Best 기록 업데이트 (변경이 있을 때만)
+        if (totalSaved > 0 || totalUpdated > 0 || totalDeleted > 0) {
+          await updateUsersBestRecords();
+          await updateLvProgress();
+        }
         
-        // 5. LV Progress 업데이트 (레벨 과정 중인 학생만)
-        await updateLvProgress();
-        
-        showToast(`${totalSaved}개 기록이 저장되었습니다`);
+        const totalChanges = totalSaved + totalUpdated + totalDeleted;
+        if (totalChanges > 0) {
+          showToast(`저장 완료 (추가: ${totalSaved}, 수정: ${totalUpdated}, 삭제: ${totalDeleted})`);
+        } else {
+          showToast('변경사항이 없습니다');
+        }
         
         if (finish) {
           closeBatchRecord();
         } else {
-          // 4. DB에서 다시 로드해서 UI 갱신
+          // DB에서 다시 로드해서 UI 갱신
           batchRecords = {};
           batchSkills = {};
           for (const p of batchParticipants) {
@@ -5127,25 +5266,6 @@
       } catch (err) {
         console.error('LV Progress 업데이트 오류:', err);
       }
-    }
-    
-    // 영어 스킬명을 한글로 변환
-    function toKoreanSkillName(englishKey) {
-      const map = {
-        // LV2
-        'rescue_5_10m': '레스큐 5-10m',
-        'theory_test_lv2': '이론 평가',
-        // LV3
-        'lanyard_remove': '랜야드 제거',
-        'no_mask_10m': '노마스크 10m',
-        'rescue_towing': '레스큐 10-15m + 토잉 50m',
-        'neutral_buoyancy': '중성부력',
-        'freefall': '프리폴',
-        'arms_only_15m': '암스 온리 15m',
-        'buddy_10_15m': '적절한 버디 10-15m',
-        'theory_test': '이론 평가'
-      };
-      return map[englishKey] || englishKey;
     }
 
     // ==================== 개인 기록 입력 ====================
@@ -6255,4 +6375,5 @@
   </script>
 </body>
 </html>
+
 
