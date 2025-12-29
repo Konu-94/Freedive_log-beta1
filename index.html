@@ -1197,6 +1197,148 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    
+    /* 트레이닝 탭 스타일 */
+    .training-tab {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .training-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .training-tab i {
+      font-size: 16px;
+    }
+    
+    /* 이미지 트레이닝 카테고리 카드 */
+    .image-category-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .image-category-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .image-category-card:active {
+      transform: scale(0.98);
+    }
+    .category-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+    .category-info {
+      flex: 1;
+    }
+    .category-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .category-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .category-arrow {
+      color: var(--text-tertiary);
+      font-size: 18px;
+    }
+    
+    /* 이미지 트레이닝 스텝 카드 */
+    .training-step-card {
+      background: var(--surface);
+      border-radius: 16px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .step-image-container {
+      width: 100%;
+      aspect-ratio: 16/10;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .step-image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .step-image-placeholder {
+      color: var(--text-tertiary);
+      font-size: 48px;
+    }
+    .step-content {
+      padding: 16px;
+    }
+    .step-number {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 28px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-right: 10px;
+    }
+    .step-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+    }
+    .step-title-text {
+      flex: 1;
+    }
+    .step-description {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .step-tips {
+      background: var(--primary-light);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 13px;
+      color: var(--primary);
+    }
+    .step-tips i {
+      margin-right: 6px;
+    }
   </style>
 </head>
 <body>
@@ -1238,7 +1380,7 @@
         <div class="section-title" style="margin-top: 24px;"><i class="fas fa-bolt"></i> 빠른 실행</div>
         <div class="quick-actions">
           <button class="quick-btn" onclick="openScheduleForm()"><i class="fas fa-calendar-plus"></i><span>일정 등록</span></button>
-          <button class="quick-btn" onclick="showScreen('screen-dry-manage')"><i class="fas fa-lungs"></i><span>드라이<br>트레이닝</span></button>
+          <button class="quick-btn" onclick="showScreen('screen-dry-manage')"><i class="fas fa-dumbbell"></i><span>트레이닝<br>관리</span></button>
           <button class="quick-btn" onclick="quickRecordInput()"><i class="fas fa-pen"></i><span>최근 강습<br>기록 입력</span></button>
         </div>
         <div class="card" style="margin-top: 24px;">
@@ -1249,7 +1391,7 @@
       <div class="tab-bar">
         <button class="tab-item active" onclick="showScreen('screen-instructor-home')"><i class="fas fa-home"></i><span>홈</span></button>
         <button class="tab-item" onclick="showScreen('screen-schedule-manage')"><i class="fas fa-calendar"></i><span>일정</span></button>
-        <button class="tab-item" onclick="showScreen('screen-dry-manage')"><i class="fas fa-lungs"></i><span>드라이</span></button>
+        <button class="tab-item" onclick="showScreen('screen-dry-manage')"><i class="fas fa-dumbbell"></i><span>트레이닝</span></button>
         <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
         <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
       </div>
@@ -1313,7 +1455,7 @@
       <div class="tab-bar">
         <button class="tab-item active" onclick="showScreen('screen-student-home')"><i class="fas fa-home"></i><span>홈</span></button>
         <button class="tab-item" onclick="showScreen('screen-student-schedule')"><i class="fas fa-calendar"></i><span>일정</span></button>
-        <button class="tab-item" onclick="showScreen('screen-dry-training')"><i class="fas fa-lungs"></i><span>드라이</span></button>
+        <button class="tab-item" onclick="showScreen('screen-dry-training')"><i class="fas fa-dumbbell"></i><span>트레이닝</span></button>
         <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
         <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
       </div>
@@ -1384,7 +1526,7 @@
       <div class="tab-bar">
         <button class="tab-item" onclick="showScreen('screen-instructor-home')"><i class="fas fa-home"></i><span>홈</span></button>
         <button class="tab-item active"><i class="fas fa-calendar"></i><span>일정</span></button>
-        <button class="tab-item" onclick="showScreen('screen-dry-manage')"><i class="fas fa-lungs"></i><span>드라이</span></button>
+        <button class="tab-item" onclick="showScreen('screen-dry-manage')"><i class="fas fa-dumbbell"></i><span>트레이닝</span></button>
         <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
         <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
       </div>
@@ -1419,21 +1561,42 @@
       </div>
     </div>
 
-    <!-- 드라이 트레이닝 관리 (강사) -->
+    <!-- 트레이닝 관리 (강사) -->
     <div class="screen" id="screen-dry-manage">
       <div class="header">
         <button class="header-back" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-        <span class="header-title">드라이 트레이닝 관리</span>
-        <button class="header-action" onclick="openDryForm()">추가</button>
+        <span class="header-title">트레이닝</span>
+        <button class="header-action" id="instructor-training-add-btn" onclick="openDryForm()">추가</button>
       </div>
       <div class="container">
-        <div class="section-title"><i class="fas fa-list"></i> 트레이닝 목록</div>
-        <div id="dry-training-list"></div>
+        <!-- 드라이/이미지 탭 -->
+        <div class="training-tabs" style="display: flex; gap: 8px; margin-bottom: 20px;">
+          <button class="training-tab active" data-tab="dry" onclick="switchInstructorTrainingTab('dry')">
+            <i class="fas fa-fire"></i> 드라이
+          </button>
+          <button class="training-tab" data-tab="image" onclick="switchInstructorTrainingTab('image')">
+            <i class="fas fa-images"></i> 이미지
+          </button>
+        </div>
+        
+        <!-- 드라이 트레이닝 콘텐츠 -->
+        <div id="instructor-dry-content">
+          <div class="section-title"><i class="fas fa-list"></i> 트레이닝 목록</div>
+          <div id="dry-training-list"></div>
+        </div>
+        
+        <!-- 이미지 트레이닝 콘텐츠 -->
+        <div id="instructor-image-content" style="display: none;">
+          <div class="section-title"><i class="fas fa-images"></i> 동작 가이드</div>
+          <div id="instructor-image-categories">
+            <div class="loading"><div class="loading-spinner"></div></div>
+          </div>
+        </div>
       </div>
       <div class="tab-bar">
         <button class="tab-item" onclick="showScreen('screen-instructor-home')"><i class="fas fa-home"></i><span>홈</span></button>
         <button class="tab-item" onclick="showScreen('screen-schedule-manage')"><i class="fas fa-calendar"></i><span>일정</span></button>
-        <button class="tab-item active"><i class="fas fa-lungs"></i><span>드라이</span></button>
+        <button class="tab-item active"><i class="fas fa-dumbbell"></i><span>트레이닝</span></button>
         <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
         <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
       </div>
@@ -1500,7 +1663,7 @@
       <div class="tab-bar">
         <button class="tab-item" onclick="showScreen('screen-student-home')"><i class="fas fa-home"></i><span>홈</span></button>
         <button class="tab-item active"><i class="fas fa-calendar"></i><span>일정</span></button>
-        <button class="tab-item" onclick="showScreen('screen-dry-training')"><i class="fas fa-lungs"></i><span>드라이</span></button>
+        <button class="tab-item" onclick="showScreen('screen-dry-training')"><i class="fas fa-dumbbell"></i><span>트레이닝</span></button>
         <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
         <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
       </div>
@@ -1538,65 +1701,112 @@
       <div class="tab-bar">
         <button class="tab-item" onclick="showScreen('screen-student-home')"><i class="fas fa-home"></i><span>홈</span></button>
         <button class="tab-item active"><i class="fas fa-calendar"></i><span>일정</span></button>
-        <button class="tab-item" onclick="showScreen('screen-dry-training')"><i class="fas fa-lungs"></i><span>드라이</span></button>
+        <button class="tab-item" onclick="showScreen('screen-dry-training')"><i class="fas fa-dumbbell"></i><span>트레이닝</span></button>
         <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
         <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
       </div>
     </div>
 
-    <!-- 드라이 트레이닝 (학생) -->
+    <!-- 트레이닝 (학생) -->
     <div class="screen" id="screen-dry-training">
       <div class="header">
         <button class="header-back" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-        <span class="header-title">드라이 트레이닝</span>
+        <span class="header-title">트레이닝</span>
       </div>
       <div class="container">
-        <!-- 참여 중인 트레이닝 -->
-        <div class="section-title"><i class="fas fa-fire"></i> 참여 중</div>
-        <div id="my-dry-trainings"></div>
+        <!-- 드라이/이미지 탭 -->
+        <div class="training-tabs" style="display: flex; gap: 8px; margin-bottom: 20px;">
+          <button class="training-tab active" data-tab="dry" onclick="switchTrainingTab('dry')">
+            <i class="fas fa-fire"></i> 드라이
+          </button>
+          <button class="training-tab" data-tab="image" onclick="switchTrainingTab('image')">
+            <i class="fas fa-images"></i> 이미지
+          </button>
+        </div>
         
-        <!-- 이번 달 기록 캘린더 (참여 중일 때만 표시) -->
-        <div id="dry-training-calendar-section" style="display: none;">
-          <div class="section-title" style="margin-top: 20px;"><i class="fas fa-calendar-check"></i> 이번 달 기록</div>
-          <div class="card">
-            <div class="calendar-header">
-              <button class="calendar-nav" onclick="changeDryListMonth(-1)"><i class="fas fa-chevron-left"></i></button>
-              <span class="calendar-title" id="dry-list-calendar-title">2025년 12월</span>
-              <button class="calendar-nav" onclick="changeDryListMonth(1)"><i class="fas fa-chevron-right"></i></button>
-            </div>
-            <div class="calendar-grid">
-              <div class="calendar-weekdays">
-                <span class="weekday sun">일</span>
-                <span class="weekday">월</span>
-                <span class="weekday">화</span>
-                <span class="weekday">수</span>
-                <span class="weekday">목</span>
-                <span class="weekday">금</span>
-                <span class="weekday sat">토</span>
+        <!-- 드라이 트레이닝 콘텐츠 -->
+        <div id="dry-training-content">
+          <!-- 참여 중인 트레이닝 -->
+          <div class="section-title"><i class="fas fa-fire"></i> 참여 중</div>
+          <div id="my-dry-trainings"></div>
+          
+          <!-- 이번 달 기록 캘린더 (참여 중일 때만 표시) -->
+          <div id="dry-training-calendar-section" style="display: none;">
+            <div class="section-title" style="margin-top: 20px;"><i class="fas fa-calendar-check"></i> 이번 달 기록</div>
+            <div class="card">
+              <div class="calendar-header">
+                <button class="calendar-nav" onclick="changeDryListMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                <span class="calendar-title" id="dry-list-calendar-title">2025년 12월</span>
+                <button class="calendar-nav" onclick="changeDryListMonth(1)"><i class="fas fa-chevron-right"></i></button>
               </div>
-              <div class="calendar-days" id="dry-list-calendar-days"></div>
+              <div class="calendar-grid">
+                <div class="calendar-weekdays">
+                  <span class="weekday sun">일</span>
+                  <span class="weekday">월</span>
+                  <span class="weekday">화</span>
+                  <span class="weekday">수</span>
+                  <span class="weekday">목</span>
+                  <span class="weekday">금</span>
+                  <span class="weekday sat">토</span>
+                </div>
+                <div class="calendar-days" id="dry-list-calendar-days"></div>
+              </div>
             </div>
+          </div>
+          
+          <!-- 전체 트레이닝 목록 (참여 안한 것만) -->
+          <div id="other-dry-trainings-section" style="display: none;">
+            <div class="section-title" style="margin-top: 24px;"><i class="fas fa-list"></i> 참여중이지 않은 트레이닝</div>
+            <div id="all-dry-trainings"></div>
+          </div>
+          
+          <!-- 전체 트레이닝 목록 (참여 안했을 때) -->
+          <div id="all-dry-trainings-section" style="display: none;">
+            <div class="section-title" style="margin-top: 24px;"><i class="fas fa-list"></i> 전체 트레이닝</div>
+            <div id="all-dry-trainings-no-participation"></div>
           </div>
         </div>
         
-        <!-- 전체 트레이닝 목록 (참여 안한 것만) -->
-        <div id="other-dry-trainings-section" style="display: none;">
-          <div class="section-title" style="margin-top: 24px;"><i class="fas fa-list"></i> 참여중이지 않은 트레이닝</div>
-          <div id="all-dry-trainings"></div>
-        </div>
-        
-        <!-- 전체 트레이닝 목록 (참여 안했을 때) -->
-        <div id="all-dry-trainings-section" style="display: none;">
-          <div class="section-title" style="margin-top: 24px;"><i class="fas fa-list"></i> 전체 트레이닝</div>
-          <div id="all-dry-trainings-no-participation"></div>
+        <!-- 이미지 트레이닝 콘텐츠 -->
+        <div id="image-training-content" style="display: none;">
+          <div class="section-title"><i class="fas fa-images"></i> 동작 가이드</div>
+          <div id="image-training-categories">
+            <div class="loading"><div class="loading-spinner"></div></div>
+          </div>
         </div>
       </div>
       <div class="tab-bar">
         <button class="tab-item" onclick="showScreen('screen-student-home')"><i class="fas fa-home"></i><span>홈</span></button>
         <button class="tab-item" onclick="showScreen('screen-student-schedule')"><i class="fas fa-calendar"></i><span>일정</span></button>
-        <button class="tab-item active"><i class="fas fa-lungs"></i><span>드라이</span></button>
+        <button class="tab-item active"><i class="fas fa-dumbbell"></i><span>트레이닝</span></button>
         <button class="tab-item" onclick="showScreen('screen-my-records')"><i class="fas fa-chart-line"></i><span>내기록</span></button>
         <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
+      </div>
+    </div>
+    
+    <!-- 이미지 트레이닝 상세 (학생용) -->
+    <div class="screen" id="screen-image-training-detail">
+      <div class="header">
+        <button class="header-back" onclick="showScreen('screen-dry-training'); switchTrainingTab('image');"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title" id="image-training-detail-title">동작 가이드</span>
+      </div>
+      <div class="container">
+        <div id="image-training-steps">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 이미지 트레이닝 상세 (강사용) -->
+    <div class="screen" id="screen-instructor-image-detail">
+      <div class="header">
+        <button class="header-back" onclick="showScreen('screen-dry-manage'); switchInstructorTrainingTab('image');"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title" id="instructor-image-detail-title">동작 가이드</span>
+      </div>
+      <div class="container">
+        <div id="instructor-image-steps">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
       </div>
     </div>
 
@@ -1719,10 +1929,25 @@
         <div class="bottom-sheet-handle"></div>
         <div class="bottom-sheet-content">
           <div class="bottom-sheet-title">참가자 추가</div>
-          <div class="input-group">
-            <label class="input-label">강습생 선택</label>
+          
+          <!-- 회원/비회원 탭 -->
+          <div class="participant-type-tabs" style="display: flex; gap: 8px; margin-bottom: 16px;">
+            <button class="participant-type-tab active" data-type="member" onclick="selectParticipantType('member')" style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--primary); color: white; font-weight: 600; cursor: pointer;">회원</button>
+            <button class="participant-type-tab" data-type="guest" onclick="selectParticipantType('guest')" style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-primary); font-weight: 600; cursor: pointer;">비회원</button>
+          </div>
+          
+          <!-- 회원 선택 -->
+          <div class="input-group" id="member-select-group">
+            <label class="input-label">회원 선택</label>
             <select class="input" id="participant-student"></select>
           </div>
+          
+          <!-- 비회원 선택 -->
+          <div class="input-group" id="guest-select-group" style="display: none;">
+            <label class="input-label">비회원 선택</label>
+            <select class="input" id="participant-guest"></select>
+          </div>
+          
           <div class="input-group">
             <label class="input-label">참가 목적</label>
             <div class="purpose-buttons">
@@ -1733,7 +1958,8 @@
           <div class="input-group" id="lesson-level-group">
             <label class="input-label">강습 레벨</label>
             <select class="input" id="participant-level">
-              <option value="2">Level 2</option>
+              <option value="1">Level 1</option>
+              <option value="2" selected>Level 2</option>
               <option value="3">Level 3</option>
               <option value="4">Level 4</option>
             </select>
@@ -2064,42 +2290,23 @@
             <div style="color: var(--text-tertiary); font-size: 14px; margin-top: 2px;" id="mypage-info"></div>
           </div>
         </div>
+
+    <!-- 자격증 섹션 추가 -->
+    <div class="card" style="margin-top: 16px;">
+      <div class="section-title" style="margin-bottom: 12px;">
+        <i class="fas fa-id-card"></i> 자격증
+      </div>
+      <div id="cert-image-container">
+        <!-- 자격증 이미지 또는 업로드 버튼 -->
+      </div>
+    </div>
+
         <button class="btn btn-danger" style="margin-top: 20px;" onclick="logout()">로그아웃</button>
       </div>
     </div>
 
     <!-- 토스트 -->
     <div class="toast" id="toast"></div>
-
-    <!-- Bottom Sheet: 참가자 추가 -->
-    <div class="bottom-sheet-overlay" id="sheet-add-participant">
-      <div class="bottom-sheet">
-        <div class="bottom-sheet-handle"></div>
-        <div class="bottom-sheet-content">
-          <div class="bottom-sheet-title">참가자 추가</div>
-          <div class="input-group">
-            <label class="input-label">강습생 선택</label>
-            <select class="input" id="participant-student"></select>
-          </div>
-          <div class="input-group">
-            <label class="input-label">참가 목적</label>
-            <div class="purpose-buttons">
-              <button class="purpose-btn selected" data-purpose="강습" onclick="selectPurpose(this)">강습</button>
-              <button class="purpose-btn" data-purpose="펀다이빙" onclick="selectPurpose(this)">펀다이빙</button>
-            </div>
-          </div>
-          <div class="input-group" id="lesson-level-group">
-            <label class="input-label">강습 레벨</label>
-            <select class="input" id="participant-level">
-              <option value="2">Level 2</option>
-              <option value="3">Level 3</option>
-              <option value="4">Level 4</option>
-            </select>
-          </div>
-          <button class="btn btn-primary" onclick="addParticipant()">추가하기</button>
-        </div>
-      </div>
-    </div>
 
     <!-- Bottom Sheet: 강습생 일정 신청 -->
     <div class="bottom-sheet-overlay" id="sheet-register">
@@ -2925,7 +3132,10 @@
       document.getElementById('mypage-name').textContent = currentUser.name;
       document.getElementById('mypage-phone').textContent = currentUser.phone;
       document.getElementById('mypage-info').textContent = 'Level ' + (currentUser.cert_level === 'X' ? '1' : currentUser.cert_level) + ' · ' + currentUser.user_type;
-    }
+
+  // 자격증 이미지 렌더링 추가
+  renderCertImage();   
+ }
 
     // ==================== 일정 관리 (강사) ====================
     async function loadScheduleManage() {
@@ -3582,19 +3792,27 @@
 
     async function loadParticipants() {
       try {
-        // 참가자 목록 조회 (users 테이블과 조인)
+        // 참가자 목록 조회 (users 테이블과 guests 테이블 모두 조인)
         const { data: regs, error } = await db
           .from('registrations')
           .select(`
             reg_id,
             student_id,
+            guest_id,
             purpose,
             lesson_level,
             attendance,
+            session_no,
             users!registrations_student_id_fkey (
               user_id,
               name,
               cert_level
+            ),
+            guests!registrations_guest_id_fkey (
+              guest_id,
+              name,
+              cert_level,
+              in_training_level
             )
           `)
           .eq('schedule_id', currentScheduleId);
@@ -3605,14 +3823,19 @@
         const funs = [];
         
         for (const r of (regs || [])) {
+          // 회원인지 비회원인지 확인
+          const isGuest = !r.student_id && r.guest_id;
           const participant = {
             reg_id: r.reg_id,
             student_id: r.student_id,
+            guest_id: r.guest_id,
+            is_guest: isGuest,
             purpose: r.purpose,
             lesson_level: r.lesson_level,
             attendance: r.attendance,
-            student_name: r.users?.name || '알 수 없음',
-            student_cert: r.users?.cert_level || 'X'
+            session_no: r.session_no,
+            student_name: isGuest ? (r.guests?.name || '알 수 없음') : (r.users?.name || '알 수 없음'),
+            student_cert: isGuest ? (r.guests?.cert_level || 'X') : (r.users?.cert_level || 'X')
           };
           
           if (r.purpose === '강습') lessons.push(participant);
@@ -3637,12 +3860,14 @@
     function renderParticipantCard(p) {
       const attClass = p.attendance === 'Y' ? 'attendance-yes' : p.attendance === 'N' ? 'attendance-no' : 'attendance-pending';
       const attText = p.attendance === 'Y' ? '출석' : p.attendance === 'N' ? '불참' : '미정';
+      const guestBadge = p.is_guest ? '<span style="font-size: 11px; color: var(--warning); margin-left: 4px;">(비회원)</span>' : '';
+      const sessionInfo = p.session_no ? ` · ${p.session_no}회차` : '';
       
       return `<div class="participant-card">
-        <div class="participant-avatar">${p.student_name ? p.student_name.charAt(0) : '?'}</div>
+        <div class="participant-avatar" style="${p.is_guest ? 'background: var(--lv2-light); color: var(--lv2-color);' : ''}">${p.student_name ? p.student_name.charAt(0) : '?'}</div>
         <div class="participant-info">
-          <div class="participant-name">${p.student_name}</div>
-          <div class="participant-detail">Lv.${p.student_cert || 'X'}${p.lesson_level ? ' · Lv.' + p.lesson_level + ' 수강중' : ''}</div>
+          <div class="participant-name">${p.student_name}${guestBadge}</div>
+          <div class="participant-detail">Lv.${p.student_cert || 'X'}${p.lesson_level ? ' · Lv.' + p.lesson_level + ' 수강중' + sessionInfo : ''}</div>
         </div>
         <div class="attendance-badge ${attClass}" onclick="toggleAttendance('${p.reg_id}', '${p.attendance}')" style="cursor: pointer;">${attText}</div>
         <button class="btn-icon-delete" onclick="deleteParticipant('${p.reg_id}')" title="삭제">
@@ -3694,26 +3919,72 @@
 
     async function openAddParticipant() {
       try {
-        // 강습생 목록 조회
-        const { data: students, error } = await db
+        // 회원(강습생) 목록 조회
+        const { data: students, error: studentsError } = await db
           .from('users')
           .select('user_id, name, phone')
-          .eq('user_type', '강습생');
+          .eq('user_type', '강습생')
+          .order('name');
         
-        if (error) throw error;
+        if (studentsError) throw studentsError;
         
-        const select = document.getElementById('participant-student');
-        let html = '<option value="">강습생을 선택하세요</option>';
+        // 비회원 목록 조회
+        const { data: guests, error: guestsError } = await db
+          .from('guests')
+          .select('guest_id, name, phone, cert_level')
+          .order('name');
+        
+        if (guestsError) throw guestsError;
+        
+        // 회원 선택 드롭다운
+        const memberSelect = document.getElementById('participant-student');
+        let memberHtml = '<option value="">회원을 선택하세요</option>';
         for (const s of (students || [])) {
-          html += `<option value="${s.user_id}">${s.name} (${s.phone})</option>`;
+          memberHtml += `<option value="${s.user_id}">${s.name}${s.phone ? ' (' + s.phone + ')' : ''}</option>`;
         }
-        select.innerHTML = html;
+        memberSelect.innerHTML = memberHtml;
+        
+        // 비회원 선택 드롭다운
+        const guestSelect = document.getElementById('participant-guest');
+        let guestHtml = '<option value="">비회원을 선택하세요</option>';
+        for (const g of (guests || [])) {
+          guestHtml += `<option value="${g.guest_id}">${g.name}${g.phone ? ' (' + g.phone + ')' : ''}</option>`;
+        }
+        guestSelect.innerHTML = guestHtml;
+        
+        // 기본값 설정 (회원 탭 선택)
+        selectParticipantType('member');
         
         openBottomSheet('sheet-add-participant');
       } catch (err) {
-        console.error('강습생 목록 로드 오류:', err);
-        showToast('강습생 목록을 불러오지 못했습니다');
+        console.error('참가자 목록 로드 오류:', err);
+        showToast('참가자 목록을 불러오지 못했습니다');
       }
+    }
+    
+    function selectParticipantType(type) {
+      // 탭 활성화 상태 변경 + 스타일 업데이트
+      document.querySelectorAll('.participant-type-tab').forEach(tab => {
+        const isActive = tab.dataset.type === type;
+        tab.classList.toggle('active', isActive);
+        if (isActive) {
+          tab.style.background = 'var(--primary)';
+          tab.style.color = 'white';
+          tab.style.borderColor = 'var(--primary)';
+        } else {
+          tab.style.background = 'var(--surface)';
+          tab.style.color = 'var(--text-primary)';
+          tab.style.borderColor = 'var(--border)';
+        }
+      });
+      
+      // 해당 드롭다운 표시/숨김
+      document.getElementById('member-select-group').style.display = type === 'member' ? 'block' : 'none';
+      document.getElementById('guest-select-group').style.display = type === 'guest' ? 'block' : 'none';
+      
+      // 선택 초기화
+      document.getElementById('participant-student').value = '';
+      document.getElementById('participant-guest').value = '';
     }
 
     function selectPurpose(btn) {
@@ -3723,32 +3994,75 @@
     }
 
     async function addParticipant() {
-      const studentId = document.getElementById('participant-student').value;
+      const activeTab = document.querySelector('.participant-type-tab.active');
+      const participantType = activeTab?.dataset.type || 'member';
+      
+      const studentId = participantType === 'member' ? document.getElementById('participant-student').value : null;
+      const guestId = participantType === 'guest' ? document.getElementById('participant-guest').value : null;
+      
       const purposeBtn = document.querySelector('#sheet-add-participant .purpose-btn.selected');
       const purpose = purposeBtn.dataset.purpose;
       const level = purpose === '강습' ? parseInt(document.getElementById('participant-level').value) : null;
       
-      if (!studentId) {
-        showToast('강습생을 선택해주세요');
+      if (!studentId && !guestId) {
+        showToast(participantType === 'member' ? '회원을 선택해주세요' : '비회원을 선택해주세요');
         return;
       }
       
       try {
-        const regId = 'REG_' + studentId + '_' + Date.now();
+        // session_no 계산: 강습 목적이고 level이 2 또는 3인 경우
+        let sessionNo = null;
+        if (purpose === '강습' && (level === 2 || level === 3)) {
+          // 해당 참가자의 이전 강습 참여 횟수 조회
+          let query = db
+            .from('registrations')
+            .select('session_no')
+            .eq('purpose', '강습')
+            .eq('lesson_level', level);
+          
+          if (studentId) {
+            query = query.eq('student_id', studentId);
+          } else {
+            query = query.eq('guest_id', guestId);
+          }
+          
+          const { data: prevRegs, error: prevError } = await query;
+          
+          if (prevError) throw prevError;
+          
+          // 기존 최대 session_no 찾기 (없으면 0)
+          const maxSessionNo = (prevRegs || []).reduce((max, r) => {
+            const sn = r.session_no || 0;
+            return sn > max ? sn : max;
+          }, 0);
+          
+          sessionNo = maxSessionNo + 1;
+        }
+        
+        const regId = 'REG_' + (studentId || guestId) + '_' + Date.now();
+        const insertData = {
+          reg_id: regId,
+          schedule_id: currentScheduleId,
+          purpose,
+          lesson_level: level,
+          attendance: 'Y',
+          session_no: sessionNo
+        };
+        
+        if (studentId) {
+          insertData.student_id = studentId;
+        } else {
+          insertData.guest_id = guestId;
+        }
+        
         const { error } = await db
           .from('registrations')
-          .insert({
-            reg_id: regId,
-            schedule_id: currentScheduleId,
-            student_id: studentId,
-            purpose,
-            lesson_level: level,
-            attendance: 'Y'
-          });
+          .insert(insertData);
         
         if (error) throw error;
         
-        showToast('참가자가 추가되었습니다');
+        const sessionMsg = sessionNo ? ` (${sessionNo}회차)` : '';
+        showToast(`참가자가 추가되었습니다${sessionMsg}`);
         closeBottomSheet('sheet-add-participant');
         await loadParticipants();
       } catch (err) {
@@ -4196,7 +4510,7 @@
       document.getElementById('my-records-tabbar').innerHTML = `
         <button class="tab-item" onclick="showScreen('${isInstructor ? 'screen-instructor-home' : 'screen-student-home'}')"><i class="fas fa-home"></i><span>홈</span></button>
         <button class="tab-item" onclick="showScreen('${isInstructor ? 'screen-schedule-manage' : 'screen-student-schedule'}')"><i class="fas fa-calendar"></i><span>일정</span></button>
-        <button class="tab-item" onclick="showScreen('${isInstructor ? 'screen-dry-manage' : 'screen-dry-training'}')"><i class="fas fa-lungs"></i><span>드라이</span></button>
+        <button class="tab-item" onclick="showScreen('${isInstructor ? 'screen-dry-manage' : 'screen-dry-training'}')"><i class="fas fa-dumbbell"></i><span>트레이닝</span></button>
         <button class="tab-item active"><i class="fas fa-chart-line"></i><span>내기록</span></button>
         <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
       `;
@@ -5962,6 +6276,250 @@
       }
     }
 
+    // ==================== 트레이닝 탭 전환 ====================
+    let currentTrainingTab = 'dry';
+    let imageTrainingCategories = [];
+    
+    function switchTrainingTab(tab) {
+      currentTrainingTab = tab;
+      
+      // 탭 버튼 스타일 변경
+      document.querySelectorAll('.training-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+      
+      // 콘텐츠 표시/숨김
+      document.getElementById('dry-training-content').style.display = tab === 'dry' ? 'block' : 'none';
+      document.getElementById('image-training-content').style.display = tab === 'image' ? 'block' : 'none';
+      
+      // 이미지 탭 선택 시 데이터 로드
+      if (tab === 'image' && imageTrainingCategories.length === 0) {
+        loadImageTrainingCategories();
+      }
+    }
+    
+    // 이미지 트레이닝 카테고리 로드
+    async function loadImageTrainingCategories() {
+      const container = document.getElementById('image-training-categories');
+      
+      try {
+        const { data: categories, error } = await db
+          .from('image_training_categories')
+          .select('*')
+          .order('sort_order', { ascending: true });
+        
+        if (error) throw error;
+        
+        imageTrainingCategories = categories || [];
+        
+        if (imageTrainingCategories.length === 0) {
+          container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+            등록된 동작 가이드가 없습니다
+          </div>`;
+          return;
+        }
+        
+        let html = '';
+        for (const cat of imageTrainingCategories) {
+          html += `<div class="image-category-card" onclick="openImageTrainingDetail('${cat.category_id}')">
+            <div class="category-icon">${cat.icon || '📖'}</div>
+            <div class="category-info">
+              <div class="category-name">${cat.name}</div>
+              <div class="category-desc">${cat.description || ''}</div>
+            </div>
+            <i class="fas fa-chevron-right category-arrow"></i>
+          </div>`;
+        }
+        
+        container.innerHTML = html;
+      } catch (err) {
+        console.error('이미지 트레이닝 카테고리 로드 오류:', err);
+        container.innerHTML = `<div class="card" style="text-align: center; color: var(--error); padding: 20px;">
+          데이터를 불러오지 못했습니다
+        </div>`;
+      }
+    }
+    
+    // 이미지 트레이닝 상세 보기
+    async function openImageTrainingDetail(categoryId) {
+      const category = imageTrainingCategories.find(c => c.category_id === categoryId);
+      if (category) {
+        document.getElementById('image-training-detail-title').textContent = category.name;
+      }
+      
+      showScreen('screen-image-training-detail');
+      
+      const container = document.getElementById('image-training-steps');
+      container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+      
+      try {
+        const { data: steps, error } = await db
+          .from('image_training_steps')
+          .select('*')
+          .eq('category_id', categoryId)
+          .order('step_order', { ascending: true });
+        
+        if (error) throw error;
+        
+        if (!steps || steps.length === 0) {
+          container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+            등록된 단계가 없습니다
+          </div>`;
+          return;
+        }
+        
+        let html = '';
+        for (const step of steps) {
+          html += `<div class="training-step-card">
+            <div class="step-image-container">
+              ${step.image_url 
+                ? `<img src="${step.image_url}" alt="${step.title}" loading="lazy">`
+                : `<i class="fas fa-image step-image-placeholder"></i>`
+              }
+            </div>
+            <div class="step-content">
+              <div class="step-title">
+                <span class="step-number">${step.step_order}</span>
+                <span class="step-title-text">${step.title}</span>
+              </div>
+              ${step.description ? `<div class="step-description">${step.description}</div>` : ''}
+              ${step.tips ? `<div class="step-tips"><i class="fas fa-lightbulb"></i>${step.tips}</div>` : ''}
+            </div>
+          </div>`;
+        }
+        
+        container.innerHTML = html;
+      } catch (err) {
+        console.error('이미지 트레이닝 스텝 로드 오류:', err);
+        container.innerHTML = `<div class="card" style="text-align: center; color: var(--error); padding: 20px;">
+          데이터를 불러오지 못했습니다
+        </div>`;
+      }
+    }
+    
+    // ==================== 강사용 트레이닝 탭 전환 ====================
+    let currentInstructorTrainingTab = 'dry';
+    
+    function switchInstructorTrainingTab(tab) {
+      currentInstructorTrainingTab = tab;
+      
+      // 탭 버튼 스타일 변경
+      document.querySelectorAll('#screen-dry-manage .training-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+      
+      // 콘텐츠 표시/숨김
+      document.getElementById('instructor-dry-content').style.display = tab === 'dry' ? 'block' : 'none';
+      document.getElementById('instructor-image-content').style.display = tab === 'image' ? 'block' : 'none';
+      
+      // 추가 버튼 표시/숨김 (드라이만 추가 가능)
+      document.getElementById('instructor-training-add-btn').style.display = tab === 'dry' ? 'block' : 'none';
+      
+      // 이미지 탭 선택 시 데이터 로드
+      if (tab === 'image') {
+        loadInstructorImageCategories();
+      }
+    }
+    
+    // 강사용 이미지 트레이닝 카테고리 로드
+    async function loadInstructorImageCategories() {
+      const container = document.getElementById('instructor-image-categories');
+      
+      try {
+        const { data: categories, error } = await db
+          .from('image_training_categories')
+          .select('*')
+          .order('sort_order', { ascending: true });
+        
+        if (error) throw error;
+        
+        imageTrainingCategories = categories || [];
+        
+        if (imageTrainingCategories.length === 0) {
+          container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+            등록된 동작 가이드가 없습니다
+          </div>`;
+          return;
+        }
+        
+        let html = '';
+        for (const cat of imageTrainingCategories) {
+          html += `<div class="image-category-card" onclick="openInstructorImageDetail('${cat.category_id}')">
+            <div class="category-icon">${cat.icon || '📖'}</div>
+            <div class="category-info">
+              <div class="category-name">${cat.name}</div>
+              <div class="category-desc">${cat.description || ''}</div>
+            </div>
+            <i class="fas fa-chevron-right category-arrow"></i>
+          </div>`;
+        }
+        
+        container.innerHTML = html;
+      } catch (err) {
+        console.error('이미지 트레이닝 카테고리 로드 오류:', err);
+        container.innerHTML = `<div class="card" style="text-align: center; color: var(--error); padding: 20px;">
+          데이터를 불러오지 못했습니다
+        </div>`;
+      }
+    }
+    
+    // 강사용 이미지 트레이닝 상세 보기
+    async function openInstructorImageDetail(categoryId) {
+      const category = imageTrainingCategories.find(c => c.category_id === categoryId);
+      if (category) {
+        document.getElementById('instructor-image-detail-title').textContent = category.name;
+      }
+      
+      showScreen('screen-instructor-image-detail');
+      
+      const container = document.getElementById('instructor-image-steps');
+      container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+      
+      try {
+        const { data: steps, error } = await db
+          .from('image_training_steps')
+          .select('*')
+          .eq('category_id', categoryId)
+          .order('step_order', { ascending: true });
+        
+        if (error) throw error;
+        
+        if (!steps || steps.length === 0) {
+          container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+            등록된 단계가 없습니다
+          </div>`;
+          return;
+        }
+        
+        let html = '';
+        for (const step of steps) {
+          html += `<div class="training-step-card">
+            <div class="step-image-container">
+              ${step.image_url 
+                ? `<img src="${step.image_url}" alt="${step.title}" loading="lazy">`
+                : `<i class="fas fa-image step-image-placeholder"></i>`
+              }
+            </div>
+            <div class="step-content">
+              <div class="step-title">
+                <span class="step-number">${step.step_order}</span>
+                <span class="step-title-text">${step.title}</span>
+              </div>
+              ${step.description ? `<div class="step-description">${step.description}</div>` : ''}
+              ${step.tips ? `<div class="step-tips"><i class="fas fa-lightbulb"></i>${step.tips}</div>` : ''}
+            </div>
+          </div>`;
+        }
+        
+        container.innerHTML = html;
+      } catch (err) {
+        console.error('이미지 트레이닝 스텝 로드 오류:', err);
+        container.innerHTML = `<div class="card" style="text-align: center; color: var(--error); padding: 20px;">
+          데이터를 불러오지 못했습니다
+        </div>`;
+      }
+    }
+
     // 학생: 드라이 트레이닝 목록 로드
     async function loadDryTraining() {
       try {
@@ -6372,8 +6930,136 @@
 
     // 기록 저장 후 콜백 (홈에서 호출 시 홈도 새로고침)
     let afterDryRecordSave = null;
+
+    // ==================== 자격증 이미지 ====================
+
+// 마이페이지 로드 시 자격증 표시
+function renderCertImage() {
+  const container = document.getElementById('cert-image-container');
+  
+  if (currentUser.cert_image_url) {
+    // 이미지가 있으면 표시
+    container.innerHTML = `
+      <div style="position: relative;">
+        <img src="${currentUser.cert_image_url}" 
+             style="width: 100%; border-radius: 12px; cursor: pointer;"
+             onclick="viewCertImage('${currentUser.cert_image_url}')"
+             alt="자격증">
+        <button onclick="deleteCertImage()" 
+                style="position: absolute; top: 8px; right: 8px; 
+                       width: 32px; height: 32px; border-radius: 50%; 
+                       border: none; background: rgba(0,0,0,0.5); 
+                       color: white; cursor: pointer;">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    `;
+  } else {
+    // 이미지가 없으면 업로드 버튼
+    container.innerHTML = `
+      <label style="display: flex; flex-direction: column; align-items: center; 
+                    padding: 40px 20px; border: 2px dashed var(--border); 
+                    border-radius: 12px; cursor: pointer; color: var(--text-secondary);">
+        <i class="fas fa-camera" style="font-size: 32px; margin-bottom: 12px;"></i>
+        <span>자격증 사진 등록</span>
+        <span style="font-size: 12px; margin-top: 4px;">탭하여 업로드</span>
+        <input type="file" accept="image/*" onchange="uploadCertImage(event)" style="display: none;">
+      </label>
+    `;
+  }
+}
+
+// 자격증 이미지 업로드
+async function uploadCertImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  // 파일 크기 체크 (5MB 제한)
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('파일 크기는 5MB 이하로 해주세요');
+    return;
+  }
+  
+  showToast('업로드 중...');
+  
+  try {
+    // 파일명 생성
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${currentUser.user_id}_${Date.now()}.${fileExt}`;
+    
+    // Supabase Storage에 업로드
+    const { data, error } = await db.storage
+      .from('certifications')
+      .upload(fileName, file);
+    
+    if (error) throw error;
+    
+    // Public URL 가져오기
+    const { data: urlData } = db.storage
+      .from('certifications')
+      .getPublicUrl(fileName);
+    
+    const imageUrl = urlData.publicUrl;
+    
+    // DB에 URL 저장
+    const { error: updateError } = await db
+      .from('users')
+      .update({ cert_image_url: imageUrl })
+      .eq('user_id', currentUser.user_id);
+    
+    if (updateError) throw updateError;
+    
+    // 로컬 데이터 업데이트
+    currentUser.cert_image_url = imageUrl;
+    localStorage.setItem('divelog_user', JSON.stringify(currentUser));
+    
+    showToast('자격증이 등록되었습니다!');
+    renderCertImage();
+    
+  } catch (err) {
+    console.error('업로드 오류:', err);
+    showToast('업로드 실패: ' + err.message);
+  }
+}
+
+// 자격증 이미지 삭제
+async function deleteCertImage() {
+  if (!confirm('자격증 이미지를 삭제하시겠습니까?')) return;
+  
+  try {
+    // Storage에서 파일 삭제 (URL에서 파일명 추출)
+    const url = currentUser.cert_image_url;
+    const fileName = url.split('/').pop();
+    
+    await db.storage
+      .from('certifications')
+      .remove([fileName]);
+    
+    // DB에서 URL 제거
+    const { error } = await db
+      .from('users')
+      .update({ cert_image_url: null })
+      .eq('user_id', currentUser.user_id);
+    
+    if (error) throw error;
+    
+    // 로컬 데이터 업데이트
+    currentUser.cert_image_url = null;
+    localStorage.setItem('divelog_user', JSON.stringify(currentUser));
+    
+    showToast('삭제되었습니다');
+    renderCertImage();
+    
+  } catch (err) {
+    console.error('삭제 오류:', err);
+    showToast('삭제 실패: ' + err.message);
+  }
+}
+
+// 자격증 이미지 크게 보기
+function viewCertImage(url) {
+  window.open(url, '_blank');
+}
   </script>
 </body>
 </html>
-
-
