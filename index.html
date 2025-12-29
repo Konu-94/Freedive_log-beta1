@@ -38,6 +38,8 @@
     .app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg); position: relative; padding-bottom: 80px; }
     .screen { display: none; }
     .screen.active { display: block; }
+    .screen.swipe-screen { display: none; flex-direction: column; height: 100vh; padding-bottom: 0; }
+    .screen.swipe-screen.active { display: flex; }
     .header { background: var(--surface); padding: 12px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--divider); }
     .header-back { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: none; font-size: 20px; color: var(--text-primary); cursor: pointer; border-radius: 12px; }
     .header-title { font-size: 18px; font-weight: 600; flex: 1; }
@@ -1344,6 +1346,147 @@
       margin-right: 6px;
     }
     
+    /* 스와이프 UI */
+    .swipe-container {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      touch-action: pan-y;
+    }
+    .swipe-wrapper {
+      display: flex;
+      transition: transform 0.3s ease;
+      height: 100%;
+    }
+    .swipe-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .swipe-card {
+      background: var(--surface);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .swipe-card-image {
+      width: 100%;
+      aspect-ratio: 16/10;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .swipe-card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .swipe-card-image .placeholder {
+      font-size: 64px;
+      color: var(--text-tertiary);
+    }
+    .swipe-card-content {
+      padding: 20px;
+    }
+    .swipe-card-step {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      font-size: 16px;
+      font-weight: 700;
+      margin-right: 12px;
+    }
+    .swipe-card-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+    }
+    .swipe-card-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .swipe-card-tips {
+      background: var(--primary-light);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--primary);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .swipe-card-tips i {
+      margin-top: 2px;
+    }
+    
+    .swipe-controls {
+      background: var(--surface);
+      padding: 16px 20px 24px;
+      border-top: 1px solid var(--divider);
+    }
+    .swipe-indicators {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .swipe-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: all 0.3s;
+    }
+    .swipe-indicator.active {
+      width: 24px;
+      border-radius: 4px;
+      background: var(--primary);
+    }
+    .swipe-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    .swipe-btn {
+      flex: 1;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .swipe-btn:hover {
+      background: var(--bg);
+    }
+    .swipe-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .swipe-btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
     /* 리그 랭크 카드 */
     .league-cards {
       display: flex;
@@ -2027,28 +2170,48 @@
       </div>
     </div>
     
-    <!-- 이미지 트레이닝 상세 (학생용) -->
-    <div class="screen" id="screen-image-training-detail">
+    <!-- 이미지 트레이닝 상세 (학생용) - 스와이프 UI -->
+    <div class="screen swipe-screen" id="screen-image-training-detail">
       <div class="header">
         <button class="header-back" onclick="showScreen('screen-dry-training'); switchTrainingTab('image');"><i class="fas fa-arrow-left"></i></button>
         <span class="header-title" id="image-training-detail-title">동작 가이드</span>
+        <span class="header-action" id="image-step-counter" style="font-size: 14px; color: var(--text-secondary);">1/6</span>
       </div>
-      <div class="container">
-        <div id="image-training-steps">
-          <div class="loading"><div class="loading-spinner"></div></div>
+      <div class="swipe-container" id="swipe-container">
+        <div class="swipe-wrapper" id="swipe-wrapper">
+          <!-- 스텝 카드들이 여기에 동적으로 생성됨 -->
+        </div>
+      </div>
+      <div class="swipe-controls">
+        <div class="swipe-indicators" id="swipe-indicators">
+          <!-- 페이지 인디케이터 -->
+        </div>
+        <div class="swipe-buttons">
+          <button class="swipe-btn" id="swipe-prev" onclick="swipeStep(-1)"><i class="fas fa-chevron-left"></i> 이전</button>
+          <button class="swipe-btn" id="swipe-next" onclick="swipeStep(1)">다음 <i class="fas fa-chevron-right"></i></button>
         </div>
       </div>
     </div>
     
-    <!-- 이미지 트레이닝 상세 (강사용) -->
-    <div class="screen" id="screen-instructor-image-detail">
+    <!-- 이미지 트레이닝 상세 (강사용) - 스와이프 UI -->
+    <div class="screen swipe-screen" id="screen-instructor-image-detail">
       <div class="header">
         <button class="header-back" onclick="showScreen('screen-dry-manage'); switchInstructorTrainingTab('image');"><i class="fas fa-arrow-left"></i></button>
         <span class="header-title" id="instructor-image-detail-title">동작 가이드</span>
+        <span class="header-action" id="instructor-step-counter" style="font-size: 14px; color: var(--text-secondary);">1/6</span>
       </div>
-      <div class="container">
-        <div id="instructor-image-steps">
-          <div class="loading"><div class="loading-spinner"></div></div>
+      <div class="swipe-container" id="instructor-swipe-container">
+        <div class="swipe-wrapper" id="instructor-swipe-wrapper">
+          <!-- 스텝 카드들이 여기에 동적으로 생성됨 -->
+        </div>
+      </div>
+      <div class="swipe-controls">
+        <div class="swipe-indicators" id="instructor-swipe-indicators">
+          <!-- 페이지 인디케이터 -->
+        </div>
+        <div class="swipe-buttons">
+          <button class="swipe-btn" onclick="instructorSwipeStep(-1)"><i class="fas fa-chevron-left"></i> 이전</button>
+          <button class="swipe-btn" onclick="instructorSwipeStep(1)">다음 <i class="fas fa-chevron-right"></i></button>
         </div>
       </div>
     </div>
@@ -6912,7 +7075,13 @@
       }
     }
     
-    // 이미지 트레이닝 상세 보기
+    // ==================== 스와이프 이미지 트레이닝 ====================
+    let currentSwipeIndex = 0;
+    let swipeSteps = [];
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    // 이미지 트레이닝 상세 보기 (스와이프)
     async function openImageTrainingDetail(categoryId) {
       const category = imageTrainingCategories.find(c => c.category_id === categoryId);
       if (category) {
@@ -6920,9 +7089,10 @@
       }
       
       showScreen('screen-image-training-detail');
+      currentSwipeIndex = 0;
       
-      const container = document.getElementById('image-training-steps');
-      container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+      const wrapper = document.getElementById('swipe-wrapper');
+      wrapper.innerHTML = '<div class="swipe-slide"><div class="loading"><div class="loading-spinner"></div></div></div>';
       
       try {
         const { data: steps, error } = await db
@@ -6934,39 +7104,128 @@
         if (error) throw error;
         
         if (!steps || steps.length === 0) {
-          container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary); padding: 30px;">
-            등록된 단계가 없습니다
+          wrapper.innerHTML = `<div class="swipe-slide">
+            <div class="swipe-card" style="display: flex; align-items: center; justify-content: center; min-height: 300px; color: var(--text-secondary);">
+              등록된 단계가 없습니다
+            </div>
           </div>`;
+          document.getElementById('swipe-indicators').innerHTML = '';
+          document.getElementById('image-step-counter').textContent = '';
           return;
         }
         
-        let html = '';
+        swipeSteps = steps;
+        
+        // 슬라이드 생성
+        let slidesHtml = '';
         for (const step of steps) {
-          html += `<div class="training-step-card">
-            <div class="step-image-container">
-              ${step.image_url 
-                ? `<img src="${step.image_url}" alt="${step.title}" loading="lazy">`
-                : `<i class="fas fa-image step-image-placeholder"></i>`
-              }
-            </div>
-            <div class="step-content">
-              <div class="step-title">
-                <span class="step-number">${step.step_order}</span>
-                <span class="step-title-text">${step.title}</span>
+          slidesHtml += `<div class="swipe-slide">
+            <div class="swipe-card">
+              <div class="swipe-card-image">
+                ${step.image_url 
+                  ? `<img src="${step.image_url}" alt="${step.title}">`
+                  : `<i class="fas fa-image placeholder"></i>`
+                }
               </div>
-              ${step.description ? `<div class="step-description">${step.description}</div>` : ''}
-              ${step.tips ? `<div class="step-tips"><i class="fas fa-lightbulb"></i>${step.tips}</div>` : ''}
+              <div class="swipe-card-content">
+                <div class="swipe-card-title">
+                  <span class="swipe-card-step">${step.step_order}</span>
+                  ${step.title}
+                </div>
+                ${step.description ? `<div class="swipe-card-desc">${step.description}</div>` : ''}
+                ${step.tips ? `<div class="swipe-card-tips"><i class="fas fa-lightbulb"></i><span>${step.tips}</span></div>` : ''}
+              </div>
             </div>
           </div>`;
         }
+        wrapper.innerHTML = slidesHtml;
         
-        container.innerHTML = html;
+        // 인디케이터 생성
+        let indicatorsHtml = '';
+        for (let i = 0; i < steps.length; i++) {
+          indicatorsHtml += `<div class="swipe-indicator ${i === 0 ? 'active' : ''}" onclick="goToSwipeStep(${i})"></div>`;
+        }
+        document.getElementById('swipe-indicators').innerHTML = indicatorsHtml;
+        
+        // 카운터 업데이트
+        updateSwipeUI();
+        
+        // 터치 이벤트 설정
+        setupSwipeTouch('swipe-container');
+        
       } catch (err) {
         console.error('이미지 트레이닝 스텝 로드 오류:', err);
-        container.innerHTML = `<div class="card" style="text-align: center; color: var(--error); padding: 20px;">
-          데이터를 불러오지 못했습니다
+        wrapper.innerHTML = `<div class="swipe-slide">
+          <div class="swipe-card" style="display: flex; align-items: center; justify-content: center; min-height: 300px; color: var(--error);">
+            데이터를 불러오지 못했습니다
+          </div>
         </div>`;
       }
+    }
+    
+    // 스와이프 터치 이벤트 설정
+    function setupSwipeTouch(containerId) {
+      const container = document.getElementById(containerId);
+      
+      container.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+      
+      container.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipeGesture();
+      }, { passive: true });
+    }
+    
+    // 스와이프 제스처 처리
+    function handleSwipeGesture() {
+      const diff = touchStartX - touchEndX;
+      const threshold = 50;
+      
+      if (diff > threshold) {
+        // 왼쪽으로 스와이프 → 다음
+        swipeStep(1);
+      } else if (diff < -threshold) {
+        // 오른쪽으로 스와이프 → 이전
+        swipeStep(-1);
+      }
+    }
+    
+    // 스텝 이동 (순환형)
+    function swipeStep(direction) {
+      let newIndex = currentSwipeIndex + direction;
+      
+      // 순환 처리
+      if (newIndex < 0) {
+        newIndex = swipeSteps.length - 1; // 처음에서 이전 → 마지막으로
+      } else if (newIndex >= swipeSteps.length) {
+        newIndex = 0; // 마지막에서 다음 → 처음으로
+      }
+      
+      currentSwipeIndex = newIndex;
+      updateSwipeUI();
+    }
+    
+    // 특정 스텝으로 이동
+    function goToSwipeStep(index) {
+      currentSwipeIndex = index;
+      updateSwipeUI();
+    }
+    
+    // 스와이프 UI 업데이트
+    function updateSwipeUI() {
+      const wrapper = document.getElementById('swipe-wrapper');
+      wrapper.style.transform = `translateX(-${currentSwipeIndex * 100}%)`;
+      
+      // 카운터 업데이트
+      document.getElementById('image-step-counter').textContent = `${currentSwipeIndex + 1}/${swipeSteps.length}`;
+      
+      // 인디케이터 업데이트
+      document.querySelectorAll('#swipe-indicators .swipe-indicator').forEach((ind, i) => {
+        ind.classList.toggle('active', i === currentSwipeIndex);
+      });
+      
+      // 버튼은 항상 활성화 (순환형)
     }
     
     // ==================== 강사용 트레이닝 탭 전환 ====================
@@ -7035,7 +7294,10 @@
       }
     }
     
-    // 강사용 이미지 트레이닝 상세 보기
+    // 강사용 이미지 트레이닝 상세 보기 (스와이프)
+    let instructorSwipeIndex = 0;
+    let instructorSwipeSteps = [];
+    
     async function openInstructorImageDetail(categoryId) {
       const category = imageTrainingCategories.find(c => c.category_id === categoryId);
       if (category) {
@@ -7043,9 +7305,10 @@
       }
       
       showScreen('screen-instructor-image-detail');
+      instructorSwipeIndex = 0;
       
-      const container = document.getElementById('instructor-image-steps');
-      container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+      const wrapper = document.getElementById('instructor-swipe-wrapper');
+      wrapper.innerHTML = '<div class="swipe-slide"><div class="loading"><div class="loading-spinner"></div></div></div>';
       
       try {
         const { data: steps, error } = await db
@@ -7057,39 +7320,118 @@
         if (error) throw error;
         
         if (!steps || steps.length === 0) {
-          container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary); padding: 30px;">
-            등록된 단계가 없습니다
+          wrapper.innerHTML = `<div class="swipe-slide">
+            <div class="swipe-card" style="display: flex; align-items: center; justify-content: center; min-height: 300px; color: var(--text-secondary);">
+              등록된 단계가 없습니다
+            </div>
           </div>`;
+          document.getElementById('instructor-swipe-indicators').innerHTML = '';
+          document.getElementById('instructor-step-counter').textContent = '';
           return;
         }
         
-        let html = '';
+        instructorSwipeSteps = steps;
+        
+        // 슬라이드 생성
+        let slidesHtml = '';
         for (const step of steps) {
-          html += `<div class="training-step-card">
-            <div class="step-image-container">
-              ${step.image_url 
-                ? `<img src="${step.image_url}" alt="${step.title}" loading="lazy">`
-                : `<i class="fas fa-image step-image-placeholder"></i>`
-              }
-            </div>
-            <div class="step-content">
-              <div class="step-title">
-                <span class="step-number">${step.step_order}</span>
-                <span class="step-title-text">${step.title}</span>
+          slidesHtml += `<div class="swipe-slide">
+            <div class="swipe-card">
+              <div class="swipe-card-image">
+                ${step.image_url 
+                  ? `<img src="${step.image_url}" alt="${step.title}">`
+                  : `<i class="fas fa-image placeholder"></i>`
+                }
               </div>
-              ${step.description ? `<div class="step-description">${step.description}</div>` : ''}
-              ${step.tips ? `<div class="step-tips"><i class="fas fa-lightbulb"></i>${step.tips}</div>` : ''}
+              <div class="swipe-card-content">
+                <div class="swipe-card-title">
+                  <span class="swipe-card-step">${step.step_order}</span>
+                  ${step.title}
+                </div>
+                ${step.description ? `<div class="swipe-card-desc">${step.description}</div>` : ''}
+                ${step.tips ? `<div class="swipe-card-tips"><i class="fas fa-lightbulb"></i><span>${step.tips}</span></div>` : ''}
+              </div>
             </div>
           </div>`;
         }
+        wrapper.innerHTML = slidesHtml;
         
-        container.innerHTML = html;
+        // 인디케이터 생성
+        let indicatorsHtml = '';
+        for (let i = 0; i < steps.length; i++) {
+          indicatorsHtml += `<div class="swipe-indicator ${i === 0 ? 'active' : ''}" onclick="goToInstructorSwipeStep(${i})"></div>`;
+        }
+        document.getElementById('instructor-swipe-indicators').innerHTML = indicatorsHtml;
+        
+        // 카운터 업데이트
+        updateInstructorSwipeUI();
+        
+        // 터치 이벤트 설정
+        setupInstructorSwipeTouch();
+        
       } catch (err) {
         console.error('이미지 트레이닝 스텝 로드 오류:', err);
-        container.innerHTML = `<div class="card" style="text-align: center; color: var(--error); padding: 20px;">
-          데이터를 불러오지 못했습니다
+        wrapper.innerHTML = `<div class="swipe-slide">
+          <div class="swipe-card" style="display: flex; align-items: center; justify-content: center; min-height: 300px; color: var(--error);">
+            데이터를 불러오지 못했습니다
+          </div>
         </div>`;
       }
+    }
+    
+    // 강사용 스와이프 터치
+    function setupInstructorSwipeTouch() {
+      const container = document.getElementById('instructor-swipe-container');
+      
+      container.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+      
+      container.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleInstructorSwipeGesture();
+      }, { passive: true });
+    }
+    
+    function handleInstructorSwipeGesture() {
+      const diff = touchStartX - touchEndX;
+      const threshold = 50;
+      
+      if (diff > threshold) {
+        instructorSwipeStep(1);
+      } else if (diff < -threshold) {
+        instructorSwipeStep(-1);
+      }
+    }
+    
+    function instructorSwipeStep(direction) {
+      let newIndex = instructorSwipeIndex + direction;
+      
+      // 순환 처리
+      if (newIndex < 0) {
+        newIndex = instructorSwipeSteps.length - 1;
+      } else if (newIndex >= instructorSwipeSteps.length) {
+        newIndex = 0;
+      }
+      
+      instructorSwipeIndex = newIndex;
+      updateInstructorSwipeUI();
+    }
+    
+    function goToInstructorSwipeStep(index) {
+      instructorSwipeIndex = index;
+      updateInstructorSwipeUI();
+    }
+    
+    function updateInstructorSwipeUI() {
+      const wrapper = document.getElementById('instructor-swipe-wrapper');
+      wrapper.style.transform = `translateX(-${instructorSwipeIndex * 100}%)`;
+      
+      document.getElementById('instructor-step-counter').textContent = `${instructorSwipeIndex + 1}/${instructorSwipeSteps.length}`;
+      
+      document.querySelectorAll('#instructor-swipe-indicators .swipe-indicator').forEach((ind, i) => {
+        ind.classList.toggle('active', i === instructorSwipeIndex);
+      });
     }
 
     // 학생: 드라이 트레이닝 목록 로드
@@ -7635,3 +7977,4 @@ function viewCertImage(url) {
   </script>
 </body>
 </html>
+
