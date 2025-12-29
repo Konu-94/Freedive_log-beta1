@@ -623,6 +623,10 @@
     .bottom-sheet { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 480px; background: var(--surface); border-radius: 24px 24px 0 0; z-index: 201; transition: transform 0.3s ease; max-height: 90vh; overflow-y: auto; }
     .bottom-sheet-overlay.active .bottom-sheet { transform: translateX(-50%) translateY(0); }
     .bottom-sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto; }
+    .bottom-sheet-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 12px; border-bottom: 1px solid var(--divider); }
+    .bottom-sheet-header h3 { font-size: 18px; font-weight: 700; margin: 0; }
+    .bottom-sheet-close { width: 32px; height: 32px; border-radius: 50%; background: var(--bg); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 16px; }
+    .bottom-sheet-close:hover { background: var(--divider); }
     .bottom-sheet-content { padding: 8px 20px 32px; }
     .bottom-sheet-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
     .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--text-primary); color: white; padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 500; z-index: 300; opacity: 0; visibility: hidden; transition: all 0.3s; }
@@ -1339,6 +1343,209 @@
     .step-tips i {
       margin-right: 6px;
     }
+    
+    /* 리그 랭크 카드 */
+    .league-cards {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+    .league-card {
+      flex: 0 0 auto;
+      width: 100px;
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border: 2px solid transparent;
+    }
+    .league-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .league-card.active {
+      border-color: var(--primary);
+    }
+    .league-card-disc {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .league-card-emoji {
+      font-size: 36px;
+      margin-bottom: 6px;
+    }
+    .league-card-tier {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    .league-card-record {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    
+    /* 리그 랭킹 화면 */
+    .league-header {
+      background: linear-gradient(135deg, var(--primary) 0%, #60A5FA 100%);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 20px;
+      color: white;
+      text-align: center;
+    }
+    .league-header-emoji {
+      font-size: 56px;
+      margin-bottom: 8px;
+    }
+    .league-header-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .league-header-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .league-header-range {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-top: 8px;
+    }
+    
+    .league-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+    }
+    .league-tab {
+      flex: 0 0 auto;
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .league-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    .ranking-list {
+      background: var(--surface);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--divider);
+    }
+    .ranking-item:last-child {
+      border-bottom: none;
+    }
+    .ranking-item.me {
+      background: var(--primary-light);
+    }
+    .ranking-position {
+      width: 32px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .ranking-position.top1 { color: #FFD700; }
+    .ranking-position.top2 { color: #C0C0C0; }
+    .ranking-position.top3 { color: #CD7F32; }
+    .ranking-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: var(--primary);
+      margin-right: 12px;
+    }
+    .ranking-info {
+      flex: 1;
+    }
+    .ranking-name {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .ranking-record {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    /* 티어 색상 */
+    .tier-egg { color: #9E9E9E; }
+    .tier-shrimp { color: #FF8A65; }
+    .tier-seahorse { color: #4FC3F7; }
+    .tier-turtle { color: #81C784; }
+    .tier-dolphin { color: #BA68C8; }
+    .tier-whale { color: #FFD54F; }
+    
+    .league-card.tier-0 { background: linear-gradient(135deg, #F5F5F5 0%, #E0E0E0 100%); }
+    .league-card.tier-1 { background: linear-gradient(135deg, #FFF3E0 0%, #FFCCBC 100%); }
+    .league-card.tier-2 { background: linear-gradient(135deg, #E1F5FE 0%, #B3E5FC 100%); }
+    .league-card.tier-3 { background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); }
+    .league-card.tier-4 { background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%); }
+    .league-card.tier-5 { background: linear-gradient(135deg, #FFFDE7 0%, #FFF9C4 100%); }
+    
+    /* 리그 기준 표 */
+    .league-info-table {
+      overflow-x: auto;
+    }
+    .league-info-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .league-info-table th,
+    .league-info-table td {
+      padding: 10px 8px;
+      text-align: center;
+      border-bottom: 1px solid var(--divider);
+    }
+    .league-info-table th {
+      background: var(--bg);
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .league-info-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .tier-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .tier-badge.tier-egg { background: #F5F5F5; color: #757575; }
+    .tier-badge.tier-shrimp { background: #FFF3E0; color: #E65100; }
+    .tier-badge.tier-seahorse { background: #E1F5FE; color: #0277BD; }
+    .tier-badge.tier-turtle { background: #E8F5E9; color: #2E7D32; }
+    .tier-badge.tier-dolphin { background: #F3E5F5; color: #7B1FA2; }
+    .tier-badge.tier-whale { background: #FFFDE7; color: #F57F17; }
   </style>
 </head>
 <body>
@@ -1445,6 +1652,12 @@
         <div class="section-title"><i class="fas fa-trophy"></i> 종목별 최고 기록</div>
         <div class="stat-grid" id="best-records"></div>
         
+        <!-- 나의 리그 랭크 섹션 -->
+        <div class="section-title" style="margin-top: 24px;"><i class="fas fa-medal"></i> 나의 리그</div>
+        <div class="league-cards" id="my-league-cards">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+        
         <div class="section-title"><i class="fas fa-calendar"></i> 다가오는 일정</div>
         <div id="upcoming-schedules"></div>
         
@@ -1460,7 +1673,37 @@
         <button class="tab-item" onclick="showScreen('screen-mypage')"><i class="fas fa-user"></i><span>마이</span></button>
       </div>
     </div>
-
+    
+    <!-- 리그 랭킹 화면 -->
+    <div class="screen" id="screen-league-ranking">
+      <div class="header">
+        <button class="header-back" onclick="showScreen('screen-student-home')"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title" id="league-screen-title">리그 랭킹</span>
+        <button class="header-action" onclick="openLeagueInfo()" style="font-size: 18px;"><i class="fas fa-question-circle"></i></button>
+      </div>
+      <div class="container">
+        <!-- 리그 헤더 -->
+        <div class="league-header" id="league-header">
+          <div class="league-header-emoji">🐢</div>
+          <div class="league-header-title">거북이 리그</div>
+          <div class="league-header-subtitle">STA</div>
+          <div class="league-header-range">2'00" ~ 2'39"</div>
+        </div>
+        
+        <!-- 종목 탭 -->
+        <div class="league-tabs" id="league-disc-tabs">
+          <button class="league-tab active" data-disc="STA" onclick="switchLeagueDisc('STA')">STA</button>
+          <button class="league-tab" data-disc="CWTB" onclick="switchLeagueDisc('CWTB')">CWTB</button>
+          <button class="league-tab" data-disc="DYNB" onclick="switchLeagueDisc('DYNB')">DYN</button>
+        </div>
+        
+        <!-- 랭킹 리스트 -->
+        <div class="ranking-list" id="league-ranking-list">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+    
     <!-- 일정 관리 (강사) -->
     <div class="screen" id="screen-schedule-manage">
       <div class="header">
@@ -2483,6 +2726,71 @@
         </div>
       </div>
     </div>
+    
+    <!-- 리그 기준 팝업 -->
+    <div class="bottom-sheet-overlay" id="league-info-overlay" onclick="closeLeagueInfo()">
+      <div class="bottom-sheet" onclick="event.stopPropagation()">
+        <div class="bottom-sheet-header">
+          <h3>리그 기준</h3>
+          <button class="bottom-sheet-close" onclick="closeLeagueInfo()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="bottom-sheet-content">
+          <div class="league-info-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>티어</th>
+                  <th>STA</th>
+                  <th>CWTB</th>
+                  <th>DYN</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="tier-badge tier-whale">🐋 고래</span></td>
+                  <td>4'00"+</td>
+                  <td>40m+</td>
+                  <td>100m+</td>
+                </tr>
+                <tr>
+                  <td><span class="tier-badge tier-dolphin">🐬 돌고래</span></td>
+                  <td>3'20"</td>
+                  <td>32m</td>
+                  <td>75m</td>
+                </tr>
+                <tr>
+                  <td><span class="tier-badge tier-turtle">🐢 거북이</span></td>
+                  <td>2'40"</td>
+                  <td>24m</td>
+                  <td>55m</td>
+                </tr>
+                <tr>
+                  <td><span class="tier-badge tier-seahorse">🐴 해마</span></td>
+                  <td>2'00"</td>
+                  <td>12m</td>
+                  <td>40m</td>
+                </tr>
+                <tr>
+                  <td><span class="tier-badge tier-shrimp">🦐 새우</span></td>
+                  <td>1'00"</td>
+                  <td>5m</td>
+                  <td>20m</td>
+                </tr>
+                <tr>
+                  <td><span class="tier-badge tier-egg">🥚 알</span></td>
+                  <td>~59"</td>
+                  <td>~4m</td>
+                  <td>~19m</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="margin-top: 16px; font-size: 13px; color: var(--text-secondary); text-align: center;">
+            함께 성장하는 프리다이버들 🌊
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -2818,6 +3126,270 @@
       
       // 드라이 트레이닝 로드
       await loadHomeDryTraining();
+      
+      // 리그 랭크 로드
+      await loadMyLeagueCards();
+    }
+    
+    // ==================== 리그 랭크 시스템 ====================
+    const TIER_SYSTEM = {
+      tiers: [
+        { tier: 0, name: '알', emoji: '🥚', color: '#E0E0E0' },
+        { tier: 1, name: '새우', emoji: '🦐', color: '#FF8A65' },
+        { tier: 2, name: '해마', emoji: '🐴', color: '#4FC3F7' },
+        { tier: 3, name: '거북이', emoji: '🐢', color: '#81C784' },
+        { tier: 4, name: '돌고래', emoji: '🐬', color: '#BA68C8' },
+        { tier: 5, name: '고래', emoji: '🐋', color: '#FFD54F' }
+      ],
+      thresholds: {
+        STA: [60, 120, 160, 200, 240],      // 1분, 2분, 2분40초, 3분20초, 4분 (초 단위)
+        CWTB: [5, 12, 24, 32, 40],          // 미터
+        FIM: [5, 12, 24, 32, 40],           // 미터
+        DYNB: [20, 40, 55, 75, 100]         // 미터
+      },
+      ranges: {
+        STA: ["0' ~ 59\"", "1'00\" ~ 1'59\"", "2'00\" ~ 2'39\"", "2'40\" ~ 3'19\"", "3'20\" ~ 3'59\"", "4'00\"+"],
+        CWTB: ["0m ~ 4m", "5m ~ 11m", "12m ~ 23m", "24m ~ 31m", "32m ~ 39m", "40m+"],
+        FIM: ["0m ~ 4m", "5m ~ 11m", "12m ~ 23m", "24m ~ 31m", "32m ~ 39m", "40m+"],
+        DYNB: ["0m ~ 19m", "20m ~ 39m", "40m ~ 54m", "55m ~ 74m", "75m ~ 99m", "100m+"]
+      }
+    };
+    
+    let currentLeagueDisc = 'STA';
+    let currentLeagueTier = 1;
+    let myBestRecords = {};
+    
+    // 기록으로 티어 계산
+    function calculateTier(discipline, value) {
+      if (!value || value <= 0) return -1; // 기록 없음 (-1)
+      
+      const thresholds = TIER_SYSTEM.thresholds[discipline];
+      if (!thresholds) return -1;
+      
+      for (let i = thresholds.length - 1; i >= 0; i--) {
+        if (value >= thresholds[i]) return i + 1;
+      }
+      return 0; // 기록은 있지만 1티어 미만 = 알(0티어)
+    }
+    
+    // 티어 정보 가져오기
+    function getTierInfo(tier) {
+      if (tier < 0) return { tier: -1, name: '기록없음', emoji: '❓', color: '#B0B8C1' };
+      if (tier === 0) return TIER_SYSTEM.tiers[0]; // 알
+      return TIER_SYSTEM.tiers[tier] || TIER_SYSTEM.tiers[0];
+    }
+    
+    // 티어 범위 가져오기
+    function getTierRange(discipline, tier) {
+      const ranges = TIER_SYSTEM.ranges[discipline];
+      if (!ranges || tier <= 0) return '';
+      return ranges[tier] || ranges[ranges.length - 1];
+    }
+    
+    // 기록 포맷팅
+    function formatRecordValue(discipline, value) {
+      if (!value) return '-';
+      if (discipline === 'STA') {
+        const min = Math.floor(value / 60);
+        const sec = value % 60;
+        return `${min}'${sec.toString().padStart(2, '0')}"`;
+      }
+      return `${value}m`;
+    }
+    
+    // 나의 리그 카드 로드
+    async function loadMyLeagueCards() {
+      const container = document.getElementById('my-league-cards');
+      if (!container) return;
+      
+      try {
+        // currentUser에서 최고 기록 가져오기
+        // FIM은 별도 컬럼이 없으면 CWTB와 같은 값 사용하거나 0
+        myBestRecords = {
+          'STA': currentUser.best_sta || 0,
+          'CWTB': currentUser.best_cwtb || 0,
+          'FIM': currentUser.best_fim || currentUser.best_cwtb || 0, // FIM 없으면 CWTB 사용
+          'DYNB': currentUser.best_dynb || 0
+        };
+        
+        // 카드 렌더링 (FIM 제외 - 별도 관리 안하면)
+        const disciplines = ['STA', 'CWTB', 'DYNB'];
+        let html = '';
+        
+        for (const disc of disciplines) {
+          const value = myBestRecords[disc] || 0;
+          const tier = calculateTier(disc, value);
+          const tierInfo = getTierInfo(tier);
+          const displayDisc = disc === 'DYNB' ? 'DYN' : disc;
+          
+          html += `<div class="league-card tier-${tier}" onclick="openLeagueRanking('${disc}', ${tier})">
+            <div class="league-card-disc">${displayDisc}</div>
+            <div class="league-card-emoji">${tierInfo.emoji}</div>
+            <div class="league-card-tier">${tierInfo.name}</div>
+            <div class="league-card-record">${formatRecordValue(disc, value)}</div>
+          </div>`;
+        }
+        
+        container.innerHTML = html;
+      } catch (err) {
+        console.error('리그 카드 로드 오류:', err);
+        container.innerHTML = `<div style="color: var(--text-secondary); font-size: 14px;">리그 정보를 불러오지 못했습니다</div>`;
+      }
+    }
+    
+    // 리그 랭킹 화면 열기
+    async function openLeagueRanking(discipline, tier) {
+      if (tier < 0) {
+        showToast('기록이 있어야 리그에 참여할 수 있어요!');
+        return;
+      }
+      
+      currentLeagueDisc = discipline;
+      currentLeagueTier = tier;
+      
+      showScreen('screen-league-ranking');
+      updateLeagueHeader();
+      updateLeagueDiscTabs();
+      await loadLeagueRanking();
+    }
+    
+    // 리그 헤더 업데이트
+    function updateLeagueHeader() {
+      const tierInfo = getTierInfo(currentLeagueTier);
+      const range = getTierRange(currentLeagueDisc, currentLeagueTier);
+      const displayDisc = currentLeagueDisc === 'DYNB' ? 'DYN' : currentLeagueDisc;
+      
+      document.getElementById('league-header').innerHTML = `
+        <div class="league-header-emoji">${tierInfo.emoji}</div>
+        <div class="league-header-title">${tierInfo.name} 리그</div>
+        <div class="league-header-subtitle">${displayDisc}</div>
+        <div class="league-header-range">${range}</div>
+      `;
+      document.getElementById('league-header').style.background = 
+        `linear-gradient(135deg, ${tierInfo.color} 0%, ${tierInfo.color}99 100%)`;
+      
+      document.getElementById('league-screen-title').textContent = `${tierInfo.name} 리그`;
+    }
+    
+    // 종목 탭 업데이트
+    function updateLeagueDiscTabs() {
+      document.querySelectorAll('#league-disc-tabs .league-tab').forEach(tab => {
+        const disc = tab.dataset.disc;
+        const myTier = calculateTier(disc, myBestRecords[disc] || 0);
+        tab.classList.toggle('active', disc === currentLeagueDisc);
+        
+        // 내가 속한 티어가 있는 종목만 활성화 (0티어=알 포함)
+        if (myTier >= 0) {
+          tab.style.opacity = '1';
+          tab.style.pointerEvents = 'auto';
+        } else {
+          tab.style.opacity = '0.5';
+          tab.style.pointerEvents = 'none';
+        }
+      });
+    }
+    
+    // 종목 전환
+    async function switchLeagueDisc(discipline) {
+      const myTier = calculateTier(discipline, myBestRecords[discipline] || 0);
+      if (myTier < 0) return;  // -1(기록없음)만 제외
+      
+      currentLeagueDisc = discipline;
+      currentLeagueTier = myTier;
+      
+      updateLeagueHeader();
+      updateLeagueDiscTabs();
+      await loadLeagueRanking();
+    }
+    
+    // 리그 랭킹 로드 (같은 티어만)
+    async function loadLeagueRanking() {
+      const container = document.getElementById('league-ranking-list');
+      container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+      
+      try {
+        const thresholds = TIER_SYSTEM.thresholds[currentLeagueDisc];
+        
+        // 0티어(알)는 1 ~ (1티어 기준-1) 범위
+        let minValue, maxValue;
+        if (currentLeagueTier === 0) {
+          minValue = 1;
+          maxValue = thresholds[0] - 1;
+        } else {
+          minValue = thresholds[currentLeagueTier - 1];
+          maxValue = currentLeagueTier < 5 ? thresholds[currentLeagueTier] - 1 : 999999;
+        }
+        
+        // 종목에 따른 best_ 필드명 결정
+        const bestField = 'best_' + currentLeagueDisc.toLowerCase();
+        
+        // users 테이블에서 해당 종목의 최고 기록이 있는 유저들 조회
+        const { data: users, error } = await db
+          .from('users')
+          .select(`user_id, name, ${bestField}`)
+          .gte(bestField, minValue)
+          .lte(bestField, maxValue)
+          .order(bestField, { ascending: false });
+        
+        if (error) throw error;
+        
+        // 유효한 기록이 있는 유저만 필터링
+        let rankings = (users || []).filter(u => u[bestField] && u[bestField] > 0);
+        
+        // 같은 기록일 때 본인 우선 정렬
+        rankings.sort((a, b) => {
+          if (b[bestField] !== a[bestField]) {
+            return b[bestField] - a[bestField]; // 기록 높은 순
+          }
+          // 같은 기록이면 본인 우선
+          if (a.user_id === currentUser.user_id) return -1;
+          if (b.user_id === currentUser.user_id) return 1;
+          return a.name.localeCompare(b.name); // 그 외엔 이름순
+        });
+        
+        if (rankings.length === 0) {
+          container.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+            이 리그에 참가자가 없습니다
+          </div>`;
+          return;
+        }
+        
+        let html = '';
+        rankings.forEach((u, idx) => {
+          const isMe = u.user_id === currentUser.user_id;
+          const posClass = idx === 0 ? 'top1' : idx === 1 ? 'top2' : idx === 2 ? 'top3' : '';
+          const name = u.name || '알 수 없음';
+          const recordValue = u[bestField];
+          
+          html += `<div class="ranking-item ${isMe ? 'me' : ''}">
+            <div class="ranking-position ${posClass}">${idx + 1}</div>
+            <div class="ranking-avatar">${name.charAt(0)}</div>
+            <div class="ranking-info">
+              <div class="ranking-name">${name}${isMe ? ' (나)' : ''}</div>
+            </div>
+            <div class="ranking-record">${formatRecordValue(currentLeagueDisc, recordValue)}</div>
+          </div>`;
+        });
+        
+        container.innerHTML = html;
+      } catch (err) {
+        console.error('리그 랭킹 로드 오류:', err);
+        container.innerHTML = `<div style="text-align: center; color: var(--error); padding: 20px;">
+          랭킹을 불러오지 못했습니다
+        </div>`;
+      }
+    }
+    
+    // 리그 기준 팝업 열기
+    function openLeagueInfo() {
+      document.getElementById('league-info-overlay').classList.add('active');
+      document.getElementById('league-info-sheet').classList.add('active');
+    }
+    
+    // 리그 기준 팝업 닫기
+    function closeLeagueInfo() {
+      document.getElementById('league-info-overlay').classList.remove('active');
+      document.getElementById('league-info-sheet').classList.remove('active');
     }
     
     // 레벨별 요구사항 정의
