@@ -1689,6 +1689,224 @@
     .tier-badge.tier-turtle { background: #E8F5E9; color: #2E7D32; }
     .tier-badge.tier-dolphin { background: #F3E5F5; color: #7B1FA2; }
     .tier-badge.tier-whale { background: #FFFDE7; color: #F57F17; }
+    
+    /* 프렌젤 리그 */
+    .frenzel-league-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 16px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .frenzel-league-card:hover {
+      transform: translateY(-2px);
+    }
+    .frenzel-league-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .frenzel-league-card-icon {
+      font-size: 32px;
+    }
+    .frenzel-league-card-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .frenzel-league-card-subtitle {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    .frenzel-league-card-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+    }
+    .frenzel-league-card-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .frenzel-league-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      padding: 24px;
+      color: white;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .frenzel-icon {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+    .frenzel-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .frenzel-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .frenzel-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .frenzel-tab {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: var(--surface);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .frenzel-tab.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .frenzel-ranking-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--surface);
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+    .frenzel-ranking-item.me {
+      background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+      border: 2px solid #667eea;
+    }
+    .frenzel-rank {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-right: 12px;
+    }
+    .frenzel-rank.top1 { color: #FFD700; }
+    .frenzel-rank.top2 { color: #C0C0C0; }
+    .frenzel-rank.top3 { color: #CD7F32; }
+    .frenzel-info {
+      flex: 1;
+    }
+    .frenzel-name {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .frenzel-detail {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+    .frenzel-score {
+      text-align: right;
+    }
+    .frenzel-score-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #667eea;
+    }
+    .frenzel-score-detail {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    
+    .graduate-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--surface);
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+    .graduate-icon {
+      font-size: 24px;
+      margin-right: 12px;
+    }
+    .graduate-info {
+      flex: 1;
+    }
+    .graduate-name {
+      font-weight: 600;
+    }
+    .graduate-date {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    /* 자주 가는 장소 */
+    .frequent-locations {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .frequent-loc-btn {
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .frequent-loc-btn:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    
+    /* 다중 선택 UI */
+    .multi-select-container {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .multi-select-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--divider);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .multi-select-item:last-child {
+      border-bottom: none;
+    }
+    .multi-select-item:hover {
+      background: var(--bg);
+    }
+    .multi-select-item.selected {
+      background: var(--primary-light);
+    }
+    .multi-select-item input[type="checkbox"] {
+      margin-right: 10px;
+      width: 16px;
+      height: 16px;
+    }
+    .multi-select-item .item-name {
+      font-size: 14px;
+    }
+    .selected-count {
+      font-size: 12px;
+      color: var(--primary);
+      margin-top: 6px;
+    }
   </style>
 </head>
 <body>
@@ -1801,7 +2019,10 @@
           <div class="loading"><div class="loading-spinner"></div></div>
         </div>
         
-        <div class="section-title"><i class="fas fa-calendar"></i> 다가오는 일정</div>
+        <!-- 프렌젤 리그 카드 -->
+        <div id="frenzel-league-home" style="margin-top: 8px;"></div>
+        
+        <div class="section-title" style="margin-top: 24px;"><i class="fas fa-calendar"></i> 다가오는 일정</div>
         <div id="upcoming-schedules"></div>
         
         <!-- 드라이 트레이닝 섹션 -->
@@ -2112,6 +2333,9 @@
         
         <!-- 드라이 트레이닝 콘텐츠 -->
         <div id="dry-training-content">
+          <!-- 프렌젤 리그 카드 -->
+          <div id="frenzel-league-training" style="margin-bottom: 20px;"></div>
+          
           <!-- 참여 중인 트레이닝 -->
           <div class="section-title"><i class="fas fa-fire"></i> 참여 중</div>
           <div id="my-dry-trainings"></div>
@@ -2270,11 +2494,47 @@
           </div>
           <div class="input-group">
             <label class="input-label">시간</label>
-            <input type="time" class="input" id="schedule-time">
+            <select class="input" id="schedule-time">
+              <option value="">시간 선택</option>
+              <option value="06:00">오전 6:00</option>
+              <option value="06:30">오전 6:30</option>
+              <option value="07:00">오전 7:00</option>
+              <option value="07:30">오전 7:30</option>
+              <option value="08:00">오전 8:00</option>
+              <option value="08:30">오전 8:30</option>
+              <option value="09:00">오전 9:00</option>
+              <option value="09:30">오전 9:30</option>
+              <option value="10:00">오전 10:00</option>
+              <option value="10:30">오전 10:30</option>
+              <option value="11:00">오전 11:00</option>
+              <option value="11:30">오전 11:30</option>
+              <option value="12:00">오후 12:00</option>
+              <option value="12:30">오후 12:30</option>
+              <option value="13:00">오후 1:00</option>
+              <option value="13:30">오후 1:30</option>
+              <option value="14:00">오후 2:00</option>
+              <option value="14:30">오후 2:30</option>
+              <option value="15:00">오후 3:00</option>
+              <option value="15:30">오후 3:30</option>
+              <option value="16:00">오후 4:00</option>
+              <option value="16:30">오후 4:30</option>
+              <option value="17:00">오후 5:00</option>
+              <option value="17:30">오후 5:30</option>
+              <option value="18:00">오후 6:00</option>
+              <option value="18:30">오후 6:30</option>
+              <option value="19:00">오후 7:00</option>
+              <option value="19:30">오후 7:30</option>
+              <option value="20:00">오후 8:00</option>
+              <option value="20:30">오후 8:30</option>
+              <option value="21:00">오후 9:00</option>
+            </select>
           </div>
           <div class="input-group">
             <label class="input-label">장소</label>
             <input type="text" class="input" id="schedule-location" placeholder="장소를 입력하세요">
+            <div class="frequent-locations" id="frequent-locations">
+              <!-- 자주 가는 장소 버튼들 -->
+            </div>
           </div>
           
           <!-- 기록 종목 선택 (토글) -->
@@ -2329,29 +2589,36 @@
       </div>
     </div>
 
-    <!-- Bottom Sheet: 참가자 추가 -->
+    <!-- Bottom Sheet: 참가자 추가 (다중 선택) -->
     <div class="bottom-sheet-overlay" id="sheet-add-participant">
       <div class="bottom-sheet">
         <div class="bottom-sheet-handle"></div>
         <div class="bottom-sheet-content">
           <div class="bottom-sheet-title">참가자 추가</div>
           
-          <!-- 회원/비회원 탭 -->
-          <div class="participant-type-tabs" style="display: flex; gap: 8px; margin-bottom: 16px;">
-            <button class="participant-type-tab active" data-type="member" onclick="selectParticipantType('member')" style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--primary); color: white; font-weight: 600; cursor: pointer;">회원</button>
-            <button class="participant-type-tab" data-type="guest" onclick="selectParticipantType('guest')" style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-primary); font-weight: 600; cursor: pointer;">비회원</button>
-          </div>
-          
-          <!-- 회원 선택 -->
-          <div class="input-group" id="member-select-group">
+          <!-- 회원 선택 (다중) -->
+          <div class="input-group">
             <label class="input-label">회원 선택</label>
-            <select class="input" id="participant-student"></select>
+            <div class="multi-select-container" id="member-multi-select">
+              <!-- 회원 목록 동적 생성 -->
+            </div>
+            <div class="selected-count" id="member-selected-count"></div>
           </div>
           
-          <!-- 비회원 선택 -->
-          <div class="input-group" id="guest-select-group" style="display: none;">
-            <label class="input-label">비회원 선택</label>
-            <select class="input" id="participant-guest"></select>
+          <!-- 비회원 선택 (토글) -->
+          <div class="input-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleGuestSection()">
+              <label class="input-label" style="margin-bottom: 0; cursor: pointer;">비회원 선택</label>
+              <span style="color: var(--text-tertiary); font-size: 13px;" id="guest-section-toggle">
+                <span id="guest-toggle-text">펼치기</span> <i class="fas fa-chevron-down" id="guest-toggle-icon"></i>
+              </span>
+            </div>
+            <div id="guest-section-content" style="display: none; margin-top: 8px;">
+              <div class="multi-select-container" id="guest-multi-select">
+                <!-- 비회원 목록 동적 생성 -->
+              </div>
+              <div class="selected-count" id="guest-selected-count"></div>
+            </div>
           </div>
           
           <div class="input-group">
@@ -2370,7 +2637,8 @@
               <option value="4">Level 4</option>
             </select>
           </div>
-          <button class="btn btn-primary" onclick="addParticipant()">추가하기</button>
+          <button class="btn btn-primary" onclick="addMultipleParticipants()">추가하기</button>
+          <button class="btn btn-secondary" style="margin-top: 8px;" onclick="closeBottomSheet('sheet-add-participant')">취소</button>
         </div>
       </div>
     </div>
@@ -2954,6 +3222,40 @@
         </div>
       </div>
     </div>
+    
+    <!-- 프렌젤 리그 화면 -->
+    <div class="screen" id="screen-frenzel-league">
+      <div class="header">
+        <button class="header-back" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title">🎯 프렌젤 리그</span>
+      </div>
+      <div class="container">
+        <!-- 리그 헤더 -->
+        <div class="frenzel-league-header">
+          <div class="frenzel-icon">🎯</div>
+          <div class="frenzel-title">프렌젤 마스터 도전</div>
+          <div class="frenzel-subtitle">매일 500번으로 프렌젤 완전정복</div>
+        </div>
+        
+        <!-- 탭 -->
+        <div class="frenzel-tabs">
+          <button class="frenzel-tab active" onclick="switchFrenzelTab('active')">🔥 도전 중</button>
+          <button class="frenzel-tab" onclick="switchFrenzelTab('graduated')">🎓 졸업생</button>
+        </div>
+        
+        <!-- 도전 중 탭 -->
+        <div id="frenzel-active-content">
+          <div id="frenzel-ranking-list">
+            <div class="loading"><div class="loading-spinner"></div></div>
+          </div>
+        </div>
+        
+        <!-- 졸업생 탭 -->
+        <div id="frenzel-graduated-content" style="display: none;">
+          <div id="frenzel-graduates-list"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -2972,6 +3274,7 @@
     let screenHistory = [];
     let skillsDonutChart = null;
     let recordsDonutChart = null;
+    let instructorSelectedDate = new Date().toISOString().split('T')[0]; // 강사 캘린더 선택 날짜
 
     // ==================== 초기화 ====================
     document.addEventListener('DOMContentLoaded', async function() {
@@ -3292,6 +3595,9 @@
       
       // 리그 랭크 로드
       await loadMyLeagueCards();
+      
+      // 프렌젤 리그 카드 로드
+      await loadFrenzelLeagueCard('frenzel-league-home');
     }
     
     // ==================== 리그 랭크 시스템 ====================
@@ -4130,6 +4436,7 @@
 
     function selectCalendarDate(dateStr) {
       selectedDate = dateStr;
+      instructorSelectedDate = dateStr; // 강사용 선택 날짜도 업데이트
       renderCalendar();
     }
 
@@ -4425,7 +4732,9 @@
         const s = allSchedules.find(x => x.schedule_id === scheduleId);
         if (s) {
           document.getElementById('schedule-date').value = s.date;
-          document.getElementById('schedule-time').value = s.time;
+          // 시간은 HH:MM 형식으로 변환 (HH:MM:SS인 경우 처리)
+          const timeValue = s.time ? s.time.substring(0, 5) : '';
+          document.getElementById('schedule-time').value = timeValue;
           document.getElementById('schedule-location').value = s.location;
           
           // DB에 저장된 종목 정보 로드 (NULL이면 빈 배열)
@@ -4434,8 +4743,9 @@
           resetScheduleFormChecks(savedDiscs, savedSkills);
         }
       } else {
-        // 새 일정 - 기본값
-        document.getElementById('schedule-date').value = '';
+        // 새 일정 - 캘린더에서 선택된 날짜 사용
+        const selectedDate = instructorSelectedDate || new Date().toISOString().split('T')[0];
+        document.getElementById('schedule-date').value = selectedDate;
         document.getElementById('schedule-time').value = '';
         document.getElementById('schedule-location').value = '';
         
@@ -4443,7 +4753,45 @@
         resetScheduleFormChecks(['STA', 'DYNB', 'FIM', 'CWTB'], []);
       }
       
+      // 자주 가는 장소 표시
+      updateFrequentLocations();
+      
       openBottomSheet('sheet-schedule');
+    }
+    
+    // 자주 가는 장소 업데이트
+    function updateFrequentLocations() {
+      const container = document.getElementById('frequent-locations');
+      
+      // allSchedules에서 장소 빈도 계산
+      const locationCounts = {};
+      for (const s of allSchedules) {
+        if (s.location) {
+          locationCounts[s.location] = (locationCounts[s.location] || 0) + 1;
+        }
+      }
+      
+      // 상위 3개 추출
+      const topLocations = Object.entries(locationCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([loc]) => loc);
+      
+      if (topLocations.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      
+      let html = '';
+      for (const loc of topLocations) {
+        html += `<button type="button" class="frequent-loc-btn" onclick="selectFrequentLocation('${loc}')">${loc}</button>`;
+      }
+      container.innerHTML = html;
+    }
+    
+    // 자주 가는 장소 선택
+    function selectFrequentLocation(location) {
+      document.getElementById('schedule-location').value = location;
     }
 
     async function saveSchedule() {
@@ -4652,43 +5000,85 @@
       }
     }
 
+    let allMembers = [];
+    let allGuests = [];
+    let selectedMembers = new Set();
+    let selectedGuests = new Set();
+    
     async function openAddParticipant() {
       try {
         // 회원(강습생) 목록 조회
         const { data: students, error: studentsError } = await db
           .from('users')
-          .select('user_id, name, phone')
+          .select('user_id, name, phone, in_training_level')
           .eq('user_type', '강습생')
           .order('name');
         
         if (studentsError) throw studentsError;
+        allMembers = students || [];
         
         // 비회원 목록 조회
         const { data: guests, error: guestsError } = await db
           .from('guests')
-          .select('guest_id, name, phone, cert_level')
+          .select('guest_id, name, phone, in_training_level')
           .order('name');
         
         if (guestsError) throw guestsError;
+        allGuests = guests || [];
         
-        // 회원 선택 드롭다운
-        const memberSelect = document.getElementById('participant-student');
-        let memberHtml = '<option value="">회원을 선택하세요</option>';
-        for (const s of (students || [])) {
-          memberHtml += `<option value="${s.user_id}">${s.name}${s.phone ? ' (' + s.phone + ')' : ''}</option>`;
+        // 이미 등록된 참가자 조회
+        const { data: existingRegs } = await db
+          .from('registrations')
+          .select('student_id, guest_id')
+          .eq('schedule_id', currentScheduleId);
+        
+        const existingMemberIds = new Set((existingRegs || []).filter(r => r.student_id).map(r => r.student_id));
+        const existingGuestIds = new Set((existingRegs || []).filter(r => r.guest_id).map(r => r.guest_id));
+        
+        // 선택 초기화
+        selectedMembers = new Set();
+        selectedGuests = new Set();
+        
+        // 회원 다중 선택 리스트 렌더링
+        const memberContainer = document.getElementById('member-multi-select');
+        let memberHtml = '';
+        for (const s of allMembers) {
+          const isExisting = existingMemberIds.has(s.user_id);
+          const levelText = s.in_training_level ? `Lv${s.in_training_level}` : '';
+          const existingText = isExisting ? ' · 등록됨' : '';
+          memberHtml += `<div class="multi-select-item ${isExisting ? 'disabled' : ''}" 
+            onclick="${isExisting ? '' : `toggleMemberSelect('${s.user_id}')`}"
+            id="member-item-${s.user_id}"
+            style="${isExisting ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+            <input type="checkbox" ${isExisting ? 'disabled' : ''} id="member-cb-${s.user_id}">
+            <span class="item-name">${s.name}${levelText ? ' · ' + levelText : ''}${existingText}</span>
+          </div>`;
         }
-        memberSelect.innerHTML = memberHtml;
+        memberContainer.innerHTML = memberHtml || '<div style="padding: 16px; text-align: center; color: var(--text-tertiary);">등록된 회원이 없습니다</div>';
         
-        // 비회원 선택 드롭다운
-        const guestSelect = document.getElementById('participant-guest');
-        let guestHtml = '<option value="">비회원을 선택하세요</option>';
-        for (const g of (guests || [])) {
-          guestHtml += `<option value="${g.guest_id}">${g.name}${g.phone ? ' (' + g.phone + ')' : ''}</option>`;
+        // 비회원 다중 선택 리스트 렌더링
+        const guestContainer = document.getElementById('guest-multi-select');
+        let guestHtml = '';
+        for (const g of allGuests) {
+          const isExisting = existingGuestIds.has(g.guest_id);
+          const existingText = isExisting ? ' · 등록됨' : '';
+          guestHtml += `<div class="multi-select-item ${isExisting ? 'disabled' : ''}" 
+            onclick="${isExisting ? '' : `toggleGuestSelect('${g.guest_id}')`}"
+            id="guest-item-${g.guest_id}"
+            style="${isExisting ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+            <input type="checkbox" ${isExisting ? 'disabled' : ''} id="guest-cb-${g.guest_id}">
+            <span class="item-name">${g.name} · 비회원${existingText}</span>
+          </div>`;
         }
-        guestSelect.innerHTML = guestHtml;
+        guestContainer.innerHTML = guestHtml || '<div style="padding: 20px; text-align: center; color: var(--text-tertiary);">등록된 비회원이 없습니다</div>';
         
-        // 기본값 설정 (회원 탭 선택)
-        selectParticipantType('member');
+        // 선택 카운트 초기화
+        updateSelectedCount();
+        
+        // 비회원 섹션 접기 초기화
+        document.getElementById('guest-section-content').style.display = 'none';
+        document.getElementById('guest-toggle-icon').className = 'fas fa-chevron-down';
+        document.getElementById('guest-toggle-text').textContent = '펼치기';
         
         openBottomSheet('sheet-add-participant');
       } catch (err) {
@@ -4697,29 +5087,74 @@
       }
     }
     
-    function selectParticipantType(type) {
-      // 탭 활성화 상태 변경 + 스타일 업데이트
-      document.querySelectorAll('.participant-type-tab').forEach(tab => {
-        const isActive = tab.dataset.type === type;
-        tab.classList.toggle('active', isActive);
-        if (isActive) {
-          tab.style.background = 'var(--primary)';
-          tab.style.color = 'white';
-          tab.style.borderColor = 'var(--primary)';
+    function toggleMemberSelect(userId) {
+      if (selectedMembers.has(userId)) {
+        selectedMembers.delete(userId);
+      } else {
+        selectedMembers.add(userId);
+      }
+      
+      const item = document.getElementById(`member-item-${userId}`);
+      const checkbox = document.getElementById(`member-cb-${userId}`);
+      if (item && checkbox) {
+        item.classList.toggle('selected', selectedMembers.has(userId));
+        checkbox.checked = selectedMembers.has(userId);
+      }
+      updateSelectedCount();
+    }
+    
+    function toggleGuestSelect(guestId) {
+      if (selectedGuests.has(guestId)) {
+        selectedGuests.delete(guestId);
+      } else {
+        selectedGuests.add(guestId);
+      }
+      
+      const item = document.getElementById(`guest-item-${guestId}`);
+      const checkbox = document.getElementById(`guest-cb-${guestId}`);
+      if (item && checkbox) {
+        item.classList.toggle('selected', selectedGuests.has(guestId));
+        checkbox.checked = selectedGuests.has(guestId);
+      }
+      updateSelectedCount();
+    }
+    
+    function updateSelectedCount() {
+      const memberCount = selectedMembers.size;
+      const guestCount = selectedGuests.size;
+      
+      document.getElementById('member-selected-count').textContent = 
+        memberCount > 0 ? `${memberCount}명 선택됨` : '';
+      document.getElementById('guest-selected-count').textContent = 
+        guestCount > 0 ? `${guestCount}명 선택됨` : '';
+      
+      // 비회원 선택됐으면 토글 텍스트에 표시
+      const toggleText = document.getElementById('guest-toggle-text');
+      const guestContent = document.getElementById('guest-section-content');
+      if (toggleText && guestContent) {
+        if (guestContent.style.display === 'none') {
+          toggleText.textContent = guestCount > 0 ? `${guestCount}명 선택됨` : '펼치기';
         } else {
-          tab.style.background = 'var(--surface)';
-          tab.style.color = 'var(--text-primary)';
-          tab.style.borderColor = 'var(--border)';
+          toggleText.textContent = '접기';
         }
-      });
+      }
+    }
+    
+    function toggleGuestSection() {
+      const content = document.getElementById('guest-section-content');
+      const icon = document.getElementById('guest-toggle-icon');
+      const toggleText = document.getElementById('guest-toggle-text');
+      const guestCount = selectedGuests.size;
       
-      // 해당 드롭다운 표시/숨김
-      document.getElementById('member-select-group').style.display = type === 'member' ? 'block' : 'none';
-      document.getElementById('guest-select-group').style.display = type === 'guest' ? 'block' : 'none';
-      
-      // 선택 초기화
-      document.getElementById('participant-student').value = '';
-      document.getElementById('participant-guest').value = '';
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.className = 'fas fa-chevron-up';
+        toggleText.textContent = '접기';
+      } else {
+        content.style.display = 'none';
+        icon.className = 'fas fa-chevron-down';
+        toggleText.textContent = guestCount > 0 ? `${guestCount}명 선택됨` : '펼치기';
+      }
     }
 
     function selectPurpose(btn) {
@@ -4728,81 +5163,91 @@
       document.getElementById('lesson-level-group').style.display = btn.dataset.purpose === '강습' ? 'block' : 'none';
     }
 
-    async function addParticipant() {
-      const activeTab = document.querySelector('.participant-type-tab.active');
-      const participantType = activeTab?.dataset.type || 'member';
+    async function addMultipleParticipants() {
+      const totalSelected = selectedMembers.size + selectedGuests.size;
       
-      const studentId = participantType === 'member' ? document.getElementById('participant-student').value : null;
-      const guestId = participantType === 'guest' ? document.getElementById('participant-guest').value : null;
+      if (totalSelected === 0) {
+        showToast('참가자를 선택해주세요');
+        return;
+      }
       
       const purposeBtn = document.querySelector('#sheet-add-participant .purpose-btn.selected');
       const purpose = purposeBtn.dataset.purpose;
       const level = purpose === '강습' ? parseInt(document.getElementById('participant-level').value) : null;
       
-      if (!studentId && !guestId) {
-        showToast(participantType === 'member' ? '회원을 선택해주세요' : '비회원을 선택해주세요');
-        return;
-      }
-      
       try {
-        // session_no 계산: 강습 목적이고 level이 2 또는 3인 경우
-        let sessionNo = null;
-        if (purpose === '강습' && (level === 2 || level === 3)) {
-          // 해당 참가자의 이전 강습 참여 횟수 조회
-          let query = db
-            .from('registrations')
-            .select('session_no')
-            .eq('purpose', '강습')
-            .eq('lesson_level', level);
-          
-          if (studentId) {
-            query = query.eq('student_id', studentId);
-          } else {
-            query = query.eq('guest_id', guestId);
+        let addedCount = 0;
+        
+        // 회원 추가
+        for (const userId of selectedMembers) {
+          // session_no 계산
+          let sessionNo = null;
+          if (purpose === '강습' && (level === 2 || level === 3)) {
+            const { data: prevRegs } = await db
+              .from('registrations')
+              .select('session_no')
+              .eq('student_id', userId)
+              .eq('purpose', '강습')
+              .eq('lesson_level', level);
+            
+            const maxSessionNo = (prevRegs || []).reduce((max, r) => {
+              const sn = r.session_no || 0;
+              return sn > max ? sn : max;
+            }, 0);
+            sessionNo = maxSessionNo + 1;
           }
           
-          const { data: prevRegs, error: prevError } = await query;
-          
-          if (prevError) throw prevError;
-          
-          // 기존 최대 session_no 찾기 (없으면 0)
-          const maxSessionNo = (prevRegs || []).reduce((max, r) => {
-            const sn = r.session_no || 0;
-            return sn > max ? sn : max;
-          }, 0);
-          
-          sessionNo = maxSessionNo + 1;
+          const regId = 'REG_' + userId + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+          await db.from('registrations').insert({
+            reg_id: regId,
+            schedule_id: currentScheduleId,
+            student_id: userId,
+            purpose,
+            lesson_level: level,
+            attendance: 'Y',
+            session_no: sessionNo
+          });
+          addedCount++;
         }
         
-        const regId = 'REG_' + (studentId || guestId) + '_' + Date.now();
-        const insertData = {
-          reg_id: regId,
-          schedule_id: currentScheduleId,
-          purpose,
-          lesson_level: level,
-          attendance: 'Y',
-          session_no: sessionNo
-        };
-        
-        if (studentId) {
-          insertData.student_id = studentId;
-        } else {
-          insertData.guest_id = guestId;
+        // 비회원 추가
+        for (const guestId of selectedGuests) {
+          // session_no 계산
+          let sessionNo = null;
+          if (purpose === '강습' && (level === 2 || level === 3)) {
+            const { data: prevRegs } = await db
+              .from('registrations')
+              .select('session_no')
+              .eq('guest_id', guestId)
+              .eq('purpose', '강습')
+              .eq('lesson_level', level);
+            
+            const maxSessionNo = (prevRegs || []).reduce((max, r) => {
+              const sn = r.session_no || 0;
+              return sn > max ? sn : max;
+            }, 0);
+            sessionNo = maxSessionNo + 1;
+          }
+          
+          const regId = 'REG_' + guestId + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+          await db.from('registrations').insert({
+            reg_id: regId,
+            schedule_id: currentScheduleId,
+            guest_id: guestId,
+            purpose,
+            lesson_level: level,
+            attendance: 'Y',
+            session_no: sessionNo
+          });
+          addedCount++;
         }
         
-        const { error } = await db
-          .from('registrations')
-          .insert(insertData);
-        
-        if (error) throw error;
-        
-        const sessionMsg = sessionNo ? ` (${sessionNo}회차)` : '';
-        showToast(`참가자가 추가되었습니다${sessionMsg}`);
+        showToast(`${addedCount}명의 참가자가 추가되었습니다`);
         closeBottomSheet('sheet-add-participant');
         await loadParticipants();
       } catch (err) {
         console.error('참가자 추가 오류:', err);
-        showToast('추가 실패: ' + (err.message || '이미 등록된 참가자일 수 있습니다'));
+        showToast('추가 실패: ' + (err.message || '오류가 발생했습니다'));
       }
     }
 
@@ -6883,6 +7328,284 @@
     let allDryTrainings = [];
     let myDryParticipations = [];
     let currentDryId = null;
+    let frenzelTrainingId = null; // 프렌젤 연습 500회 dry_id
+    
+    // ==================== 프렌젤 리그 ====================
+    
+    // 프렌젤 리그 카드 로드 (홈, 트레이닝 탭)
+    async function loadFrenzelLeagueCard(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      
+      try {
+        // 프렌젤 연습 트레이닝 찾기
+        const { data: frenzelTraining } = await db
+          .from('dry_trainings')
+          .select('*')
+          .ilike('name', '%프렌젤%')
+          .single();
+        
+        if (!frenzelTraining) {
+          container.innerHTML = '';
+          return;
+        }
+        
+        frenzelTrainingId = frenzelTraining.dry_id;
+        
+        const participants = frenzelTraining.participants || [];
+        const graduates = frenzelTraining.graduates || [];
+        
+        // 내가 참여 중인지 확인
+        const isParticipant = participants.includes(currentUser.user_id);
+        const isGraduate = graduates.includes(currentUser.user_id);
+        
+        // 내 점수 계산
+        let myScore = 0;
+        let myCount = 0;
+        let myAvgRate = 0;
+        
+        if (isParticipant || isGraduate) {
+          const { data: myRecords } = await db
+            .from('dry_training_records')
+            .select('achievement')
+            .eq('dry_id', frenzelTrainingId)
+            .eq('user_id', currentUser.user_id);
+          
+          if (myRecords && myRecords.length > 0) {
+            myCount = myRecords.length;
+            let totalScore = 0;
+            myRecords.forEach((r, idx) => {
+              totalScore += (idx + 1) * (r.achievement * 100);
+            });
+            myScore = Math.round(totalScore);
+            myAvgRate = Math.round(myRecords.reduce((sum, r) => sum + r.achievement, 0) / myCount * 100);
+          }
+        }
+        
+        container.innerHTML = `
+          <div class="frenzel-league-card" onclick="openFrenzelLeague()">
+            <div class="frenzel-league-card-header">
+              <div class="frenzel-league-card-icon">🎯</div>
+              <div>
+                <div class="frenzel-league-card-title">프렌젤 리그</div>
+                <div class="frenzel-league-card-subtitle">${isGraduate ? '🎓 졸업!' : isParticipant ? '도전 중' : '도전해보세요!'}</div>
+              </div>
+            </div>
+            <div class="frenzel-league-card-stats">
+              <div class="frenzel-league-card-stat"><i class="fas fa-fire"></i> ${participants.length}명 도전 중</div>
+              <div class="frenzel-league-card-stat"><i class="fas fa-graduation-cap"></i> ${graduates.length}명 졸업</div>
+              ${myScore > 0 ? `<div class="frenzel-league-card-stat"><i class="fas fa-star"></i> 내점수 ${myScore}점</div>` : ''}
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        console.error('프렌젤 리그 카드 로드 오류:', err);
+        container.innerHTML = '';
+      }
+    }
+    
+    // 프렌젤 리그 화면 열기
+    async function openFrenzelLeague() {
+      showScreen('screen-frenzel-league');
+      await loadFrenzelRanking();
+    }
+    
+    // 프렌젤 탭 전환
+    function switchFrenzelTab(tab) {
+      document.querySelectorAll('.frenzel-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.frenzel-tab[onclick*="${tab}"]`).classList.add('active');
+      
+      document.getElementById('frenzel-active-content').style.display = tab === 'active' ? 'block' : 'none';
+      document.getElementById('frenzel-graduated-content').style.display = tab === 'graduated' ? 'block' : 'none';
+      
+      if (tab === 'graduated') {
+        loadFrenzelGraduates();
+      }
+    }
+    
+    // 프렌젤 랭킹 로드
+    async function loadFrenzelRanking() {
+      const container = document.getElementById('frenzel-ranking-list');
+      container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+      
+      try {
+        // 프렌젤 트레이닝 찾기
+        const { data: frenzelTraining } = await db
+          .from('dry_trainings')
+          .select('*')
+          .ilike('name', '%프렌젤%')
+          .single();
+        
+        if (!frenzelTraining) {
+          container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">프렌젤 트레이닝이 없습니다</div>';
+          return;
+        }
+        
+        frenzelTrainingId = frenzelTraining.dry_id;
+        const participants = frenzelTraining.participants || [];
+        
+        if (participants.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">아직 도전자가 없습니다</div>';
+          return;
+        }
+        
+        // 참여자들의 기록 조회
+        const { data: records } = await db
+          .from('dry_training_records')
+          .select('user_id, achievement')
+          .eq('dry_id', frenzelTrainingId);
+        
+        // 참여자 정보 조회
+        const { data: users } = await db
+          .from('users')
+          .select('user_id, name')
+          .in('user_id', participants);
+        
+        const userMap = {};
+        (users || []).forEach(u => userMap[u.user_id] = u.name);
+        
+        // 점수 계산
+        const scores = {};
+        participants.forEach(pid => {
+          const userRecords = (records || []).filter(r => r.user_id === pid);
+          let totalScore = 0;
+          userRecords.forEach((r, idx) => {
+            totalScore += (idx + 1) * (r.achievement * 100);
+          });
+          
+          const count = userRecords.length;
+          const avgRate = count > 0 ? Math.round(userRecords.reduce((sum, r) => sum + r.achievement, 0) / count * 100) : 0;
+          
+          scores[pid] = {
+            score: Math.round(totalScore),
+            count,
+            avgRate,
+            name: userMap[pid] || '알 수 없음'
+          };
+        });
+        
+        // 점수순 정렬
+        const sortedParticipants = participants.sort((a, b) => scores[b].score - scores[a].score);
+        
+        let html = '';
+        sortedParticipants.forEach((pid, idx) => {
+          const s = scores[pid];
+          const isMe = pid === currentUser.user_id;
+          const rankClass = idx === 0 ? 'top1' : idx === 1 ? 'top2' : idx === 2 ? 'top3' : '';
+          
+          html += `
+            <div class="frenzel-ranking-item ${isMe ? 'me' : ''}">
+              <div class="frenzel-rank ${rankClass}">${idx + 1}</div>
+              <div class="frenzel-info">
+                <div class="frenzel-name">${s.name}${isMe ? ' (나)' : ''}</div>
+                <div class="frenzel-detail">${s.count}회 참여</div>
+              </div>
+              <div class="frenzel-score">
+                <div class="frenzel-score-value">${s.score}점</div>
+                <div class="frenzel-score-detail">${s.count}회 × ${s.avgRate}%</div>
+              </div>
+            </div>
+          `;
+        });
+        
+        container.innerHTML = html || '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">도전자가 없습니다</div>';
+        
+      } catch (err) {
+        console.error('프렌젤 랭킹 로드 오류:', err);
+        container.innerHTML = '<div style="text-align: center; color: var(--error); padding: 20px;">랭킹을 불러오지 못했습니다</div>';
+      }
+    }
+    
+    // 프렌젤 졸업생 로드
+    async function loadFrenzelGraduates() {
+      const container = document.getElementById('frenzel-graduates-list');
+      container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+      
+      try {
+        const { data: frenzelTraining } = await db
+          .from('dry_trainings')
+          .select('graduates')
+          .ilike('name', '%프렌젤%')
+          .single();
+        
+        const graduates = frenzelTraining?.graduates || [];
+        
+        if (graduates.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">아직 졸업생이 없습니다<br><span style="font-size: 13px;">🎯 첫 번째 졸업생이 되어보세요!</span></div>';
+          return;
+        }
+        
+        // 졸업생 정보 조회
+        const { data: users } = await db
+          .from('users')
+          .select('user_id, name')
+          .in('user_id', graduates);
+        
+        const userMap = {};
+        (users || []).forEach(u => userMap[u.user_id] = u.name);
+        
+        let html = '';
+        graduates.forEach(gid => {
+          const name = userMap[gid] || '알 수 없음';
+          const isMe = gid === currentUser.user_id;
+          
+          html += `
+            <div class="graduate-item ${isMe ? 'me' : ''}">
+              <div class="graduate-icon">🎓</div>
+              <div class="graduate-info">
+                <div class="graduate-name">${name}${isMe ? ' (나)' : ''}</div>
+                <div class="graduate-date">프렌젤 마스터</div>
+              </div>
+            </div>
+          `;
+        });
+        
+        container.innerHTML = html;
+        
+      } catch (err) {
+        console.error('프렌젤 졸업생 로드 오류:', err);
+        container.innerHTML = '<div style="text-align: center; color: var(--error); padding: 20px;">졸업생을 불러오지 못했습니다</div>';
+      }
+    }
+    
+    // 강사: 프렌젤 졸업 처리
+    async function graduateFrenzelMember(userId) {
+      if (!confirm('이 회원을 프렌젤 마스터로 졸업 처리하시겠습니까?')) return;
+      
+      try {
+        // 현재 데이터 조회
+        const { data: training } = await db
+          .from('dry_trainings')
+          .select('participants, graduates')
+          .eq('dry_id', frenzelTrainingId)
+          .single();
+        
+        const participants = training.participants || [];
+        const graduates = training.graduates || [];
+        
+        // participants에서 제거, graduates에 추가
+        const newParticipants = participants.filter(p => p !== userId);
+        const newGraduates = [...graduates, userId];
+        
+        const { error } = await db
+          .from('dry_trainings')
+          .update({
+            participants: newParticipants,
+            graduates: newGraduates
+          })
+          .eq('dry_id', frenzelTrainingId);
+        
+        if (error) throw error;
+        
+        showToast('졸업 처리되었습니다! 🎓');
+        loadFrenzelRanking();
+        
+      } catch (err) {
+        console.error('졸업 처리 오류:', err);
+        showToast('졸업 처리 실패');
+      }
+    }
+    
 
     // 강사: 드라이 트레이닝 관리 로드
     async function loadDryManage() {
@@ -7436,6 +8159,9 @@
 
     // 학생: 드라이 트레이닝 목록 로드
     async function loadDryTraining() {
+      // 프렌젤 리그 카드 로드
+      await loadFrenzelLeagueCard('frenzel-league-training');
+      
       try {
         // 모든 트레이닝 조회
         const { data: trainings } = await db
@@ -7740,7 +8466,7 @@
         const { data: trainings } = await db
           .from('dry_trainings')
           .select('*, users!dry_trainings_instructor_id_fkey(name)')
-          .limit(3);
+          .limit(5);
         
         const container = document.getElementById('home-dry-training');
         
@@ -7756,14 +8482,9 @@
           t.participants && t.participants.includes(currentUser.user_id)
         );
         
-        // 참여하지 않은 트레이닝
-        const otherTrainings = trainings.filter(t => 
-          !t.participants || !t.participants.includes(currentUser.user_id)
-        );
-        
         let html = '';
         
-        // 참여한 트레이닝이 있으면 체크 버튼 표시
+        // 참여한 트레이닝만 표시
         if (myTrainings.length > 0) {
           // 오늘 기록 확인
           const today = new Date().toISOString().split('T')[0];
@@ -7785,17 +8506,11 @@
               }
             </div>`;
           }
-        }
-        
-        // 참여하지 않은 트레이닝은 renderDryCard 사용 (참여하기 버튼)
-        for (const t of otherTrainings) {
-          html += renderDryCard(t, false);
-        }
-        
-        // 트레이닝이 하나도 없으면 메시지 표시
-        if (html === '') {
+        } else {
+          // 참여 중인 트레이닝이 없으면 안내 메시지
           html = `<div class="card" style="text-align: center; color: var(--text-secondary); padding: 20px;">
-            등록된 드라이 트레이닝이 없습니다
+            참여 중인 드라이 트레이닝이 없습니다<br>
+            <span style="font-size: 12px;">트레이닝 탭에서 참여해보세요!</span>
           </div>`;
         }
         
