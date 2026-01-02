@@ -1416,6 +1416,8 @@
       color: var(--text-secondary);
       line-height: 1.6;
       margin-bottom: 16px;
+      white-space: pre-line;
+      padding-left: 16px;
     }
     .swipe-card-tips {
       background: var(--primary-light);
@@ -1423,12 +1425,17 @@
       padding: 14px 16px;
       font-size: 14px;
       color: var(--primary);
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
+    }
+    .swipe-card-tips .tips-header {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .swipe-card-tips .tips-content {
+      white-space: pre-line;
+      line-height: 1.6;
     }
     .swipe-card-tips i {
-      margin-top: 2px;
+      margin-right: 4px;
     }
     
     .swipe-controls {
@@ -1533,6 +1540,18 @@
     .league-card-record {
       font-size: 11px;
       color: var(--text-tertiary);
+    }
+    .league-card.frenzel-card {
+      background: linear-gradient(135deg, #E8E0FF 0%, #D4C4FF 100%);
+    }
+    .league-card.frenzel-card .league-card-disc {
+      color: #7C3AED;
+    }
+    .league-card.frenzel-card .league-card-tier {
+      color: #5B21B6;
+    }
+    .league-card.frenzel-card .league-card-record {
+      color: #7C3AED;
     }
     
     /* 리그 랭킹 화면 */
@@ -1785,6 +1804,13 @@
       background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
       border: 2px solid #667eea;
     }
+    .frenzel-ranking-item.today-done {
+      background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+    }
+    .frenzel-ranking-item.me.today-done {
+      background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+      border: 2px solid #F59E0B;
+    }
     .frenzel-rank {
       width: 28px;
       height: 28px;
@@ -2018,9 +2044,6 @@
         <div class="league-cards" id="my-league-cards">
           <div class="loading"><div class="loading-spinner"></div></div>
         </div>
-        
-        <!-- 프렌젤 리그 카드 -->
-        <div id="frenzel-league-home" style="margin-top: 8px;"></div>
         
         <div class="section-title" style="margin-top: 24px;"><i class="fas fa-calendar"></i> 다가오는 일정</div>
         <div id="upcoming-schedules"></div>
@@ -2441,6 +2464,29 @@
     </div>
 
     <!-- 드라이 트레이닝 상세 -->
+    <div class="screen swipe-screen" id="screen-dry-detail">
+      <div class="header">
+        <button class="header-back" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+        <span class="header-title" id="dry-detail-title">트레이닝 상세</span>
+        <span class="header-action" id="dry-step-counter" style="font-size: 14px; color: var(--text-secondary);">1/3</span>
+      </div>
+      
+      <!-- 스와이프 컨테이너 -->
+      <div class="swipe-container" id="dry-swipe-container">
+        <div class="swipe-wrapper" id="dry-swipe-wrapper">
+          <!-- 스텝 카드들이 여기에 동적으로 생성됨 -->
+        </div>
+      </div>
+      <div class="swipe-controls">
+        <div class="swipe-indicators" id="dry-swipe-indicators">
+          <!-- 페이지 인디케이터 -->
+        </div>
+        <div class="swipe-buttons">
+          <button class="swipe-btn" onclick="drySwipeStep(-1)"><i class="fas fa-chevron-left"></i> 이전</button>
+          <button class="swipe-btn" onclick="drySwipeStep(1)">다음 <i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
 
     <!-- 나의 기록 -->
     <div class="screen" id="screen-my-records">
@@ -3593,11 +3639,8 @@
       // 드라이 트레이닝 로드
       await loadHomeDryTraining();
       
-      // 리그 랭크 로드
+      // 리그 랭크 로드 (프렌젤 리그 포함)
       await loadMyLeagueCards();
-      
-      // 프렌젤 리그 카드 로드
-      await loadFrenzelLeagueCard('frenzel-league-home');
     }
     
     // ==================== 리그 랭크 시스템 ====================
@@ -3689,7 +3732,7 @@
           const value = myBestRecords[disc] || 0;
           const tier = calculateTier(disc, value);
           const tierInfo = getTierInfo(tier);
-          const displayDisc = disc === 'DYNB' ? 'DYN' : disc;
+          const displayDisc = disc;
           
           html += `<div class="league-card tier-${tier}" onclick="openLeagueRanking('${disc}', ${tier})">
             <div class="league-card-disc">${displayDisc}</div>
@@ -3698,6 +3741,10 @@
             <div class="league-card-record">${formatRecordValue(disc, value)}</div>
           </div>`;
         }
+        
+        // 프렌젤 리그 카드 추가
+        const frenzelCard = await renderFrenzelLeagueCard();
+        html += frenzelCard;
         
         container.innerHTML = html;
       } catch (err) {
@@ -5794,7 +5841,16 @@
         let bestHtml = '';
         for (const d of disciplines) {
           const best = bestByDiscipline[d];
-          const val = best ? (d === 'STA' ? best + 's' : best + 'm') : '-';
+          let val = '-';
+          if (best) {
+            if (d === 'STA') {
+              const min = Math.floor(best / 60);
+              const sec = Math.round(best % 60);
+              val = `${min}'${sec.toString().padStart(2, '0')}"`;
+            } else {
+              val = best + 'm';
+            }
+          }
           bestHtml += `<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--divider);">
             <span style="font-weight: 500;">${d}</span>
             <span style="color: var(--primary); font-weight: 600;">${val}</span>
@@ -7289,9 +7345,37 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: { 
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const val = context.raw;
+                  if (currentChartDiscipline === 'STA') {
+                    const min = Math.floor(val / 60);
+                    const sec = Math.round(val % 60);
+                    return `${min}'${sec.toString().padStart(2, '0')}"`;
+                  }
+                  return val + 'm';
+                }
+              }
+            }
+          },
           scales: {
-            y: { beginAtZero: true, grid: { color: '#E5E8EB' } },
+            y: { 
+              beginAtZero: true, 
+              grid: { color: '#E5E8EB' },
+              ticks: {
+                callback: function(value) {
+                  if (currentChartDiscipline === 'STA') {
+                    const min = Math.floor(value / 60);
+                    const sec = Math.round(value % 60);
+                    return `${min}'${sec.toString().padStart(2, '0')}"`;
+                  }
+                  return value + 'm';
+                }
+              }
+            },
             x: { grid: { display: false } }
           }
         }
@@ -7333,6 +7417,82 @@
     // ==================== 프렌젤 리그 ====================
     
     // 프렌젤 리그 카드 로드 (홈, 트레이닝 탭)
+    // 프렌젤 리그 카드 렌더링 (나의 리그 카드 스타일)
+    async function renderFrenzelLeagueCard() {
+      try {
+        // 프렌젤 연습 트레이닝 찾기
+        const { data: frenzelTraining } = await db
+          .from('dry_trainings')
+          .select('*')
+          .ilike('name', '%프렌젤%')
+          .single();
+        
+        if (!frenzelTraining) {
+          return '';
+        }
+        
+        frenzelTrainingId = frenzelTraining.dry_id;
+        
+        const participants = frenzelTraining.participants || [];
+        const graduates = frenzelTraining.graduates || [];
+        
+        // 내가 참여 중인지 확인
+        const isParticipant = participants.includes(currentUser.user_id);
+        const isGraduate = graduates.includes(currentUser.user_id);
+        
+        // 내 기록 계산
+        let myCount = 0;
+        let myAvgRate = 0;
+        let totalPractice = 0; // 총 연습횟수 (참여횟수 × 달성률 × 500)
+        
+        if (isParticipant || isGraduate) {
+          const { data: myRecords } = await db
+            .from('dry_training_records')
+            .select('achievement')
+            .eq('dry_id', frenzelTrainingId)
+            .eq('user_id', currentUser.user_id);
+          
+          if (myRecords && myRecords.length > 0) {
+            myCount = myRecords.length;
+            myAvgRate = myRecords.reduce((sum, r) => sum + r.achievement, 0) / myCount;
+            totalPractice = Math.round(myCount * myAvgRate * 500);
+          }
+        }
+        
+        // 현재 이퀄 상태에 따라 도전 중인 단계 표시
+        // 발살바 → 프렌젤 도전, 프렌젤 → 헤드퍼스트 도전, 헤드퍼스트 → 완료
+        const eqStatus = currentUser.equalization || 'valsalva';
+        let challengeDisplay = '프렌젤'; // 기본: 발살바 → 프렌젤 도전
+        let practiceDisplay = '';
+        
+        if (eqStatus === 'frenzel') {
+          challengeDisplay = '헤드퍼스트';
+        } else if (eqStatus === 'headfirst_frenzel') {
+          challengeDisplay = '마스터 🎓';
+        }
+        
+        // 총 연습횟수 또는 현재 상태 표시
+        if (eqStatus === 'headfirst_frenzel') {
+          practiceDisplay = '완료!';
+        } else if (totalPractice > 0) {
+          practiceDisplay = totalPractice.toLocaleString() + '회';
+        } else {
+          practiceDisplay = '도전하기';
+        }
+        
+        return `<div class="league-card frenzel-card" onclick="openFrenzelLeague()">
+          <div class="league-card-disc">이퀄라이징</div>
+          <div class="league-card-emoji">🎯</div>
+          <div class="league-card-tier">${challengeDisplay}</div>
+          <div class="league-card-record">${practiceDisplay}</div>
+        </div>`;
+      } catch (err) {
+        console.error('프렌젤 리그 카드 로드 오류:', err);
+        return '';
+      }
+    }
+    
+    // 프렌젤 리그 카드 로드 (트레이닝 탭용)
     async function loadFrenzelLeagueCard(containerId) {
       const container = document.getElementById(containerId);
       if (!container) return;
@@ -7373,12 +7533,8 @@
           
           if (myRecords && myRecords.length > 0) {
             myCount = myRecords.length;
-            let totalScore = 0;
-            myRecords.forEach((r, idx) => {
-              totalScore += (idx + 1) * (r.achievement * 100);
-            });
-            myScore = Math.round(totalScore);
             myAvgRate = Math.round(myRecords.reduce((sum, r) => sum + r.achievement, 0) / myCount * 100);
+            myScore = myCount * myAvgRate;
           }
         }
         
@@ -7449,11 +7605,12 @@
           return;
         }
         
-        // 참여자들의 기록 조회
+        // 참여자들의 기록 조회 (날짜 포함)
         const { data: records } = await db
           .from('dry_training_records')
-          .select('user_id, achievement')
-          .eq('dry_id', frenzelTrainingId);
+          .select('user_id, achievement, date')
+          .eq('dry_id', frenzelTrainingId)
+          .order('date', { ascending: true });
         
         // 참여자 정보 조회
         const { data: users } = await db
@@ -7464,23 +7621,51 @@
         const userMap = {};
         (users || []).forEach(u => userMap[u.user_id] = u.name);
         
+        const today = new Date().toISOString().split('T')[0];
+        
+        // 연속 참여일 계산 함수
+        function calculateStreak(userRecords) {
+          if (!userRecords || userRecords.length === 0) return 0;
+          
+          // 날짜별로 정렬 (최신순)
+          const dates = [...new Set(userRecords.map(r => r.date))].sort().reverse();
+          
+          // 오늘 참여 안했으면 0
+          if (dates[0] !== today) return 0;
+          
+          let streak = 1;
+          for (let i = 1; i < dates.length; i++) {
+            const prevDate = new Date(dates[i-1]);
+            const currDate = new Date(dates[i]);
+            const diffDays = (prevDate - currDate) / (1000 * 60 * 60 * 24);
+            
+            if (diffDays === 1) {
+              streak++;
+            } else {
+              break;
+            }
+          }
+          return streak;
+        }
+        
         // 점수 계산
         const scores = {};
         participants.forEach(pid => {
           const userRecords = (records || []).filter(r => r.user_id === pid);
-          let totalScore = 0;
-          userRecords.forEach((r, idx) => {
-            totalScore += (idx + 1) * (r.achievement * 100);
-          });
           
           const count = userRecords.length;
           const avgRate = count > 0 ? Math.round(userRecords.reduce((sum, r) => sum + r.achievement, 0) / count * 100) : 0;
+          const totalScore = count * avgRate;
+          const todayDone = userRecords.some(r => r.date === today);
+          const streak = calculateStreak(userRecords);
           
           scores[pid] = {
-            score: Math.round(totalScore),
+            score: totalScore,
             count,
             avgRate,
-            name: userMap[pid] || '알 수 없음'
+            name: userMap[pid] || '알 수 없음',
+            todayDone,
+            streak
           };
         });
         
@@ -7493,12 +7678,21 @@
           const isMe = pid === currentUser.user_id;
           const rankClass = idx === 0 ? 'top1' : idx === 1 ? 'top2' : idx === 2 ? 'top3' : '';
           
+          // 불꽃 이모지 (최대 3개)
+          const fireEmoji = s.streak > 0 ? '🔥'.repeat(Math.min(s.streak, 3)) : '';
+          
+          // 연속 참여 텍스트
+          const streakText = s.streak > 1 ? ` · ${s.streak}일 연속!` : '';
+          
+          // 오늘 참여 시 배경색 클래스
+          const todayClass = s.todayDone ? 'today-done' : '';
+          
           html += `
-            <div class="frenzel-ranking-item ${isMe ? 'me' : ''}">
+            <div class="frenzel-ranking-item ${isMe ? 'me' : ''} ${todayClass}">
               <div class="frenzel-rank ${rankClass}">${idx + 1}</div>
               <div class="frenzel-info">
-                <div class="frenzel-name">${s.name}${isMe ? ' (나)' : ''}</div>
-                <div class="frenzel-detail">${s.count}회 참여</div>
+                <div class="frenzel-name">${s.name}${isMe ? ' (나)' : ''} ${fireEmoji}</div>
+                <div class="frenzel-detail">${s.count}회 참여${streakText}</div>
               </div>
               <div class="frenzel-score">
                 <div class="frenzel-score-value">${s.score}점</div>
@@ -7606,6 +7800,161 @@
       }
     }
     
+    // ==================== 드라이 트레이닝 상세 ====================
+    let currentDryDetailId = null;
+    let drySteps = [];
+    let currentDryStepIndex = 0;
+    
+    // 드라이 트레이닝 상세 화면 열기
+    async function openDryDetail(dryId) {
+      currentDryDetailId = dryId;
+      currentDryStepIndex = 0;
+      showScreen('screen-dry-detail');
+      
+      try {
+        // 트레이닝 정보 조회
+        const { data: training } = await db
+          .from('dry_trainings')
+          .select('*')
+          .eq('dry_id', dryId)
+          .single();
+        
+        if (training) {
+          document.getElementById('dry-detail-title').textContent = training.name;
+        }
+        
+        // 스텝 정보 조회
+        const { data: steps } = await db
+          .from('dry_training_steps')
+          .select('*')
+          .eq('dry_id', dryId)
+          .order('step_order', { ascending: true });
+        
+        drySteps = steps || [];
+        
+        // 스와이프 UI 렌더링
+        renderDrySteps();
+        
+      } catch (err) {
+        console.error('드라이 트레이닝 상세 로드 오류:', err);
+        showToast('로드 실패');
+      }
+    }
+    
+    // 스텝 렌더링
+    function renderDrySteps() {
+      const wrapper = document.getElementById('dry-swipe-wrapper');
+      const indicators = document.getElementById('dry-swipe-indicators');
+      
+      if (drySteps.length === 0) {
+        wrapper.innerHTML = `
+          <div class="swipe-slide">
+            <div class="swipe-card" style="display: flex; align-items: center; justify-content: center; min-height: 300px; flex-direction: column; color: var(--text-secondary);">
+              <i class="fas fa-info-circle" style="font-size: 48px; margin-bottom: 16px;"></i>
+              <p>상세 연습 방법이 아직 등록되지 않았습니다</p>
+            </div>
+          </div>
+        `;
+        indicators.innerHTML = '';
+        document.getElementById('dry-step-counter').textContent = '';
+        return;
+      }
+      
+      // 스텝 카드 생성
+      let html = '';
+      drySteps.forEach((step, idx) => {
+        html += `
+          <div class="swipe-slide">
+            <div class="swipe-card">
+              <div class="swipe-card-image">
+                ${step.image_url 
+                  ? `<img src="${step.image_url}" alt="${step.title}">`
+                  : `<i class="fas fa-image placeholder"></i>`
+                }
+              </div>
+              <div class="swipe-card-content">
+                <div class="swipe-card-title">
+                  <span class="swipe-card-step">${idx + 1}</span>
+                  ${step.title}
+                </div>
+                ${step.description ? `<div class="swipe-card-desc">${step.description}</div>` : ''}
+                ${step.tips ? `<div class="swipe-card-tips"><div class="tips-header"><i class="fas fa-lightbulb"></i> Tips</div><div class="tips-content">${step.tips}</div></div>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      wrapper.innerHTML = html;
+      
+      // 인디케이터 생성
+      let indHtml = '';
+      drySteps.forEach((_, idx) => {
+        indHtml += `<div class="swipe-indicator ${idx === 0 ? 'active' : ''}" onclick="goToDryStep(${idx})"></div>`;
+      });
+      indicators.innerHTML = indHtml;
+      
+      // 카운터 업데이트
+      updateDryStepCounter();
+      
+      // 터치 이벤트 설정
+      setupDrySwipeTouch();
+    }
+    
+    // 특정 스텝으로 이동
+    function goToDryStep(index) {
+      currentDryStepIndex = index;
+      const wrapper = document.getElementById('dry-swipe-wrapper');
+      wrapper.style.transform = `translateX(-${currentDryStepIndex * 100}%)`;
+      updateDryStepCounter();
+    }
+    
+    // 스텝 카운터 업데이트
+    function updateDryStepCounter() {
+      document.getElementById('dry-step-counter').textContent = `${currentDryStepIndex + 1}/${drySteps.length}`;
+      
+      // 인디케이터 업데이트
+      document.querySelectorAll('#dry-swipe-indicators .swipe-indicator').forEach((ind, idx) => {
+        ind.classList.toggle('active', idx === currentDryStepIndex);
+      });
+    }
+    
+    // 스와이프 이동
+    function drySwipeStep(direction) {
+      const newIndex = currentDryStepIndex + direction;
+      if (newIndex < 0 || newIndex >= drySteps.length) return;
+      
+      currentDryStepIndex = newIndex;
+      const wrapper = document.getElementById('dry-swipe-wrapper');
+      wrapper.style.transform = `translateX(-${currentDryStepIndex * 100}%)`;
+      updateDryStepCounter();
+    }
+    
+    // 터치 스와이프 설정
+    function setupDrySwipeTouch() {
+      const container = document.getElementById('dry-swipe-container');
+      let startX = 0;
+      let isDragging = false;
+      
+      container.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isDragging = true;
+      });
+      
+      container.addEventListener('touchend', (e) => {
+        if (!isDragging) return;
+        const endX = e.changedTouches[0].clientX;
+        const diff = startX - endX;
+        
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) {
+            drySwipeStep(1); // 다음
+          } else {
+            drySwipeStep(-1); // 이전
+          }
+        }
+        isDragging = false;
+      });
+    }
 
     // 강사: 드라이 트레이닝 관리 로드
     async function loadDryManage() {
@@ -7856,7 +8205,7 @@
                   ${step.title}
                 </div>
                 ${step.description ? `<div class="swipe-card-desc">${step.description}</div>` : ''}
-                ${step.tips ? `<div class="swipe-card-tips"><i class="fas fa-lightbulb"></i><span>${step.tips}</span></div>` : ''}
+                ${step.tips ? `<div class="swipe-card-tips"><div class="tips-header"><i class="fas fa-lightbulb"></i> Tips</div><div class="tips-content">${step.tips}</div></div>` : ''}
               </div>
             </div>
           </div>`;
@@ -8072,7 +8421,7 @@
                   ${step.title}
                 </div>
                 ${step.description ? `<div class="swipe-card-desc">${step.description}</div>` : ''}
-                ${step.tips ? `<div class="swipe-card-tips"><i class="fas fa-lightbulb"></i><span>${step.tips}</span></div>` : ''}
+                ${step.tips ? `<div class="swipe-card-tips"><div class="tips-header"><i class="fas fa-lightbulb"></i> Tips</div><div class="tips-content">${step.tips}</div></div>` : ''}
               </div>
             </div>
           </div>`;
@@ -8231,7 +8580,7 @@
           
           for (const t of myTrainings) {
             const isDone = completedIds.includes(t.dry_id);
-            myHtml += `<div class="card" style="margin-bottom: 12px;">
+            myHtml += `<div class="card" style="margin-bottom: 12px; cursor: pointer;" onclick="openDryDetail('${t.dry_id}')">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div style="flex: 1;">
                   <div style="font-weight: 600; margin-bottom: 4px;">${t.name}</div>
@@ -8239,7 +8588,7 @@
                 </div>
                 ${isDone 
                   ? `<span style="color: var(--success); font-size: 13px; padding: 10px 16px;"><i class="fas fa-check-circle"></i> 완료</span>`
-                  : `<button class="btn btn-primary btn-small" onclick="quickDryRecord('${t.dry_id}')">체크</button>`
+                  : `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); quickDryRecord('${t.dry_id}')">체크</button>`
                 }
               </div>
             </div>`;
@@ -8347,7 +8696,7 @@
 
     // 드라이 트레이닝 카드 렌더링 (공용)
     function renderDryCard(t, isParticipating) {
-      return `<div class="card" style="margin-bottom: 12px;">
+      return `<div class="card" style="margin-bottom: 12px; cursor: pointer;" onclick="openDryDetail('${t.dry_id}')">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
           <div style="flex: 1;">
             <div style="font-weight: 600; margin-bottom: 4px;">${t.name}</div>
@@ -8355,8 +8704,8 @@
             <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">by ${t.users?.name || '강사'}</div>
           </div>
           ${isParticipating 
-            ? `<button class="btn btn-primary btn-small" onclick="quickDryRecord('${t.dry_id}')">체크</button>`
-            : `<button class="btn btn-secondary btn-small" onclick="joinDryTraining('${t.dry_id}')">참여하기</button>`
+            ? `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); quickDryRecord('${t.dry_id}')">체크</button>`
+            : `<button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); joinDryTraining('${t.dry_id}')">참여하기</button>`
           }
         </div>
       </div>`;
@@ -8692,4 +9041,5 @@ function viewCertImage(url) {
   </script>
 </body>
 </html>
+
 
