@@ -7648,29 +7648,30 @@
           return streak;
         }
         
-        // 점수 계산
+        // 점수 계산 -> 총 연습 횟수 (참여횟수 × 500회 × 달성률)
         const scores = {};
         participants.forEach(pid => {
           const userRecords = (records || []).filter(r => r.user_id === pid);
           
           const count = userRecords.length;
-          const avgRate = count > 0 ? Math.round(userRecords.reduce((sum, r) => sum + r.achievement, 0) / count * 100) : 0;
-          const totalScore = count * avgRate;
+          const avgRate = count > 0 ? userRecords.reduce((sum, r) => sum + r.achievement, 0) / count : 0;
+          const avgRatePercent = Math.round(avgRate * 100);
+          const totalPractice = Math.round(count * 500 * avgRate); // 총 연습 횟수
           const todayDone = userRecords.some(r => r.date === today);
           const streak = calculateStreak(userRecords);
           
           scores[pid] = {
-            score: totalScore,
+            totalPractice,
             count,
-            avgRate,
+            avgRate: avgRatePercent,
             name: userMap[pid] || '알 수 없음',
             todayDone,
             streak
           };
         });
         
-        // 점수순 정렬
-        const sortedParticipants = participants.sort((a, b) => scores[b].score - scores[a].score);
+        // 총 연습 횟수순 정렬
+        const sortedParticipants = participants.sort((a, b) => scores[b].totalPractice - scores[a].totalPractice);
         
         let html = '';
         sortedParticipants.forEach((pid, idx) => {
@@ -7695,7 +7696,7 @@
                 <div class="frenzel-detail">${s.count}회 참여${streakText}</div>
               </div>
               <div class="frenzel-score">
-                <div class="frenzel-score-value">${s.score}점</div>
+                <div class="frenzel-score-value">${s.totalPractice.toLocaleString()}번</div>
                 <div class="frenzel-score-detail">${s.count}회 × ${s.avgRate}%</div>
               </div>
             </div>
@@ -9041,5 +9042,3 @@ function viewCertImage(url) {
   </script>
 </body>
 </html>
-
-
