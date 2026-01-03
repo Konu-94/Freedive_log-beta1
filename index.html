@@ -6455,8 +6455,7 @@
       // 바디 렌더링
       let bodyHtml = '';
       for (const p of batchParticipants) {
-        // 스킬이면 강습생만 표시
-        if (isSkillDiscipline && p.purpose !== '강습') continue;
+        // 모든 참여자 표시 (강습/펀다이빙 구분 없음)
         
         bodyHtml += `<tr data-reg-id="${p.reg_id}">
           <td class="col-name">${p.name}</td>`;
@@ -9078,4 +9077,3 @@ function viewCertImage(url) {
   </script>
 </body>
 </html>
-
