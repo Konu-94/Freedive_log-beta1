@@ -8622,10 +8622,13 @@
                   <div style="font-weight: 600; margin-bottom: 4px;">${t.name}</div>
                   <div style="font-size: 13px; color: var(--text-secondary);">${t.description || ''}</div>
                 </div>
-                ${isDone 
-                  ? `<span style="color: var(--success); font-size: 13px; padding: 10px 16px;"><i class="fas fa-check-circle"></i> 완료</span>`
-                  : `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); quickDryRecord('${t.dry_id}')">체크</button>`
-                }
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); openDryDetail('${t.dry_id}')">설명</button>
+                  ${isDone 
+                    ? `<span style="color: var(--success); font-size: 13px; padding: 10px 16px;"><i class="fas fa-check-circle"></i> 완료</span>`
+                    : `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); quickDryRecord('${t.dry_id}')">체크</button>`
+                  }
+                </div>
               </div>
             </div>`;
           }
@@ -8739,10 +8742,13 @@
             <div style="font-size: 13px; color: var(--text-secondary);">${t.description || ''}</div>
             <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">by ${t.users?.name || '강사'}</div>
           </div>
-          ${isParticipating 
-            ? `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); quickDryRecord('${t.dry_id}')">체크</button>`
-            : `<button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); joinDryTraining('${t.dry_id}')">참여하기</button>`
-          }
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); openDryDetail('${t.dry_id}')">설명</button>
+            ${isParticipating 
+              ? `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); quickDryRecord('${t.dry_id}')">체크</button>`
+              : `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); joinDryTraining('${t.dry_id}')">참여하기</button>`
+            }
+          </div>
         </div>
       </div>`;
     }
@@ -8883,12 +8889,15 @@
           
           for (const t of myTrainings) {
             const isDone = completedIds.includes(t.dry_id);
-            html += `<div class="card" style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+            html += `<div class="card" style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="openDryDetail('${t.dry_id}')">
               <span>${t.name}</span>
-              ${isDone 
-                ? `<span style="color: var(--success); font-size: 13px;"><i class="fas fa-check-circle"></i> 완료</span>`
-                : `<button class="btn btn-small btn-primary" onclick="quickDryRecord('${t.dry_id}')">체크</button>`
-              }
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); openDryDetail('${t.dry_id}')">설명</button>
+                ${isDone 
+                  ? `<span style="color: var(--success); font-size: 13px;"><i class="fas fa-check-circle"></i> 완료</span>`
+                  : `<button class="btn btn-small btn-primary" onclick="event.stopPropagation(); quickDryRecord('${t.dry_id}')">체크</button>`
+                }
+              </div>
             </div>`;
           }
         } else {
