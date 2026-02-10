@@ -633,6 +633,40 @@
     .bottom-sheet-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
     .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--text-primary); color: white; padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 500; z-index: 300; opacity: 0; visibility: hidden; transition: all 0.3s; }
     .toast.show { opacity: 1; visibility: visible; }
+    
+    /* 게스트 모드 배너 */
+    .guest-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      font-size: 13px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .guest-banner button {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    body.guest-mode .screen .container {
+      padding-top: 56px;
+    }
+    body.guest-mode .screen .header {
+      top: 40px;
+    }
+    
     .login-screen { display: flex; flex-direction: column; min-height: 100vh; padding: 60px 24px 40px; }
     .login-logo { text-align: center; margin-bottom: 48px; }
     .login-logo i { font-size: 64px; color: var(--primary); margin-bottom: 16px; }
@@ -1228,6 +1262,31 @@
     }
     .training-tab i {
       font-size: 16px;
+    }
+    
+    /* 레벨 탭 */
+    .level-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .level-tab {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 20px;
+      background: var(--bg);
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .level-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+    .level-tab:hover:not(.active) {
+      background: var(--border);
     }
     
     /* 이미지 트레이닝 카테고리 카드 */
@@ -1981,6 +2040,12 @@
             <input type="text" class="input" id="login-userid" placeholder="아이디 입력">
           </div>
           <button class="btn btn-primary" onclick="handleLogin()">시작하기</button>
+          <div style="text-align: center; margin-top: 16px; color: var(--text-tertiary); font-size: 13px;">
+            ────── 또는 ──────
+          </div>
+          <button class="btn btn-secondary" style="margin-top: 16px;" onclick="handleGuestLogin()">
+            <i class="fas fa-eye"></i> 둘러보기 (게스트)
+          </button>
         </div>
       </div>
     </div>
@@ -2222,28 +2287,32 @@
         <button class="header-action" id="instructor-training-add-btn" onclick="openDryForm()">추가</button>
       </div>
       <div class="container">
-        <!-- 드라이/이미지 탭 -->
+        <!-- 이미지/드라이 탭 -->
         <div class="training-tabs" style="display: flex; gap: 8px; margin-bottom: 20px;">
-          <button class="training-tab active" data-tab="dry" onclick="switchInstructorTrainingTab('dry')">
-            <i class="fas fa-fire"></i> 드라이
+          <button class="training-tab active" data-tab="image" onclick="switchInstructorTrainingTab('image')">
+            <i class="fas fa-images"></i> 이미지 트레이닝
           </button>
-          <button class="training-tab" data-tab="image" onclick="switchInstructorTrainingTab('image')">
-            <i class="fas fa-images"></i> 이미지
+          <button class="training-tab" data-tab="dry" onclick="switchInstructorTrainingTab('dry')">
+            <i class="fas fa-fire"></i> 드라이 트레이닝
           </button>
-        </div>
-        
-        <!-- 드라이 트레이닝 콘텐츠 -->
-        <div id="instructor-dry-content">
-          <div class="section-title"><i class="fas fa-list"></i> 트레이닝 목록</div>
-          <div id="dry-training-list"></div>
         </div>
         
         <!-- 이미지 트레이닝 콘텐츠 -->
-        <div id="instructor-image-content" style="display: none;">
-          <div class="section-title"><i class="fas fa-images"></i> 동작 가이드</div>
+        <div id="instructor-image-content">
+          <!-- 레벨 탭 -->
+          <div class="level-tabs" id="instructor-image-level-tabs">
+            <button class="level-tab active" data-level="2" onclick="switchInstructorImageLevel(2)">Lv2</button>
+            <button class="level-tab" data-level="3" onclick="switchInstructorImageLevel(3)">Lv3</button>
+          </div>
           <div id="instructor-image-categories">
             <div class="loading"><div class="loading-spinner"></div></div>
           </div>
+        </div>
+        
+        <!-- 드라이 트레이닝 콘텐츠 -->
+        <div id="instructor-dry-content" style="display: none;">
+          <div class="section-title"><i class="fas fa-list"></i> 트레이닝 목록</div>
+          <div id="dry-training-list"></div>
         </div>
       </div>
       <div class="tab-bar">
@@ -2367,18 +2436,30 @@
         <span class="header-title">트레이닝</span>
       </div>
       <div class="container">
-        <!-- 드라이/이미지 탭 -->
+        <!-- 이미지/드라이 탭 -->
         <div class="training-tabs" style="display: flex; gap: 8px; margin-bottom: 20px;">
-          <button class="training-tab active" data-tab="dry" onclick="switchTrainingTab('dry')">
-            <i class="fas fa-fire"></i> 드라이
+          <button class="training-tab active" data-tab="image" onclick="switchTrainingTab('image')">
+            <i class="fas fa-images"></i> 이미지 트레이닝
           </button>
-          <button class="training-tab" data-tab="image" onclick="switchTrainingTab('image')">
-            <i class="fas fa-images"></i> 이미지
+          <button class="training-tab" data-tab="dry" onclick="switchTrainingTab('dry')">
+            <i class="fas fa-fire"></i> 드라이 트레이닝
           </button>
         </div>
         
+        <!-- 이미지 트레이닝 콘텐츠 -->
+        <div id="image-training-content">
+          <!-- 레벨 탭 -->
+          <div class="level-tabs" id="image-level-tabs">
+            <button class="level-tab active" data-level="2" onclick="switchImageLevel(2)">Lv2</button>
+            <button class="level-tab" data-level="3" onclick="switchImageLevel(3)">Lv3</button>
+          </div>
+          <div id="image-training-categories">
+            <div class="loading"><div class="loading-spinner"></div></div>
+          </div>
+        </div>
+        
         <!-- 드라이 트레이닝 콘텐츠 -->
-        <div id="dry-training-content">
+        <div id="dry-training-content" style="display: none;">
           <!-- 프렌젤 리그 카드 -->
           <div id="frenzel-league-training" style="margin-bottom: 20px;"></div>
           
@@ -2420,14 +2501,6 @@
           <div id="all-dry-trainings-section" style="display: none;">
             <div class="section-title" style="margin-top: 24px;"><i class="fas fa-list"></i> 전체 트레이닝</div>
             <div id="all-dry-trainings-no-participation"></div>
-          </div>
-        </div>
-        
-        <!-- 이미지 트레이닝 콘텐츠 -->
-        <div id="image-training-content" style="display: none;">
-          <div class="section-title"><i class="fas fa-images"></i> 동작 가이드</div>
-          <div id="image-training-categories">
-            <div class="loading"><div class="loading-spinner"></div></div>
           </div>
         </div>
       </div>
@@ -3349,6 +3422,8 @@
     document.addEventListener('DOMContentLoaded', async function() {
       // 자동 로그인 확인
       const savedUser = localStorage.getItem('divelog_user');
+      const savedGuestMode = localStorage.getItem('divelog_guest_mode');
+      
       if (savedUser) {
         try {
           const user = JSON.parse(savedUser);
@@ -3364,6 +3439,14 @@
             // 최신 정보로 localStorage 업데이트
             localStorage.setItem('divelog_user', JSON.stringify(currentUser));
             
+            // 게스트 모드 확인
+            if (savedGuestMode === 'true') {
+              isGuestMode = true;
+              showScreen('screen-student-home');
+              enableGuestOverlay();
+              return;
+            }
+            
             if (currentUser.user_type === '강사') {
               showScreen('screen-instructor-home');
             } else {
@@ -3373,9 +3456,11 @@
           } else {
             // 유효하지 않은 저장된 사용자 정보 삭제
             localStorage.removeItem('divelog_user');
+            localStorage.removeItem('divelog_guest_mode');
           }
         } catch (e) {
           localStorage.removeItem('divelog_user');
+          localStorage.removeItem('divelog_guest_mode');
         }
       }
       
@@ -3403,6 +3488,13 @@
           if (e.target === this) closeBottomSheet(this.id);
         });
       });
+      
+      // 게스트 모드 클릭 이벤트 처리
+      document.addEventListener('click', function(e) {
+        if (isGuestMode) {
+          checkGuestMode(e);
+        }
+      }, true);
     });
 
     // ==================== 유틸리티 함수 ====================
@@ -3468,6 +3560,8 @@
     }
 
     // ==================== 로그인/로그아웃 ====================
+    let isGuestMode = false; // 게스트 모드 여부
+    
     async function handleLogin() {
       const phoneBack = document.getElementById('login-phone').value.replace(/-/g, '');
       const userId = document.getElementById('login-userid').value.trim();
@@ -3505,10 +3599,12 @@
         }
         
         currentUser = data;
+        isGuestMode = false;
         console.log('로그인 성공:', currentUser);
         
         // 자동 로그인을 위해 localStorage에 저장
         localStorage.setItem('divelog_user', JSON.stringify(currentUser));
+        localStorage.removeItem('divelog_guest_mode');
         
         if (currentUser.user_type === '강사') {
           showScreen('screen-instructor-home');
@@ -3520,12 +3616,122 @@
         showToast('로그인 실패: ' + err.message);
       }
     }
+    
+    // 게스트 로그인 (dodo 계정으로 읽기 전용 모드)
+    async function handleGuestLogin() {
+      try {
+        const { data, error } = await db
+          .from('users')
+          .select('*')
+          .eq('user_id', 'dodo')
+          .single();
+        
+        if (error || !data) {
+          showToast('게스트 모드를 사용할 수 없습니다');
+          return;
+        }
+        
+        currentUser = data;
+        isGuestMode = true;
+        
+        // 게스트 모드 저장
+        localStorage.setItem('divelog_user', JSON.stringify(currentUser));
+        localStorage.setItem('divelog_guest_mode', 'true');
+        
+        showToast('게스트 모드로 둘러보기');
+        showScreen('screen-student-home');
+        
+        // 게스트 오버레이 활성화
+        enableGuestOverlay();
+      } catch (err) {
+        console.error('게스트 로그인 오류:', err);
+        showToast('게스트 모드 실패');
+      }
+    }
+    
+    // 게스트 모드 오버레이 활성화
+    function enableGuestOverlay() {
+      // 기존 오버레이 제거
+      document.querySelectorAll('.guest-banner').forEach(el => el.remove());
+      
+      // 게스트 배너 추가
+      const banner = document.createElement('div');
+      banner.className = 'guest-banner';
+      banner.innerHTML = `
+        <span>👀 게스트 모드로 둘러보는 중</span>
+        <button onclick="guestLoginPrompt()">로그인하기</button>
+      `;
+      document.body.appendChild(banner);
+      document.body.classList.add('guest-mode');
+    }
+    
+    // 게스트 모드 해제
+    function disableGuestOverlay() {
+      document.querySelectorAll('.guest-banner').forEach(el => el.remove());
+      document.body.classList.remove('guest-mode');
+    }
+    
+    // 게스트 로그인 유도
+    function guestLoginPrompt() {
+      if (confirm('로그인하시겠습니까?')) {
+        logout();
+      }
+    }
+    
+    // 게스트 모드에서 클릭 차단
+    function checkGuestMode(e) {
+      if (!isGuestMode) return true;
+      
+      const target = e.target;
+      
+      // 이미지 트레이닝, 설명 버튼은 허용
+      if (target.closest('.image-category-card') || 
+          target.closest('[onclick*="openImageTrainingDetail"]') ||
+          target.closest('[onclick*="openDryDetail"]') ||
+          target.closest('[onclick*="switchTrainingTab"]') ||
+          target.closest('[onclick*="switchImageLevel"]') ||
+          target.closest('.training-tab') ||
+          target.closest('.level-tab') ||
+          target.textContent?.includes('설명') ||
+          target.textContent?.includes('이미지') ||
+          target.textContent?.includes('드라이') ||
+          target.closest('.swipe-btn') ||
+          target.closest('.swipe-indicator') ||
+          target.closest('.header-back') ||
+          target.closest('[onclick*="goBack"]') ||
+          target.closest('[onclick*="logout"]') ||
+          target.closest('[onclick*="guestLoginPrompt"]')) {
+        return true;
+      }
+      
+      // 탭바 클릭은 허용
+      if (target.closest('.tab-item')) {
+        return true;
+      }
+      
+      // 버튼이나 입력 요소 클릭 시 차단
+      if (target.closest('button') || 
+          target.closest('input') || 
+          target.closest('.card[onclick]') ||
+          target.closest('.league-card') ||
+          target.closest('.frenzel-league-card')) {
+        e.preventDefault();
+        e.stopPropagation();
+        showToast('로그인이 필요한 기능입니다');
+        return false;
+      }
+      
+      return true;
+    }
 
     function logout() {
       currentUser = null;
+      isGuestMode = false;
       screenHistory = [];
       // 자동 로그인 정보 삭제
       localStorage.removeItem('divelog_user');
+      localStorage.removeItem('divelog_guest_mode');
+      disableGuestOverlay();
       showScreen('screen-login');
       document.getElementById('login-phone').value = '';
       document.getElementById('login-userid').value = '';
@@ -7981,6 +8187,11 @@
 
     // 강사: 드라이 트레이닝 관리 로드
     async function loadDryManage() {
+      // 이미지 트레이닝 기본 로드 (첫 번째 탭이므로)
+      if (imageTrainingCategories.length === 0) {
+        loadInstructorImageCategories();
+      }
+      
       try {
         const { data, error } = await db
           .from('dry_trainings')
@@ -8129,6 +8340,9 @@
     }
     
     // 이미지 트레이닝 카테고리 로드
+    // 현재 선택된 이미지 트레이닝 레벨
+    let currentImageLevel = 2;
+    
     async function loadImageTrainingCategories() {
       const container = document.getElementById('image-training-categories');
       
@@ -8142,45 +8356,86 @@
         
         imageTrainingCategories = categories || [];
         
-        if (imageTrainingCategories.length === 0) {
-          container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary); padding: 30px;">
-            등록된 동작 가이드가 없습니다
-          </div>`;
-          return;
-        }
+        // 기본 레벨 설정 (사용자 레벨에 따라)
+        currentImageLevel = getDefaultImageLevel();
+        updateImageLevelTabs();
+        renderImageCategories();
         
-        // 각 카테고리별 스텝 수 조회
-        const { data: stepCounts } = await db
-          .from('image_training_steps')
-          .select('category_id');
-        
-        const categoryStepCounts = {};
-        (stepCounts || []).forEach(s => {
-          categoryStepCounts[s.category_id] = (categoryStepCounts[s.category_id] || 0) + 1;
-        });
-        
-        let html = '';
-        for (const cat of imageTrainingCategories) {
-          const hasSteps = categoryStepCounts[cat.category_id] > 0;
-          const isReady = hasSteps;
-          
-          html += `<div class="image-category-card ${!isReady ? 'not-ready' : ''}" onclick="${isReady ? `openImageTrainingDetail('${cat.category_id}')` : 'showToast(\'준비 중입니다\')'}">
-            <div class="category-icon">${cat.icon || '📖'}</div>
-            <div class="category-info">
-              <div class="category-name">${cat.name} ${!isReady ? '<span class="preparing-badge">준비중</span>' : ''}</div>
-              <div class="category-desc">${cat.description || ''}</div>
-            </div>
-            <i class="fas fa-chevron-right category-arrow"></i>
-          </div>`;
-        }
-        
-        container.innerHTML = html;
       } catch (err) {
         console.error('이미지 트레이닝 카테고리 로드 오류:', err);
         container.innerHTML = `<div class="card" style="text-align: center; color: var(--error); padding: 20px;">
           데이터를 불러오지 못했습니다
         </div>`;
       }
+    }
+    
+    // 사용자 레벨에 따른 기본 이미지 트레이닝 레벨
+    function getDefaultImageLevel() {
+      if (isGuestMode) return 2;
+      if (!currentUser) return 2;
+      
+      // Lv3 과정 중이거나 Lv2 이상 자격증 보유 시 Lv3
+      if (currentUser.in_training_level >= 3 || currentUser.cert_level >= 2) {
+        return 3;
+      }
+      return 2;
+    }
+    
+    // 레벨 탭 UI 업데이트
+    function updateImageLevelTabs() {
+      document.querySelectorAll('#image-level-tabs .level-tab').forEach(tab => {
+        const level = parseInt(tab.dataset.level);
+        tab.classList.toggle('active', level === currentImageLevel);
+      });
+    }
+    
+    // 레벨 전환
+    function switchImageLevel(level) {
+      currentImageLevel = level;
+      updateImageLevelTabs();
+      renderImageCategories();
+    }
+    
+    // 카테고리 렌더링 (레벨 필터링)
+    async function renderImageCategories() {
+      const container = document.getElementById('image-training-categories');
+      
+      // 현재 레벨에 맞는 카테고리만 필터링
+      const filteredCategories = imageTrainingCategories.filter(c => c.level === currentImageLevel);
+      
+      if (filteredCategories.length === 0) {
+        container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+          등록된 동작 가이드가 없습니다
+        </div>`;
+        return;
+      }
+      
+      // 각 카테고리별 스텝 수 조회
+      const { data: stepCounts } = await db
+        .from('image_training_steps')
+        .select('category_id');
+      
+      const categoryStepCounts = {};
+      (stepCounts || []).forEach(s => {
+        categoryStepCounts[s.category_id] = (categoryStepCounts[s.category_id] || 0) + 1;
+      });
+      
+      let html = '';
+      for (const cat of filteredCategories) {
+        const hasSteps = categoryStepCounts[cat.category_id] > 0;
+        const isReady = hasSteps;
+        
+        html += `<div class="image-category-card ${!isReady ? 'not-ready' : ''}" onclick="${isReady ? `openImageTrainingDetail('${cat.category_id}')` : 'showToast(\'준비 중입니다\')'}">
+          <div class="category-icon">${cat.icon || '📖'}</div>
+          <div class="category-info">
+            <div class="category-name">${cat.name} ${!isReady ? '<span class="preparing-badge">준비중</span>' : ''}</div>
+            <div class="category-desc">${cat.description || ''}</div>
+          </div>
+          <i class="fas fa-chevron-right category-arrow"></i>
+        </div>`;
+      }
+      
+      container.innerHTML = html;
     }
     
     // ==================== 스와이프 이미지 트레이닝 ====================
@@ -8360,6 +8615,9 @@
       }
     }
     
+    // 강사용 이미지 트레이닝 레벨
+    let currentInstructorImageLevel = 2;
+    
     // 강사용 이미지 트레이닝 카테고리 로드
     async function loadInstructorImageCategories() {
       const container = document.getElementById('instructor-image-categories');
@@ -8374,32 +8632,61 @@
         
         imageTrainingCategories = categories || [];
         
-        if (imageTrainingCategories.length === 0) {
-          container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary); padding: 30px;">
-            등록된 동작 가이드가 없습니다
-          </div>`;
-          return;
-        }
+        // 기본 레벨 설정
+        currentInstructorImageLevel = 2;
+        updateInstructorImageLevelTabs();
+        renderInstructorImageCategories();
         
-        let html = '';
-        for (const cat of imageTrainingCategories) {
-          html += `<div class="image-category-card" onclick="openInstructorImageDetail('${cat.category_id}')">
-            <div class="category-icon">${cat.icon || '📖'}</div>
-            <div class="category-info">
-              <div class="category-name">${cat.name}</div>
-              <div class="category-desc">${cat.description || ''}</div>
-            </div>
-            <i class="fas fa-chevron-right category-arrow"></i>
-          </div>`;
-        }
-        
-        container.innerHTML = html;
       } catch (err) {
         console.error('이미지 트레이닝 카테고리 로드 오류:', err);
         container.innerHTML = `<div class="card" style="text-align: center; color: var(--error); padding: 20px;">
           데이터를 불러오지 못했습니다
         </div>`;
       }
+    }
+    
+    // 강사용 레벨 탭 UI 업데이트
+    function updateInstructorImageLevelTabs() {
+      document.querySelectorAll('#instructor-image-level-tabs .level-tab').forEach(tab => {
+        const level = parseInt(tab.dataset.level);
+        tab.classList.toggle('active', level === currentInstructorImageLevel);
+      });
+    }
+    
+    // 강사용 레벨 전환
+    function switchInstructorImageLevel(level) {
+      currentInstructorImageLevel = level;
+      updateInstructorImageLevelTabs();
+      renderInstructorImageCategories();
+    }
+    
+    // 강사용 카테고리 렌더링 (레벨 필터링)
+    function renderInstructorImageCategories() {
+      const container = document.getElementById('instructor-image-categories');
+      
+      // 현재 레벨에 맞는 카테고리만 필터링
+      const filteredCategories = imageTrainingCategories.filter(c => c.level === currentInstructorImageLevel);
+      
+      if (filteredCategories.length === 0) {
+        container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+          등록된 동작 가이드가 없습니다
+        </div>`;
+        return;
+      }
+      
+      let html = '';
+      for (const cat of filteredCategories) {
+        html += `<div class="image-category-card" onclick="openInstructorImageDetail('${cat.category_id}')">
+          <div class="category-icon">${cat.icon || '📖'}</div>
+          <div class="category-info">
+            <div class="category-name">${cat.name}</div>
+            <div class="category-desc">${cat.description || ''}</div>
+          </div>
+          <i class="fas fa-chevron-right category-arrow"></i>
+        </div>`;
+      }
+      
+      container.innerHTML = html;
     }
     
     // 강사용 이미지 트레이닝 상세 보기 (스와이프)
@@ -8544,6 +8831,11 @@
 
     // 학생: 드라이 트레이닝 목록 로드
     async function loadDryTraining() {
+      // 이미지 트레이닝 기본 로드 (첫 번째 탭이므로)
+      if (imageTrainingCategories.length === 0) {
+        loadImageTrainingCategories();
+      }
+      
       // 프렌젤 리그 카드 로드
       await loadFrenzelLeagueCard('frenzel-league-training');
       
