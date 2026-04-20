@@ -2807,10 +2807,10 @@
             <div class="selected-count" id="member-selected-count"></div>
           </div>
           
-          <!-- 비회원 선택 (토글) -->
+          <!-- 체험/외부강습생 선택 (토글) -->
           <div class="input-group">
             <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleGuestSection()">
-              <label class="input-label" style="margin-bottom: 0; cursor: pointer;">비회원 선택</label>
+              <label class="input-label" style="margin-bottom: 0; cursor: pointer;">체험/외부강습생 선택</label>
               <span style="color: var(--text-tertiary); font-size: 13px;" id="guest-section-toggle">
                 <span id="guest-toggle-text">펼치기</span> <i class="fas fa-chevron-down" id="guest-toggle-icon"></i>
               </span>
@@ -5339,17 +5339,17 @@
           '<div style="text-align: center; color: var(--error); padding: 20px;">참가자를 불러오지 못했습니다</div>';
       }
     }
-
+    
     function renderParticipantCard(p) {
       const attClass = p.attendance === 'Y' ? 'attendance-yes' : p.attendance === 'N' ? 'attendance-no' : 'attendance-pending';
       const attText = p.attendance === 'Y' ? '출석' : p.attendance === 'N' ? '불참' : '미정';
-      const guestBadge = p.is_guest ? '<span style="font-size: 11px; color: var(--warning); margin-left: 4px;">(비회원)</span>' : '';
+      const externalBadge = p.is_external ? `<span style="font-size: 11px; color: var(--warning); margin-left: 4px;">(${p.user_type})</span>` : '';
       const sessionInfo = p.session_no ? ` · ${p.session_no}회차` : '';
       
       return `<div class="participant-card">
-        <div class="participant-avatar" style="${p.is_guest ? 'background: var(--lv2-light); color: var(--lv2-color);' : ''}">${p.student_name ? p.student_name.charAt(0) : '?'}</div>
+        <div class="participant-avatar" style="${p.is_external ? 'background: var(--lv2-light); color: var(--lv2-color);' : ''}">${p.student_name ? p.student_name.charAt(0) : '?'}</div>
         <div class="participant-info">
-          <div class="participant-name">${p.student_name}${guestBadge}</div>
+          <div class="participant-name">${p.student_name}${externalBadge}</div>
           <div class="participant-detail">Lv.${p.student_cert || 'X'}${p.lesson_level ? ' · Lv.' + p.lesson_level + ' 수강중' + sessionInfo : ''}</div>
         </div>
         <div class="attendance-badge ${attClass}" onclick="toggleAttendance('${p.reg_id}', '${p.attendance}')" style="cursor: pointer;">${attText}</div>
@@ -5405,45 +5405,38 @@
     let selectedMembers = new Set();
     let selectedGuests = new Set();
     
-    async function openAddParticipant() {
+async function openAddParticipant() {
       try {
-        // 회원(강습생) 목록 조회
-        const { data: students, error: studentsError } = await db
+        // 모든 users 조회 (user_type으로 구분)
+        const { data: allUsers, error } = await db
           .from('users')
-          .select('user_id, name, phone, in_training_level')
-          .eq('user_type', '강습생')
+          .select('user_id, name, in_training_level, user_type')
+          .in('user_type', ['강습생', '외부강습생', '체험'])
           .order('name');
         
-        if (studentsError) throw studentsError;
-        allMembers = students || [];
+        if (error) throw error;
         
-        // 비회원 목록 조회
-        const { data: guests, error: guestsError } = await db
-          .from('guests')
-          .select('guest_id, name, phone, in_training_level')
-          .order('name');
-        
-        if (guestsError) throw guestsError;
-        allGuests = guests || [];
+        // user_type으로 분류
+        allMembers = (allUsers || []).filter(u => u.user_type === '강습생');
+        allGuests = (allUsers || []).filter(u => u.user_type === '외부강습생' || u.user_type === '체험');
         
         // 이미 등록된 참가자 조회
         const { data: existingRegs } = await db
           .from('registrations')
-          .select('student_id, guest_id')
+          .select('student_id')
           .eq('schedule_id', currentScheduleId);
         
-        const existingMemberIds = new Set((existingRegs || []).filter(r => r.student_id).map(r => r.student_id));
-        const existingGuestIds = new Set((existingRegs || []).filter(r => r.guest_id).map(r => r.guest_id));
+        const existingIds = new Set((existingRegs || []).map(r => r.student_id).filter(Boolean));
         
         // 선택 초기화
         selectedMembers = new Set();
         selectedGuests = new Set();
         
-        // 회원 다중 선택 리스트 렌더링
+        // 강습생 목록 렌더링
         const memberContainer = document.getElementById('member-multi-select');
         let memberHtml = '';
         for (const s of allMembers) {
-          const isExisting = existingMemberIds.has(s.user_id);
+          const isExisting = existingIds.has(s.user_id);
           const levelText = s.in_training_level ? `Lv${s.in_training_level}` : '';
           const existingText = isExisting ? ' · 등록됨' : '';
           memberHtml += `<div class="multi-select-item ${isExisting ? 'disabled' : ''}" 
@@ -5454,28 +5447,28 @@
             <span class="item-name">${s.name}${levelText ? ' · ' + levelText : ''}${existingText}</span>
           </div>`;
         }
-        memberContainer.innerHTML = memberHtml || '<div style="padding: 16px; text-align: center; color: var(--text-tertiary);">등록된 회원이 없습니다</div>';
+        memberContainer.innerHTML = memberHtml || '<div style="padding: 16px; text-align: center; color: var(--text-tertiary);">등록된 강습생이 없습니다</div>';
         
-        // 비회원 다중 선택 리스트 렌더링
+        // 체험/외부강습생 목록 렌더링
         const guestContainer = document.getElementById('guest-multi-select');
         let guestHtml = '';
         for (const g of allGuests) {
-          const isExisting = existingGuestIds.has(g.guest_id);
+          const isExisting = existingIds.has(g.user_id);
           const existingText = isExisting ? ' · 등록됨' : '';
           guestHtml += `<div class="multi-select-item ${isExisting ? 'disabled' : ''}" 
-            onclick="${isExisting ? '' : `toggleGuestSelect('${g.guest_id}')`}"
-            id="guest-item-${g.guest_id}"
+            onclick="${isExisting ? '' : `toggleGuestSelect('${g.user_id}')`}"
+            id="guest-item-${g.user_id}"
             style="${isExisting ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
-            <input type="checkbox" ${isExisting ? 'disabled' : ''} id="guest-cb-${g.guest_id}">
-            <span class="item-name">${g.name} · 비회원${existingText}</span>
+            <input type="checkbox" ${isExisting ? 'disabled' : ''} id="guest-cb-${g.user_id}">
+            <span class="item-name">${g.name} · ${g.user_type}${existingText}</span>
           </div>`;
         }
-        guestContainer.innerHTML = guestHtml || '<div style="padding: 20px; text-align: center; color: var(--text-tertiary);">등록된 비회원이 없습니다</div>';
+        guestContainer.innerHTML = guestHtml || '<div style="padding: 20px; text-align: center; color: var(--text-tertiary);">등록된 체험/외부강습생이 없습니다</div>';
         
         // 선택 카운트 초기화
         updateSelectedCount();
         
-        // 비회원 섹션 접기 초기화
+        // 체험/외부강습생 섹션 접기 초기화
         document.getElementById('guest-section-content').style.display = 'none';
         document.getElementById('guest-toggle-icon').className = 'fas fa-chevron-down';
         document.getElementById('guest-toggle-text').textContent = '펼치기';
@@ -5610,15 +5603,14 @@
           addedCount++;
         }
         
-        // 비회원 추가
-        for (const guestId of selectedGuests) {
-          // session_no 계산
+        // 체험/외부강습생 추가 (users 테이블, student_id로 처리)
+        for (const userId of selectedGuests) {
           let sessionNo = null;
           if (purpose === '강습' && (level === 2 || level === 3)) {
             const { data: prevRegs } = await db
               .from('registrations')
               .select('session_no')
-              .eq('guest_id', guestId)
+              .eq('student_id', userId)
               .eq('purpose', '강습')
               .eq('lesson_level', level);
             
@@ -5629,11 +5621,11 @@
             sessionNo = maxSessionNo + 1;
           }
           
-          const regId = 'REG_' + guestId + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+          const regId = 'REG_' + userId + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
           await db.from('registrations').insert({
             reg_id: regId,
             schedule_id: currentScheduleId,
-            guest_id: guestId,
+            student_id: userId,
             purpose,
             lesson_level: level,
             attendance: 'Y',
