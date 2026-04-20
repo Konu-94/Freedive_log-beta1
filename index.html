@@ -2015,6 +2015,9 @@
       color: var(--primary);
       margin-top: 6px;
     }
+    .region-btn { flex:1; min-width:80px; padding:12px; border-radius:10px; font-size:15px; font-weight:500; border:1.5px solid var(--border); background:var(--surface); cursor:pointer; text-align:center; transition:all 0.15s; }
+    .region-btn.selected { background:var(--primary); border-color:var(--primary); color:white; }
+    .region-btn:not(.selected):hover { border-color:var(--primary); color:var(--primary); }
   </style>
 </head>
 <body>
@@ -2043,8 +2046,70 @@
           <div style="text-align: center; margin-top: 16px; color: var(--text-tertiary); font-size: 13px;">
             ────── 또는 ──────
           </div>
-          <button class="btn btn-secondary" style="margin-top: 16px;" onclick="handleGuestLogin()">
+          <div class="login-divider" style="display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--text-tertiary);font-size:13px;">
+            <span style="flex:1;height:1px;background:var(--border);"></span>또는<span style="flex:1;height:1px;background:var(--border);"></span>
+          </div>
+          <button class="btn btn-secondary" style="margin-bottom: 12px;" onclick="showSignupScreen()">
+            <i class="fas fa-user-plus"></i> 회원가입
+          </button>
+          <button class="btn btn-outline" onclick="handleGuestLogin()">
             <i class="fas fa-eye"></i> 둘러보기 (게스트)
+          </button>
+        </div>
+      </div>
+    </div>
+
+        <!-- 회원가입 화면 -->
+    <div class="screen" id="screen-signup">
+      <div class="login-screen">
+        <div class="login-logo">
+          <i class="fas fa-water"></i>
+          <h1>회원가입</h1>
+          <p>DiveLog에 오신 걸 환영해요 🌊</p>
+        </div>
+        <div class="login-form">
+          <div class="input-group">
+            <label class="input-label">이름 <span style="color:var(--primary);">*</span></label>
+            <input type="text" class="input" id="signup-name" placeholder="실명을 입력하세요">
+          </div>
+          <div class="input-group">
+            <label class="input-label">연락처 <span style="color:var(--primary);">*</span></label>
+            <div class="phone-input-wrapper">
+              <span class="phone-prefix">010-</span>
+              <input type="tel" class="input phone-input" id="signup-phone" placeholder="0000-0000" maxlength="9">
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">아이디 <span style="color:var(--primary);">*</span>
+              <span style="font-size:12px;color:var(--text-tertiary);font-weight:400;margin-left:4px;">영문/숫자/언더바, 4자 이상</span>
+            </label>
+            <input type="text" class="input" id="signup-userid" placeholder="사용할 아이디 입력" autocapitalize="none">
+          </div>
+          <div class="input-group">
+            <label class="input-label">활동 지역 <span style="color:var(--primary);">*</span>
+              <span style="font-size:12px;color:var(--text-tertiary);font-weight:400;"> 복수 선택 가능</span>
+            </label>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;" id="signup-region-buttons">
+              <button class="region-btn" data-region="포항" onclick="toggleRegion(this)">📍 포항</button>
+              <button class="region-btn" data-region="서울" onclick="toggleRegion(this)">📍 서울</button>
+              <button class="region-btn" data-region="부산" onclick="toggleRegion(this)">📍 부산</button>
+              <button class="region-btn" data-region="제주" onclick="toggleRegion(this)">📍 제주</button>
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">자격증 레벨
+              <span style="font-size:12px;color:var(--text-tertiary);font-weight:400;"> 선택</span>
+            </label>
+            <select class="input" id="signup-cert-level">
+              <option value="X">없음 (입문)</option>
+              <option value="1">Level 1</option>
+              <option value="2">Level 2</option>
+              <option value="3">Level 3</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="margin-top:8px;" onclick="handleSignup()">가입하기</button>
+          <button class="btn btn-outline" style="margin-top:8px;" onclick="showScreen('screen-login')">
+            <i class="fas fa-arrow-left"></i> 로그인으로 돌아가기
           </button>
         </div>
       </div>
@@ -3559,6 +3624,70 @@
       return (h < 12 ? '오전 ' : '오후 ') + (h > 12 ? h - 12 : h) + ':' + m;
     }
 
+// ==================== 회원가입 ====================
+    function showSignupScreen() {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-signup').classList.add('active');
+      const phoneInput = document.getElementById('signup-phone');
+      phoneInput.oninput = function(e) {
+        let v = e.target.value.replace(/\D/g, '');
+        if (v.length > 8) v = v.slice(0, 8);
+        if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4);
+        e.target.value = v;
+      };
+    }
+
+    function toggleRegion(btn) {
+      btn.classList.toggle('selected');
+    }
+
+    async function handleSignup() {
+      const name     = document.getElementById('signup-name').value.trim();
+      const phoneRaw = document.getElementById('signup-phone').value.replace(/-/g, '');
+      const userId   = document.getElementById('signup-userid').value.trim();
+      const cert     = document.getElementById('signup-cert-level').value;
+      const regions  = [...document.querySelectorAll('#signup-region-buttons .region-btn.selected')]
+                         .map(b => b.dataset.region);
+
+      if (!name)                            { showToast('이름을 입력해주세요'); return; }
+      if (phoneRaw.length < 8)              { showToast('연락처를 정확히 입력해주세요'); return; }
+      if (userId.length < 4)                { showToast('아이디는 4자 이상 입력해주세요'); return; }
+      if (!/^[a-zA-Z0-9_]+$/.test(userId)) { showToast('아이디는 영문/숫자/언더바만 가능해요'); return; }
+      if (regions.length === 0)             { showToast('활동 지역을 선택해주세요'); return; }
+
+      const phone = '010-' + phoneRaw.slice(0, 4) + '-' + phoneRaw.slice(4);
+
+      try {
+        const { data: existId } = await db.from('users').select('user_id').eq('user_id', userId).maybeSingle();
+        if (existId) { showToast('이미 사용 중인 아이디예요'); return; }
+
+        const { data: existPhone } = await db.from('users').select('user_id').eq('phone', phone).maybeSingle();
+        if (existPhone) { showToast('이미 등록된 연락처예요'); return; }
+
+        const { error } = await db.from('users').insert({
+          user_id      : userId,
+          name         : name,
+          phone        : phone,
+          cert_level   : cert,
+          user_type    : '강습생',
+          region       : regions,
+          fun_dive_base: 0
+        });
+
+        if (error) throw error;
+
+        showToast('가입 완료! 로그인해주세요 🎉');
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-login').classList.add('active');
+        document.getElementById('login-userid').value = userId;
+        document.getElementById('login-phone').value  = phoneRaw.slice(0,4) + '-' + phoneRaw.slice(4);
+
+      } catch (err) {
+        console.error('회원가입 오류:', err);
+        showToast('가입 실패: ' + err.message);
+      }
+    }
+    
     // ==================== 로그인/로그아웃 ====================
     let isGuestMode = false; // 게스트 모드 여부
     
