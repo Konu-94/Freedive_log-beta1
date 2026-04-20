@@ -1,0 +1,16 @@
+{
+  "name": "DiveLog",
+  "short_name": "DiveLog",
+  "description": "프리다이빙 기록 앱",
+  "start_url": "/Freedive_log-beta1/",
+  "display": "standalone",
+  "background_color": "#F7F8FA",
+  "theme_color": "#3182F6",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
