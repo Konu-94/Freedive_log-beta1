@@ -2084,6 +2084,9 @@
           <p style="font-size:14px;color:var(--primary);font-weight:600;margin-bottom:4px;">이분이 맞으신가요?</p>
           <div id="found-user-info" style="font-size:15px;font-weight:700;"></div>
           <p style="font-size:12px;color:var(--text-secondary);margin-top:6px;">강사가 미리 등록해둔 정보와 연동됩니다</p>
+          <div id="found-user-lessons" style="font-size:13px;color:var(--text-secondary);margin-top:8px;"></div>
+        </div>
+        <p style="font-size:15px;font-weight:600;margin-bottom:16px;">이분이 맞으시면 아래 정보를 입력해주세요.</p>
         </div>
         <div class="input-group">
           <label class="input-label">연락처 <span style="color:var(--primary);">*</span></label>
@@ -3717,6 +3720,28 @@ async function checkSignupName() {
     } else if (unregistered.length === 1) {
       // 2-1: 연동 가입
       signupFoundUserId = unregistered[0].user_id;
+      // 최근 강습 이력 조회
+      const { data: regs } = await db
+        .from('registrations')
+        .select('purpose, lesson_level, schedules(date, location)')
+        .eq('student_id', unregistered[0].user_id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+      
+      const lessonsEl = document.getElementById('found-user-lessons');
+      if (regs && regs.length > 0) {
+        const items = regs.map(r => {
+          const s = r.schedules;
+          if (!s) return null;
+          const d = new Date(s.date);
+          const dateStr = `${d.getMonth()+1}/${d.getDate()}`;
+          const label = r.purpose === '강습' ? `강습 Lv${r.lesson_level}` : '펀다이빙';
+          return `📅 ${dateStr} ${s.location} · ${label}`;
+        }).filter(Boolean);
+        lessonsEl.innerHTML = `<b style="font-size:12px;">최근 강습 이력</b><br>${items.join('<br>')}`;
+      } else {
+        lessonsEl.innerHTML = '강습 이력 없음';
+      }
       const u = unregistered[0];
       const lvText = u.in_training_level ? ` · Lv${u.in_training_level}` : u.cert_level && u.cert_level !== 'X' ? ` · 자격증 Lv${u.cert_level}` : '';
       const regionText = Array.isArray(u.region) ? u.region.join(', ') : (u.region || '');
