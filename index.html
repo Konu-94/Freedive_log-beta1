@@ -3726,7 +3726,7 @@ async function checkSignupName() {
         .from('registrations')
         .select('purpose, lesson_level, schedules(date, location)')
         .eq('student_id', unregistered[0].user_id)
-        .order('created_at', { ascending: false })
+        .order('reg_id', { ascending: false })
         .limit(3);
       
       const lessonsEl = document.getElementById('found-user-lessons');
