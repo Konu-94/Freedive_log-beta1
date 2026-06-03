@@ -5293,7 +5293,8 @@ async function loadParticipants() {
       .from('registrations')
       .select(`
         reg_id, student_id, purpose, lesson_level, attendance, session_no,
-        users!registrations_student_id_fkey (user_id, name, cert_level, user_type)
+        users!registrations_student_id_fkey (user_id, name, cert_level, user_type,
+        best_sta, best_dynb, best_cwtb, equalization)
       `)
       .eq('schedule_id', currentScheduleId);
 
@@ -5309,7 +5310,11 @@ async function loadParticipants() {
         purpose: r.purpose, lesson_level: r.lesson_level,
         attendance: r.attendance, session_no: r.session_no,
         student_name: r.users?.name || '알 수 없음',
-        student_cert: r.users?.cert_level || 'X'
+        student_cert: r.users?.cert_level || 'X',
+        best_sta: r.users?.best_sta || null,
+        best_dynb: r.users?.best_dynb || null,
+        best_cwtb: r.users?.best_cwtb || null,
+        equalization: r.users?.equalization || null
       };
       if (r.purpose === '강습') lessons.push(participant);
       else funs.push(participant);
@@ -5331,22 +5336,59 @@ async function loadParticipants() {
 }
     
     function renderParticipantCard(p) {
-      const attClass = p.attendance === 'Y' ? 'attendance-yes' : p.attendance === 'N' ? 'attendance-no' : 'attendance-pending';
-      const attText = p.attendance === 'Y' ? '출석' : p.attendance === 'N' ? '불참' : '미정';
-      const externalBadge = p.is_external ? `<span style="font-size: 11px; color: var(--warning); margin-left: 4px;">(${p.user_type})</span>` : '';
-      const sessionInfo = p.session_no ? ` · ${p.session_no}회차` : '';
-      
-      return `<div class="participant-card">
-        <div class="participant-avatar" style="${p.is_external ? 'background: var(--lv2-light); color: var(--lv2-color);' : ''}">${p.student_name ? p.student_name.charAt(0) : '?'}</div>
-        <div class="participant-info">
-          <div class="participant-name">${p.student_name}${externalBadge}</div>
-          <div class="participant-detail">Lv.${p.student_cert || 'X'}${p.lesson_level ? ' · Lv.' + p.lesson_level + ' 수강중' + sessionInfo : ''}</div>
-        </div>
-        <div class="attendance-badge ${attClass}" onclick="toggleAttendance('${p.reg_id}', '${p.attendance}')" style="cursor: pointer;">${attText}</div>
-        <button class="btn-icon-delete" onclick="deleteParticipant('${p.reg_id}')" title="삭제">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>`;
+      const isAbsent = p.attendance === 'N';
+      const externalBadge = p.is_external
+        ? `<span style="font-size:11px;color:var(--warning);margin-left:4px;">(${p.user_type})</span>`
+        : '';
+    
+      // 아바타 우측 하단 자격증 레벨 뱃지
+      const certNum = p.student_cert && p.student_cert !== 'X' ? p.student_cert : null;
+      const certBadge = certNum
+        ? `<span style="
+            position:absolute;bottom:-2px;right:-2px;
+            width:16px;height:16px;border-radius:50%;
+            background:var(--primary);color:white;
+            font-size:10px;font-weight:700;
+            display:flex;align-items:center;justify-content:center;
+            border:1.5px solid white;line-height:1;">${certNum}</span>`
+        : '';
+    
+      // 기록 한 줄
+      function fmtSta(v) {
+        if (!v) return '-';
+        const m = Math.floor(v / 60), s = Math.round(v % 60);
+        return `${m}'${String(s).padStart(2,'0')}"`;
+      }
+      function fmtM(v) { return v ? `${v}m` : '-'; }
+    
+      const eq = p.equalization || '-';
+      const recordLine = `
+        <div style="display:flex;gap:10px;margin-top:4px;font-size:12px;color:var(--text-secondary);flex-wrap:wrap;">
+          <span><b style="color:var(--text-tertiary)">STA</b> ${fmtSta(p.best_sta)}</span>
+          <span><b style="color:var(--text-tertiary)">DYNB</b> ${fmtM(p.best_dynb)}</span>
+          <span><b style="color:var(--text-tertiary)">CWTB</b> ${fmtM(p.best_cwtb)}</span>
+          <span><b style="color:var(--text-tertiary)">이퀄</b> ${eq}</span>
+        </div>`;
+    
+      return `
+        <div class="participant-card" style="${isAbsent ? 'opacity:0.4;filter:grayscale(1);' : ''}">
+          <div style="position:relative;width:44px;height:44px;flex-shrink:0;">
+            <div class="participant-avatar" style="${p.is_external ? 'background:var(--lv2-light);color:var(--lv2-color);' : ''}">
+              ${p.student_name ? p.student_name.charAt(0) : '?'}
+            </div>
+            ${certBadge}
+          </div>
+          <div class="participant-info" style="flex:1;min-width:0;">
+            <div class="participant-name">
+              ${p.student_name}${externalBadge}
+              ${isAbsent ? '<span style="font-size:11px;color:var(--error);margin-left:6px;">불참</span>' : ''}
+            </div>
+            ${recordLine}
+          </div>
+          <button class="btn-icon-delete" onclick="openAttendanceSheet('${p.reg_id}','${p.attendance}')" title="출석/삭제">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>`;
     }
 
     async function deleteParticipant(regId) {
@@ -5388,6 +5430,55 @@ async function loadParticipants() {
         console.error('출석 변경 오류:', err);
         showToast('출석 변경 실패');
       }
+    }
+
+    function openAttendanceSheet(regId, currentAttendance) {
+      const overlay = document.createElement('div');
+      overlay.className = 'bottom-sheet-overlay active';
+      overlay.id = 'sheet-attendance-temp';
+      overlay.innerHTML = `
+        <div class="bottom-sheet" style="transform:translateX(-50%) translateY(0);">
+          <div class="bottom-sheet-handle"></div>
+          <div class="bottom-sheet-content">
+            <div class="bottom-sheet-title" style="font-size:16px;">참가자 처리</div>
+            <button class="btn btn-secondary" style="margin-bottom:8px;" onclick="setAttendance('${regId}','Y')">
+              <i class="fas fa-check" style="color:var(--success);margin-right:8px;"></i>출석
+            </button>
+            <button class="btn btn-secondary" style="margin-bottom:8px;" onclick="setAttendance('${regId}','N')">
+              <i class="fas fa-times" style="color:var(--error);margin-right:8px;"></i>불참
+            </button>
+            <button class="btn btn-danger" onclick="deleteParticipantFromSheet('${regId}')">
+              <i class="fas fa-trash" style="margin-right:8px;"></i>삭제
+            </button>
+            <button class="btn btn-outline" style="margin-top:8px;" onclick="closeAttendanceSheet()">취소</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+    }
+    
+    function closeAttendanceSheet() {
+      const el = document.getElementById('sheet-attendance-temp');
+      if (el) el.remove();
+    }
+    
+    async function setAttendance(regId, status) {
+      closeAttendanceSheet();
+      try {
+        const { error } = await db
+          .from('registrations')
+          .update({ attendance: status })
+          .eq('reg_id', regId);
+        if (error) throw error;
+        await loadParticipants();
+      } catch (err) {
+        showToast('변경 실패: ' + err.message);
+      }
+    }
+    
+    async function deleteParticipantFromSheet(regId) {
+      closeAttendanceSheet();
+      if (!confirm('이 참가자를 삭제하시겠습니까?')) return;
+      await deleteParticipant(regId);
     }
 
     let allMembers = [];
