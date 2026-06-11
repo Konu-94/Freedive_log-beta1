@@ -2092,14 +2092,25 @@
             </div>
           </div>
           <div class="input-group">
+            <label class="input-label">강습 레벨
+              <span style="font-size:12px;color:var(--text-tertiary);font-weight:400;"> 현재 수강 중인 레벨</span>
+            </label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="signup-lesson-level-buttons">
+              <button class="region-btn selected" data-level="체험" data-type="체험" data-training="null" onclick="selectLessonLevel(this)">체험</button>
+              <button class="region-btn" data-level="Lv2" data-type="강습생" data-training="2" onclick="selectLessonLevel(this)">Lv2</button>
+              <button class="region-btn" data-level="Lv3" data-type="강습생" data-training="3" onclick="selectLessonLevel(this)">Lv3</button>
+              <button class="region-btn" data-level="Lv4" data-type="강습생" data-training="4" onclick="selectLessonLevel(this)">Lv4</button>
+            </div>
+          </div>
+          <div class="input-group">
             <label class="input-label">자격증 레벨
               <span style="font-size:12px;color:var(--text-tertiary);font-weight:400;"> 선택</span>
             </label>
             <select class="input" id="signup-cert-level">
-              <option value="X">없음 (입문)</option>
-              <option value="1">Level 1</option>
-              <option value="2">Level 2</option>
-              <option value="3">Level 3</option>
+              <option value="">없음 (입문)</option>
+              <option value="2">Level 2 (초급)</option>
+              <option value="3">Level 3 (중급)</option>
+              <option value="4">Level 4 (고급)</option>
             </select>
           </div>
           <button class="btn btn-primary" style="margin-top:8px;" onclick="handleSignup()">가입하기</button>
@@ -3366,6 +3377,23 @@
         </div>
       </div>
     </div>
+
+    <!-- Bottom Sheet: 이름 중복 확인 -->
+    <div class="bottom-sheet-overlay" id="sheet-name-duplicate">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-title">같은 이름의 기록이 있어요</div>
+          <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">
+            강사가 미리 등록해둔 계정일 수 있어요. 아래 강습 기록이 본인의 기록인지 확인해주세요.
+          </p>
+          <div id="duplicate-user-list"></div>
+          <button class="btn btn-outline" style="margin-top:12px;" onclick="proceedAsNewUser()">
+            동명이인이에요 → 새 계정으로 가입
+          </button>
+        </div>
+      </div>
+    </div>
     
     <!-- 리그 기준 팝업 -->
     <div class="bottom-sheet-overlay" id="league-info-overlay" onclick="closeLeagueInfo()">
@@ -3643,6 +3671,18 @@
       btn.classList.toggle('selected');
     }
 
+    function selectLessonLevel(btn) {
+      document.querySelectorAll('#signup-lesson-level-buttons .region-btn')
+        .forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    //이건 지우지마라 Claude!!!!
+    // 이거는 uuid를 처음에 사용 안했기 때문이다... 다음에는 이렇게 복잡해지지 않도록, uuid를 사용하고 강습생이 회원가입시에 기존에 있던 본인의 user 데이터들을 사용할 수 있도록 해야할 것.
+    // UUID 방식이면: 내부 식별자(uuid)는 회원가입 시 자동 생성. 또는 강사가 미리 등록할 때도 uuid가 생성.
+    //강습생이 회원가입 시 이름으로 기존 uuid row를 찾아서 강습기록 등을 확인하고, phone, user_id 등만 추가하면 됨
+    //모든 FK가 uuid를 참조하므로 테이블을 뒤질 필요가 없음
+    
     async function handleSignup() {
       const name     = document.getElementById('signup-name').value.trim();
       const phoneRaw = document.getElementById('signup-phone').value.replace(/-/g, '');
@@ -3650,44 +3690,178 @@
       const cert     = document.getElementById('signup-cert-level').value;
       const regions  = [...document.querySelectorAll('#signup-region-buttons .region-btn.selected')]
                          .map(b => b.dataset.region);
-
+      const levelBtn = document.querySelector('#signup-lesson-level-buttons .region-btn.selected');
+      const userType = levelBtn ? levelBtn.dataset.type : '체험';
+      const inTrainingLevel = levelBtn && levelBtn.dataset.training !== 'null'
+        ? parseInt(levelBtn.dataset.training) : null;
+    
       if (!name)                            { showToast('이름을 입력해주세요'); return; }
       if (phoneRaw.length < 8)              { showToast('연락처를 정확히 입력해주세요'); return; }
       if (userId.length < 4)                { showToast('아이디는 4자 이상 입력해주세요'); return; }
       if (!/^[a-zA-Z0-9_]+$/.test(userId)) { showToast('아이디는 영문/숫자/언더바만 가능해요'); return; }
       if (regions.length === 0)             { showToast('활동 지역을 선택해주세요'); return; }
-
+    
       const phone = '010-' + phoneRaw.slice(0, 4) + '-' + phoneRaw.slice(4);
-
+    
       try {
+        // user_id 중복 체크
         const { data: existId } = await db.from('users').select('user_id').eq('user_id', userId).maybeSingle();
         if (existId) { showToast('이미 사용 중인 아이디예요'); return; }
-
+    
+        // phone 중복 체크
         const { data: existPhone } = await db.from('users').select('user_id').eq('phone', phone).maybeSingle();
         if (existPhone) { showToast('이미 등록된 연락처예요'); return; }
-
-        const { error } = await db.from('users').insert({
-          user_id      : userId,
-          name         : name,
-          phone        : phone,
-          cert_level   : cert,
-          user_type    : '강습생',
-          region       : regions,
-          fun_dive_base: 0
-        });
-
-        if (error) throw error;
-
-        showToast('가입 완료! 로그인해주세요 🎉');
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('screen-login').classList.add('active');
-        document.getElementById('login-userid').value = userId;
-        document.getElementById('login-phone').value  = phoneRaw.slice(0,4) + '-' + phoneRaw.slice(4);
-
+    
+        // 이름 중복 체크
+        const { data: sameNames } = await db
+          .from('users')
+          .select('user_id, name, user_type, in_training_level')
+          .eq('name', name)
+          .is('phone', null); // 핸드폰 없는 기존 row만 (강사가 미리 등록한 케이스)
+    
+        if (sameNames && sameNames.length > 0) {
+          // 강습 이력 조회해서 바텀시트 표시
+          await showDuplicateNameSheet(sameNames, {
+            name, phone, userId, cert, regions, userType, inTrainingLevel
+          });
+          return;
+        }
+    
+        // 중복 없으면 바로 가입
+        await insertNewUser({ name, phone, userId, cert, regions, userType, inTrainingLevel });
+    
       } catch (err) {
         console.error('회원가입 오류:', err);
         showToast('가입 실패: ' + err.message);
       }
+    }
+    
+    // 이름 중복 시 바텀시트 표시
+    let pendingSignupData = null;
+    let pendingMergeTargetId = null;
+    
+    async function showDuplicateNameSheet(sameNames, signupData) {
+      pendingSignupData = signupData;
+    
+      let html = '';
+      for (const u of sameNames) {
+        // 강습 이력 조회
+        const { data: regs } = await db
+          .from('registrations')
+          .select('purpose, lesson_level, schedules(date, location)')
+          .eq('student_id', u.user_id)
+          .order('schedules(date)', { ascending: false })
+          .limit(5);
+    
+        const regList = (regs || []).map(r => {
+          const s = r.schedules;
+          return `<div style="font-size:13px;color:var(--text-secondary);padding:4px 0;border-bottom:1px solid var(--divider);">
+            ${s?.date || ''} · ${s?.location || ''} · ${r.purpose} ${r.lesson_level ? 'Lv' + r.lesson_level : ''}
+          </div>`;
+        }).join('');
+    
+        html += `<div class="card" style="margin-bottom:12px;">
+          <div style="font-weight:600;margin-bottom:4px;">${u.name}</div>
+          <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;">
+            ${u.user_type}${u.in_training_level ? ' · Lv' + u.in_training_level : ''}
+          </div>
+          ${regList || '<div style="font-size:13px;color:var(--text-tertiary);">강습 이력 없음</div>'}
+          <button class="btn btn-primary" style="margin-top:12px;" 
+            onclick="confirmMergeUser('${u.user_id}')">
+            이 계정이 제 계정이에요
+          </button>
+        </div>`;
+      }
+    
+      document.getElementById('duplicate-user-list').innerHTML = html;
+      openBottomSheet('sheet-name-duplicate');
+    }
+    
+    // 본인 확인 후 병합
+    async function confirmMergeUser(oldUserId) {
+      if (!confirm(`기존 강습 기록이 새 계정으로 이전됩니다.\n정말 본인의 계정이 맞나요?\n\n잘못 선택하면 다른 사람의 기록과 합쳐질 수 있어요!`)) return;
+    
+      closeBottomSheet('sheet-name-duplicate');
+      const { name, phone, userId: newUserId, cert, regions, userType, inTrainingLevel } = pendingSignupData;
+    
+      try {
+        showToast('계정 이전 중...');
+    
+        // 1. registrations
+        await db.from('registrations').update({ student_id: newUserId }).eq('student_id', oldUserId);
+    
+        // 2. lv1/2/3_progress
+        await db.from('lv1_progress').update({ user_id: newUserId }).eq('user_id', oldUserId);
+        await db.from('lv2_progress').update({ user_id: newUserId }).eq('user_id', oldUserId);
+        await db.from('lv3_progress').update({ user_id: newUserId }).eq('user_id', oldUserId);
+    
+        // 3. dry_training_records
+        await db.from('dry_training_records').update({ user_id: newUserId }).eq('user_id', oldUserId);
+    
+        // 4. personal_dive_records
+        await db.from('personal_dive_records').update({ user_id: newUserId }).eq('user_id', oldUserId);
+    
+        // 5. equipment
+        await db.from('equipment').update({ owner_id: newUserId }).eq('owner_id', oldUserId);
+    
+        // 6. dry_trainings 배열 (participants, graduates)
+        const { data: dryTrainings } = await db
+          .from('dry_trainings')
+          .select('dry_id, participants, graduates');
+    
+        for (const t of (dryTrainings || [])) {
+          const updates = {};
+          if (t.participants?.includes(oldUserId)) {
+            updates.participants = t.participants.map(id => id === oldUserId ? newUserId : id);
+          }
+          if (t.graduates?.includes(oldUserId)) {
+            updates.graduates = t.graduates.map(id => id === oldUserId ? newUserId : id);
+          }
+          if (Object.keys(updates).length > 0) {
+            await db.from('dry_trainings').update(updates).eq('dry_id', t.dry_id);
+          }
+        }
+    
+        // 7. 기존 users row 삭제 후 새 row INSERT
+        await db.from('users').delete().eq('user_id', oldUserId);
+        await insertNewUser({ name, phone, userId: newUserId, cert, regions, userType, inTrainingLevel });
+    
+        showToast('계정 이전 완료! 로그인해주세요 🎉');
+    
+      } catch (err) {
+        console.error('계정 이전 오류:', err);
+        showToast('이전 실패: ' + err.message);
+      }
+    }
+    
+    // 동명이인 → 새 계정으로 가입
+    async function proceedAsNewUser() {
+      closeBottomSheet('sheet-name-duplicate');
+      if (!pendingSignupData) return;
+      await insertNewUser(pendingSignupData);
+    }
+    
+    // 실제 INSERT 함수
+    async function insertNewUser({ name, phone, userId, cert, regions, userType, inTrainingLevel }) {
+      const { error } = await db.from('users').insert({
+        user_id: userId,
+        name,
+        phone,
+        cert_level: cert || null,
+        user_type: userType,
+        in_training_level: inTrainingLevel,
+        region: regions,
+        fun_dive_base: 0
+      });
+    
+      if (error) throw error;
+    
+      showToast('가입 완료! 로그인해주세요 🎉');
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-login').classList.add('active');
+      document.getElementById('login-userid').value = userId;
+      document.getElementById('login-phone').value = phone.replace('010-', '').replace(/-/, '');
+      pendingSignupData = null;
     }
     
     // ==================== 로그인/로그아웃 ====================
