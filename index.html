@@ -3787,27 +3787,53 @@
       try {
         showToast('계정 이전 중...');
     
-        // 1. registrations
-        await db.from('registrations').update({ student_id: newUserId }).eq('student_id', oldUserId);
+        // ✅ STEP 1. 새 users 행 먼저 INSERT (FK 참조 전에 반드시 존재해야 함)
+        const { error: insertErr } = await db.from('users').insert({
+          user_id: newUserId,
+          name,
+          phone,
+          cert_level: cert || null,
+          user_type: userType,
+          in_training_level: inTrainingLevel,
+          region: regions,
+          fun_dive_base: 0
+        });
+        if (insertErr) throw new Error('새 계정 생성 실패: ' + insertErr.message);
     
-        // 2. lv1/2/3_progress
-        await db.from('lv1_progress').update({ user_id: newUserId }).eq('user_id', oldUserId);
-        await db.from('lv2_progress').update({ user_id: newUserId }).eq('user_id', oldUserId);
-        await db.from('lv3_progress').update({ user_id: newUserId }).eq('user_id', oldUserId);
+        // ✅ STEP 2. FK 업데이트 (newUserId가 이제 users에 존재하므로 성공)
+        const { error: regErr } = await db
+          .from('registrations').update({ student_id: newUserId }).eq('student_id', oldUserId);
+        if (regErr) throw new Error('registrations 이전 실패: ' + regErr.message);
     
-        // 3. dry_training_records
-        await db.from('dry_training_records').update({ user_id: newUserId }).eq('user_id', oldUserId);
+        const { error: lv1Err } = await db
+          .from('lv1_progress').update({ user_id: newUserId }).eq('user_id', oldUserId);
+        if (lv1Err) throw new Error('lv1_progress 이전 실패: ' + lv1Err.message);
     
-        // 4. personal_dive_records
-        await db.from('personal_dive_records').update({ user_id: newUserId }).eq('user_id', oldUserId);
+        const { error: lv2Err } = await db
+          .from('lv2_progress').update({ user_id: newUserId }).eq('user_id', oldUserId);
+        if (lv2Err) throw new Error('lv2_progress 이전 실패: ' + lv2Err.message);
     
-        // 5. equipment
-        await db.from('equipment').update({ owner_id: newUserId }).eq('owner_id', oldUserId);
+        const { error: lv3Err } = await db
+          .from('lv3_progress').update({ user_id: newUserId }).eq('user_id', oldUserId);
+        if (lv3Err) throw new Error('lv3_progress 이전 실패: ' + lv3Err.message);
     
-        // 6. dry_trainings 배열 (participants, graduates)
-        const { data: dryTrainings } = await db
+        const { error: dryRecErr } = await db
+          .from('dry_training_records').update({ user_id: newUserId }).eq('user_id', oldUserId);
+        if (dryRecErr) throw new Error('dry_training_records 이전 실패: ' + dryRecErr.message);
+    
+        const { error: pdrErr } = await db
+          .from('personal_dive_records').update({ user_id: newUserId }).eq('user_id', oldUserId);
+        if (pdrErr) throw new Error('personal_dive_records 이전 실패: ' + pdrErr.message);
+    
+        const { error: eqErr } = await db
+          .from('equipment').update({ owner_id: newUserId }).eq('owner_id', oldUserId);
+        if (eqErr) throw new Error('equipment 이전 실패: ' + eqErr.message);
+    
+        // dry_trainings 배열 (participants, graduates)
+        const { data: dryTrainings, error: dryFetchErr } = await db
           .from('dry_trainings')
           .select('dry_id, participants, graduates');
+        if (dryFetchErr) throw new Error('dry_trainings 조회 실패: ' + dryFetchErr.message);
     
         for (const t of (dryTrainings || [])) {
           const updates = {};
@@ -3818,19 +3844,29 @@
             updates.graduates = t.graduates.map(id => id === oldUserId ? newUserId : id);
           }
           if (Object.keys(updates).length > 0) {
-            await db.from('dry_trainings').update(updates).eq('dry_id', t.dry_id);
+            const { error: dtErr } = await db
+              .from('dry_trainings').update(updates).eq('dry_id', t.dry_id);
+            if (dtErr) throw new Error('dry_trainings 이전 실패: ' + dtErr.message);
           }
         }
     
-        // 7. 기존 users row 삭제 후 새 row INSERT
-        await db.from('users').delete().eq('user_id', oldUserId);
-        await insertNewUser({ name, phone, userId: newUserId, cert, regions, userType, inTrainingLevel });
+        // ✅ STEP 3. 기존 users 행 삭제 (FK 참조 모두 정리된 후 마지막에)
+        const { error: delErr } = await db
+          .from('users').delete().eq('user_id', oldUserId);
+        if (delErr) throw new Error('기존 계정 삭제 실패: ' + delErr.message);
     
+        // ✅ STEP 4. 완료 → 로그인 화면으로
         showToast('계정 이전 완료! 로그인해주세요 🎉');
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-login').classList.add('active');
+        document.getElementById('login-userid').value = newUserId;
+        document.getElementById('login-phone').value = phone.replace('010-', '').replace(/-/, '');
+        pendingSignupData = null;
     
       } catch (err) {
         console.error('계정 이전 오류:', err);
         showToast('이전 실패: ' + err.message);
+        // 실패 시 안내: 새 계정이 생성됐을 수 있으므로 수동 정리 필요할 수 있음
       }
     }
     
