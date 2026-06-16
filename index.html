@@ -3787,20 +3787,37 @@
       try {
         showToast('계정 이전 중...');
     
-        // ✅ STEP 1. 새 users 행 먼저 INSERT (FK 참조 전에 반드시 존재해야 함)
+        // ✅ STEP 0. 기존 users 데이터 조회 (모든 컬럼 이전용)
+        const { data: oldUser, error: fetchErr } = await db
+          .from('users').select('*').eq('user_id', oldUserId).single();
+        if (fetchErr) throw new Error('기존 계정 조회 실패: ' + fetchErr.message);
+    
+        // ✅ STEP 1. 새 users 행 INSERT (기존 데이터 전부 이전)
         const { error: insertErr } = await db.from('users').insert({
           user_id: newUserId,
           name,
           phone,
-          cert_level: cert || null,
           user_type: userType,
           in_training_level: inTrainingLevel,
-          region: regions,
-          fun_dive_base: 0
+          region: regions?.length > 0 ? regions : (oldUser?.region || []),
+          cert_level: cert || oldUser?.cert_level || null,
+          fun_dive_base: oldUser?.fun_dive_base || 0,
+          best_sta:        oldUser?.best_sta        || null,
+          best_dynb:       oldUser?.best_dynb       || null,
+          best_fim:        oldUser?.best_fim        || null,
+          best_cwtb:       oldUser?.best_cwtb       || null,
+          fin_size:        oldUser?.fin_size        || null,
+          equalization:    oldUser?.equalization    || null,
+          gender:          oldUser?.gender          || null,
+          birth_date:      oldUser?.birth_date      || null,
+          instagram:       oldUser?.instagram       || null,
+          cert_image_url:  oldUser?.cert_image_url  || null,
+          referral_source: oldUser?.referral_source || null,
+          memo:            oldUser?.memo            || null,
         });
         if (insertErr) throw new Error('새 계정 생성 실패: ' + insertErr.message);
     
-        // ✅ STEP 2. FK 업데이트 (newUserId가 이제 users에 존재하므로 성공)
+        // ✅ STEP 2. FK 업데이트
         const { error: regErr } = await db
           .from('registrations').update({ student_id: newUserId }).eq('student_id', oldUserId);
         if (regErr) throw new Error('registrations 이전 실패: ' + regErr.message);
@@ -3831,18 +3848,15 @@
     
         // dry_trainings 배열 (participants, graduates)
         const { data: dryTrainings, error: dryFetchErr } = await db
-          .from('dry_trainings')
-          .select('dry_id, participants, graduates');
+          .from('dry_trainings').select('dry_id, participants, graduates');
         if (dryFetchErr) throw new Error('dry_trainings 조회 실패: ' + dryFetchErr.message);
     
         for (const t of (dryTrainings || [])) {
           const updates = {};
-          if (t.participants?.includes(oldUserId)) {
+          if (t.participants?.includes(oldUserId))
             updates.participants = t.participants.map(id => id === oldUserId ? newUserId : id);
-          }
-          if (t.graduates?.includes(oldUserId)) {
+          if (t.graduates?.includes(oldUserId))
             updates.graduates = t.graduates.map(id => id === oldUserId ? newUserId : id);
-          }
           if (Object.keys(updates).length > 0) {
             const { error: dtErr } = await db
               .from('dry_trainings').update(updates).eq('dry_id', t.dry_id);
@@ -3850,7 +3864,7 @@
           }
         }
     
-        // ✅ STEP 3. 기존 users 행 삭제 (FK 참조 모두 정리된 후 마지막에)
+        // ✅ STEP 3. 기존 users 행 삭제 (마지막)
         const { error: delErr } = await db
           .from('users').delete().eq('user_id', oldUserId);
         if (delErr) throw new Error('기존 계정 삭제 실패: ' + delErr.message);
@@ -3866,7 +3880,6 @@
       } catch (err) {
         console.error('계정 이전 오류:', err);
         showToast('이전 실패: ' + err.message);
-        // 실패 시 안내: 새 계정이 생성됐을 수 있으므로 수동 정리 필요할 수 있음
       }
     }
     
@@ -8267,18 +8280,18 @@ async function openAddParticipant() {
         
         // 현재 이퀄 상태에 따라 도전 중인 단계 표시
         // 발살바 → 프렌젤 도전, 프렌젤 → 헤드퍼스트 도전, 헤드퍼스트 → 완료
-        const eqStatus = currentUser.equalization || 'valsalva';
+        const eqStatus = currentUser.equalization || '발살바';
         let challengeDisplay = '프렌젤'; // 기본: 발살바 → 프렌젤 도전
         let practiceDisplay = '';
         
-        if (eqStatus === 'frenzel') {
+        if (eqStatus === '프렌젤') {
           challengeDisplay = '헤드퍼스트';
-        } else if (eqStatus === 'headfirst_frenzel') {
+        } else if (eqStatus === '헤드퍼스트 프렌젤') {
           challengeDisplay = '마스터 🎓';
         }
         
         // 총 연습횟수 또는 현재 상태 표시
-        if (eqStatus === 'headfirst_frenzel') {
+        if (eqStatus === '헤드퍼스트 프렌젤') {
           practiceDisplay = '완료!';
         } else if (totalPractice > 0) {
           practiceDisplay = totalPractice.toLocaleString() + '회';
