@@ -7537,37 +7537,69 @@ async function openAddParticipant() {
       }
     }
     
-    // LV Progress 업데이트 함수 (레벨 과정 중인 학생만)
+    // LV Progress 업데이트 함수 (Lv1 체험 포함 / Lv2 / Lv3)
     async function updateLvProgress() {
       try {
         const studentIds = [...new Set(batchParticipants.map(p => p.student_id))];
-        
+
         const { data: students } = await db
           .from('users')
-          .select('user_id, in_training_level')
+          .select('user_id, name, in_training_level')
           .in('user_id', studentIds);
-        
+
         if (!students) return;
-        
+
         for (const student of students) {
-          const level = student.in_training_level;
-          if (!level || (level !== 2 && level !== 3)) continue;
-          
           const participant = batchParticipants.find(p => p.student_id === student.user_id);
           if (!participant) continue;
-          
+
+          // in_training_level 없으면(체험) registration의 lesson_level로 판단
+          const level = student.in_training_level || participant.lesson_level;
+          if (!level) continue;
+
           const regId = participant.reg_id;
+
+          // ── Lv1 (체험) ──────────────────────────────────────
+          if (level === 1) {
+            const { data: existing } = await db
+              .from('lv1_progress')
+              .select('lesson_count')
+              .eq('user_id', student.user_id)
+              .maybeSingle();
+
+            if (existing) {
+              if (participant.purpose === '강습') {
+                await db
+                  .from('lv1_progress')
+                  .update({ lesson_count: (existing.lesson_count || 0) + 1 })
+                  .eq('user_id', student.user_id);
+              }
+            } else {
+              await db
+                .from('lv1_progress')
+                .insert({
+                  user_id: student.user_id,
+                  name: student.name,
+                  lesson_count: participant.purpose === '강습' ? 1 : 0,
+                  tuition_status: 'pending',
+                  cert_issued: 'none'
+                });
+            }
+            continue; // Lv1은 여기서 끝
+          }
+
+          // ── Lv2 / Lv3 ────────────────────────────────────────
+          if (level !== 2 && level !== 3) continue;
+
           const tableName = level === 2 ? 'lv2_progress' : 'lv3_progress';
           const req = LEVEL_REQUIREMENTS[level];
-          
-          // 현재 진도 조회
+
           let { data: progress } = await db
             .from(tableName)
             .select('*')
             .eq('user_id', student.user_id)
             .single();
-          
-          // 진도 레코드가 없으면 생성
+
           if (!progress) {
             const { data: newProgress } = await db
               .from(tableName)
@@ -7576,60 +7608,40 @@ async function openAddParticipant() {
               .single();
             progress = newProgress || {};
           }
-          
+
           const updates = {};
-          
-          // 기록 종목 업데이트 (STA, DYNB, FIM, CWTB)
+
           const diveRecords = batchRecords[regId] || {};
           for (const disc of ['STA', 'DYNB', 'FIM', 'CWTB']) {
             const data = diveRecords[disc];
             if (!data || !data.attempts) continue;
-            
             const maxValue = Math.max(...data.attempts.filter(v => v && v !== '').map(v => parseFloat(v)));
             if (isNaN(maxValue) || maxValue <= 0) continue;
-            
             const key = disc.toLowerCase();
             const currentValue = progress[key] || 0;
-            
-            if (maxValue > currentValue) {
-              updates[key] = maxValue;
-            }
+            if (maxValue > currentValue) updates[key] = maxValue;
           }
-          
-          // 스킬 종목 업데이트
+
           const skillRecords = batchSkills[regId] || {};
           for (const skill of req.skills) {
             const koreanName = toKoreanSkillName(skill.key);
             const skillData = skillRecords[koreanName];
-            
             if (!skillData || !skillData.attempts) continue;
-            
-            // 시도 횟수 계산 (Y 또는 N이 있는 시도만)
             const attemptCount = skillData.attempts.filter(v => v === 'Y' || v === 'N').length;
             if (attemptCount > 0) {
               const attemptKey = skill.key + '_attempts';
-              const currentAttempts = progress[attemptKey] || 0;
-              updates[attemptKey] = currentAttempts + attemptCount;
+              updates[attemptKey] = (progress[attemptKey] || 0) + attemptCount;
             }
-            
-            // 성공이 하나라도 있으면 Y로 업데이트
             const hasSuccess = skillData.attempts.some(v => v === 'Y');
-            if (hasSuccess && progress[skill.key] !== 'Y') {
-              updates[skill.key] = 'Y';
-            }
+            if (hasSuccess && progress[skill.key] !== 'Y') updates[skill.key] = 'Y';
           }
-          
-          // 강습 횟수 업데이트 (강습 목적인 경우만)
+
           if (participant.purpose === '강습') {
-            const currentLessonCount = progress.lesson_count || 0;
-            updates.lesson_count = currentLessonCount + 1;
+            updates.lesson_count = (progress.lesson_count || 0) + 1;
           }
-          
+
           if (Object.keys(updates).length > 0) {
-            await db
-              .from(tableName)
-              .update(updates)
-              .eq('user_id', student.user_id);
+            await db.from(tableName).update(updates).eq('user_id', student.user_id);
           }
         }
       } catch (err) {
