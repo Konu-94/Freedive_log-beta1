@@ -4925,10 +4925,10 @@
       if (!confirm('이 일정을 삭제하시겠습니까? 관련 참가자 정보도 함께 삭제됩니다.')) return;
       
       try {
-        // 먼저 관련 기록 삭제
+        // 먼저 관련 기록 삭제 (lesson_count 재계산에 필요한 정보도 함께 조회)
         const { data: regs } = await db
           .from('registrations')
-          .select('reg_id')
+          .select('reg_id, student_id, purpose, lesson_level')
           .eq('schedule_id', scheduleId);
         
         if (regs && regs.length > 0) {
@@ -4945,6 +4945,19 @@
           .eq('schedule_id', scheduleId);
         
         if (error) throw error;
+        
+        // lesson_count 재계산 (강습 등록이 있었던 학생×레벨 조합만, 중복 제거)
+        if (regs && regs.length > 0) {
+          const targets = new Map();
+          for (const r of regs) {
+            if (r.purpose === '강습' && r.lesson_level) {
+              targets.set(r.student_id + '_' + r.lesson_level, { userId: r.student_id, level: r.lesson_level });
+            }
+          }
+          for (const t of targets.values()) {
+            await recalculateLessonCount(t.userId, t.level);
+          }
+        }
         
         showToast('일정이 삭제되었습니다');
         loadScheduleManage();
@@ -5616,6 +5629,13 @@ async function loadParticipants() {
       if (!confirm('이 참가자를 삭제하시겠습니까?')) return;
       
       try {
+        // 삭제 전, lesson_count 재계산에 필요한 정보 조회
+        const { data: regInfo } = await db
+          .from('registrations')
+          .select('student_id, purpose, lesson_level')
+          .eq('reg_id', regId)
+          .maybeSingle();
+        
         // 관련 기록 삭제
         await db.from('dive_records').delete().eq('reg_id', regId);
         await db.from('skill_records').delete().eq('reg_id', regId);
@@ -5628,11 +5648,39 @@ async function loadParticipants() {
         
         if (error) throw error;
         
+        // 강습 등록이었던 경우 lesson_count 재계산 (노쇼 처리와 달리 등록 자체를 지우는 케이스)
+        if (regInfo && regInfo.purpose === '강습' && regInfo.lesson_level) {
+          await recalculateLessonCount(regInfo.student_id, regInfo.lesson_level);
+        }
+        
         showToast('참가자가 삭제되었습니다');
         loadParticipants();
       } catch (err) {
         console.error('참가자 삭제 오류:', err);
         showToast('삭제 실패: ' + err.message);
+      }
+    }
+
+    // 삭제 후 남은 registrations 기준으로 lv{level}_progress.lesson_count를 재계산해서 그대로 SET
+    // (등록 시점 GREATEST와 달리, 삭제는 값이 줄어들 수 있는 유일한 케이스라 증분/GREATEST를 쓰면 안 됨)
+    async function recalculateLessonCount(userId, level) {
+      try {
+        const { data: remaining } = await db
+          .from('registrations')
+          .select('session_no')
+          .eq('student_id', userId)
+          .eq('purpose', '강습')
+          .eq('lesson_level', level);
+
+        const maxSessionNo = (remaining || []).reduce((max, r) => {
+          const sn = r.session_no || 0;
+          return sn > max ? sn : max;
+        }, 0);
+
+        const tableName = 'lv' + level + '_progress';
+        await db.from(tableName).update({ lesson_count: maxSessionNo }).eq('user_id', userId);
+      } catch (err) {
+        console.error('lesson_count 재계산 오류:', err);
       }
     }
 
@@ -5987,6 +6035,82 @@ async function openAddParticipant() {
       document.getElementById('lesson-level-group').style.display = btn.dataset.purpose === '강습' ? 'block' : 'none';
     }
 
+    // session_no 계산 + lv{level}_progress.lesson_count 동기화 (source of truth: registrations.session_no)
+    // purpose가 '강습'이 아니거나 level이 없으면 session_no 없이 null 반환 (펀다이빙 등)
+    async function computeSessionNoAndSyncProgress(userId, purpose, level) {
+      if (purpose !== '강습' || !level) return null;
+
+      let sessionNo;
+
+      if (level === 1) {
+        // 체험(Lv1)은 규정상 1회만 진행 — 프로젝트 규칙 8번
+        sessionNo = 1;
+      } else if (level === 2 || level === 3) {
+        const { data: prevRegs } = await db
+          .from('registrations')
+          .select('session_no')
+          .eq('student_id', userId)
+          .eq('purpose', '강습')
+          .eq('lesson_level', level);
+
+        const maxSessionNo = (prevRegs || []).reduce((max, r) => {
+          const sn = r.session_no || 0;
+          return sn > max ? sn : max;
+        }, 0);
+
+        if (maxSessionNo > 0) {
+          sessionNo = maxSessionNo + 1;
+        } else if (level === 2) {
+          // 첫 Lv2 등록: 체험(Lv1) 이력이 있으면 체험을 1회차로 인정 — 프로젝트 규칙 9-1번
+          const { data: lv1Regs } = await db
+            .from('registrations')
+            .select('reg_id')
+            .eq('student_id', userId)
+            .eq('purpose', '강습')
+            .eq('lesson_level', 1)
+            .limit(1);
+          sessionNo = (lv1Regs && lv1Regs.length > 0) ? 2 : 1;
+        } else {
+          sessionNo = 1; // Lv3 첫 등록, 체험 특례 없음
+        }
+      } else {
+        return null; // 정의되지 않은 레벨
+      }
+
+      // lv{level}_progress.lesson_count 동기화 (증분 아님, GREATEST 방식으로 세팅)
+      const tableName = 'lv' + level + '_progress';
+      const { data: existingProgress } = await db
+        .from(tableName)
+        .select('lesson_count')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (existingProgress) {
+        const newCount = Math.max(existingProgress.lesson_count || 0, sessionNo);
+        if (newCount !== existingProgress.lesson_count) {
+          await db.from(tableName).update({ lesson_count: newCount }).eq('user_id', userId);
+        }
+      } else {
+        const { data: student } = await db
+          .from('users')
+          .select('name')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        const insertPayload = {
+          user_id: userId,
+          name: student ? student.name : null,
+          lesson_count: sessionNo,
+          tuition_status: 'pending'
+        };
+        if (level === 1) insertPayload.cert_issued = 'none';
+
+        await db.from(tableName).insert(insertPayload);
+      }
+
+      return sessionNo;
+    }
+
     async function addMultipleParticipants() {
       const totalSelected = selectedMembers.size + selectedGuests.size;
       
@@ -6004,22 +6128,7 @@ async function openAddParticipant() {
         
         // 회원 추가
         for (const userId of selectedMembers) {
-          // session_no 계산
-          let sessionNo = null;
-          if (purpose === '강습' && (level === 2 || level === 3)) {
-            const { data: prevRegs } = await db
-              .from('registrations')
-              .select('session_no')
-              .eq('student_id', userId)
-              .eq('purpose', '강습')
-              .eq('lesson_level', level);
-            
-            const maxSessionNo = (prevRegs || []).reduce((max, r) => {
-              const sn = r.session_no || 0;
-              return sn > max ? sn : max;
-            }, 0);
-            sessionNo = maxSessionNo + 1;
-          }
+          const sessionNo = await computeSessionNoAndSyncProgress(userId, purpose, level);
           
           const regId = 'REG_' + userId + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
           await db.from('registrations').insert({
@@ -6036,21 +6145,7 @@ async function openAddParticipant() {
         
         // 체험/외부강습생 추가 (users 테이블, student_id로 처리)
         for (const userId of selectedGuests) {
-          let sessionNo = null;
-          if (purpose === '강습' && (level === 2 || level === 3)) {
-            const { data: prevRegs } = await db
-              .from('registrations')
-              .select('session_no')
-              .eq('student_id', userId)
-              .eq('purpose', '강습')
-              .eq('lesson_level', level);
-            
-            const maxSessionNo = (prevRegs || []).reduce((max, r) => {
-              const sn = r.session_no || 0;
-              return sn > max ? sn : max;
-            }, 0);
-            sessionNo = maxSessionNo + 1;
-          }
+          const sessionNo = await computeSessionNoAndSyncProgress(userId, purpose, level);
           
           const regId = 'REG_' + userId + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
           await db.from('registrations').insert({
@@ -7537,7 +7632,7 @@ async function openAddParticipant() {
       }
     }
     
-    // LV Progress 업데이트 함수 (Lv1 체험 포함 / Lv2 / Lv3)
+    // LV Progress 업데이트 함수 (Lv2/Lv3 기록·스킬만 담당. lesson_count는 등록 시점에 세팅됨 — computeSessionNoAndSyncProgress 참고)
     async function updateLvProgress() {
       try {
         const studentIds = [...new Set(batchParticipants.map(p => p.student_id))];
@@ -7557,56 +7652,26 @@ async function openAddParticipant() {
           const level = student.in_training_level || participant.lesson_level;
           if (!level) continue;
 
-          const regId = participant.reg_id;
-
-          // ── Lv1 (체험) ──────────────────────────────────────
-          if (level === 1) {
-            const { data: existing } = await db
-              .from('lv1_progress')
-              .select('lesson_count')
-              .eq('user_id', student.user_id)
-              .maybeSingle();
-
-            if (existing) {
-              if (participant.purpose === '강습') {
-                await db
-                  .from('lv1_progress')
-                  .update({ lesson_count: (existing.lesson_count || 0) + 1 })
-                  .eq('user_id', student.user_id);
-              }
-            } else {
-              await db
-                .from('lv1_progress')
-                .insert({
-                  user_id: student.user_id,
-                  name: student.name,
-                  lesson_count: participant.purpose === '강습' ? 1 : 0,
-                  tuition_status: 'pending',
-                  cert_issued: 'none'
-                });
-            }
-            continue; // Lv1은 여기서 끝
-          }
+          // Lv1(체험)은 sta/dynb 등 별도 진도 필드가 없어 여기서 할 일이 없음.
+          // lesson_count는 등록 시점(computeSessionNoAndSyncProgress)에서 이미 세팅됨.
+          if (level === 1) continue;
 
           // ── Lv2 / Lv3 ────────────────────────────────────────
           if (level !== 2 && level !== 3) continue;
 
+          const regId = participant.reg_id;
           const tableName = level === 2 ? 'lv2_progress' : 'lv3_progress';
           const req = LEVEL_REQUIREMENTS[level];
 
-          let { data: progress } = await db
+          const { data: progress } = await db
             .from(tableName)
             .select('*')
             .eq('user_id', student.user_id)
-            .single();
+            .maybeSingle();
 
           if (!progress) {
-            const { data: newProgress } = await db
-              .from(tableName)
-              .insert({ user_id: student.user_id })
-              .select()
-              .single();
-            progress = newProgress || {};
+            console.warn(`${tableName} 행이 없습니다 (user_id: ${student.user_id}) — 등록 누락 의심`);
+            continue;
           }
 
           const updates = {};
@@ -7634,10 +7699,6 @@ async function openAddParticipant() {
             }
             const hasSuccess = skillData.attempts.some(v => v === 'Y');
             if (hasSuccess && progress[skill.key] !== 'Y') updates[skill.key] = 'Y';
-          }
-
-          if (participant.purpose === '강습') {
-            updates.lesson_count = (progress.lesson_count || 0) + 1;
           }
 
           if (Object.keys(updates).length > 0) {
