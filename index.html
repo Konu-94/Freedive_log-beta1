@@ -9,6 +9,9 @@
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="theme-color" content="#3182F6">
   <style>
     :root {
@@ -10039,6 +10042,15 @@ async function deleteCertImage() {
 function viewCertImage(url) {
   window.open(url, '_blank');
 }
+
+    // ==================== 서비스워커 등록 ====================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then((reg) => console.log('[sw] 등록됨:', reg.scope))
+          .catch((err) => console.warn('[sw] 등록 실패:', err));
+      });
+    }
   </script>
 </body>
 </html>
