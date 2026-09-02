@@ -1008,10 +1008,11 @@ async function handleLogin() {
   if (!userId || phoneRaw.length < 8) { showToast('아이디와 연락처를 입력해주세요'); return; }
   const phone = '010-'+phoneRaw.slice(0,4)+'-'+phoneRaw.slice(4);
   try {
-    const { data, error } = await db.from('users').select('*').eq('user_id', userId).eq('phone', phone).single();
-    if (error || !data) { showToast('아이디 또는 연락처가 일치하지 않습니다'); return; }
-    if (data.user_type !== '강사') { showToast('강사 계정만 접근 가능합니다'); return; }
-    currentUser = data;
+    const { data, error } = await db.rpc('login_user', { p_phone: phone, p_user_id: userId });
+    const user = (data && data.length > 0) ? data[0] : null;
+    if (error || !user) { showToast('아이디 또는 연락처가 일치하지 않습니다'); return; }
+    if (user.user_type !== '강사') { showToast('강사 계정만 접근 가능합니다'); return; }
+    currentUser = user;
     localStorage.setItem('crm_user', JSON.stringify(currentUser));
     initApp();
   } catch(err) { showToast('로그인 오류: '+err.message); }

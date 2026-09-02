@@ -3940,22 +3940,23 @@
       console.log('로그인 시도:', phone, userId);
       
       try {
-        // Supabase에서 사용자 조회 (전화번호 + 아이디 둘 다 일치)
+        // Supabase RPC로 사용자 조회 (login_user 보안 함수 사용)
         const { data, error } = await db
-          .from('users')
-          .select('*')
-          .eq('phone', phone)
-          .eq('user_id', userId)
-          .single();
+          .rpc('login_user', {
+            p_phone: phone,
+            p_user_id: userId
+          });
         
         console.log('Supabase 응답:', { data, error });
         
-        if (error || !data) {
+        const user = (data && data.length > 0) ? data[0] : null;
+        
+        if (error || !user) {
           showToast('연락처 또는 아이디가 일치하지 않습니다.');
           return;
         }
         
-        currentUser = data;
+        currentUser = user;
         isGuestMode = false;
         console.log('로그인 성공:', currentUser);
         
@@ -3978,17 +3979,16 @@
     async function handleGuestLogin() {
       try {
         const { data, error } = await db
-          .from('users')
-          .select('*')
-          .eq('user_id', 'dodo')
-          .single();
+          .rpc('get_guest_user');
         
-        if (error || !data) {
-          showToast('게스트 모드를 사용할 수 없습니다');
+        const guestUser = (data && data.length > 0) ? data[0] : null;
+        
+        if (error || !guestUser) {
+          showToast('게스트 계정을 불러올 수 없습니다.');
           return;
         }
         
-        currentUser = data;
+        currentUser = guestUser;
         isGuestMode = true;
         
         // 게스트 모드 저장

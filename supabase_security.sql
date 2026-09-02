@@ -108,10 +108,10 @@ grant execute on function public.get_guest_user()             to anon;
 --   이 단계가 "전화번호 152건 전부 유출" 구멍을 막습니다.
 -- ─────────────────────────────────────────────────────────────────────
 
--- alter table public.users enable row level security;
---
--- -- anon 은 users 를 직접 읽을 수 없다. 오직 위 RPC 를 통해서만 접근.
--- -- (정책을 하나도 만들지 않으면 = 전면 차단)
+alter table public.users enable row level security;
+
+-- anon 은 users 를 직접 읽을 수 없다. 오직 위 RPC 를 통해서만 접근.
+-- (정책을 하나도 만들지 않으면 = 전면 차단)
 
 
 -- ─────────────────────────────────────────────────────────────────────
