@@ -3659,6 +3659,20 @@
         .replace(/'/g, '&#039;');
     }
 
+    // onclick="fn('...')" 처럼 HTML 속성 안의 JS 문자열 자리에 값을 넣을 때 사용.
+    // 브라우저는 속성값의 HTML 엔티티를 먼저 디코딩한 뒤 JS로 해석하므로,
+    // escapeHtml만으로는 따옴표 탈출을 막지 못한다. JS 이스케이프를 먼저 건다.
+    function jsStr(v) {
+      if (v === null || v === undefined) return '';
+      return escapeHtml(
+        String(v)
+          .replace(/\\/g, '\\\\')
+          .replace(/'/g, "\\'")
+          .replace(/\r/g, '\\r')
+          .replace(/\n/g, '\\n')
+      );
+    }
+
     function formatTime(timeStr) {
       if (!timeStr) return '';
       const parts = timeStr.split(':');
@@ -3780,7 +3794,7 @@
           </div>
           ${regList || '<div style="font-size:13px;color:var(--text-tertiary);">강습 이력 없음</div>'}
           <button class="btn btn-primary" style="margin-top:12px;" 
-            onclick="confirmMergeUser('${escapeHtml(u.user_id)}')">
+            onclick="confirmMergeUser('${jsStr(u.user_id)}')">
             이 계정이 제 계정이에요
           </button>
         </div>`;
@@ -4140,9 +4154,9 @@
             .select('*', { count: 'exact', head: true })
             .eq('schedule_id', s.schedule_id);
           
-          html += `<div class="card schedule-card" style="cursor:pointer;" onclick="openParticipants('${s.schedule_id}')">`;
+          html += `<div class="card schedule-card" style="cursor:pointer;" onclick="openParticipants('${jsStr(s.schedule_id)}')">`;
           html += '<div class="schedule-info">';
-          html += `<div class="schedule-time">${formatTime(s.time)} · ${s.location}</div>`;
+          html += `<div class="schedule-time">${formatTime(s.time)} · ${escapeHtml(s.location)}</div>`;
           html += `<div class="schedule-meta">참가자 ${count || 0}명</div>`;
           html += '</div>';
           html += '<i class="fas fa-chevron-right schedule-arrow"></i>';
@@ -4330,10 +4344,10 @@
           const tierInfo = getTierInfo(tier);
           const displayDisc = disc;
           
-          html += `<div class="league-card tier-${tier}" onclick="openLeagueRanking('${disc}', ${tier})">
+          html += `<div class="league-card tier-${tier}" onclick="openLeagueRanking('${jsStr(disc)}', ${tier})">
             <div class="league-card-disc">${displayDisc}</div>
             <div class="league-card-emoji">${tierInfo.emoji}</div>
-            <div class="league-card-tier">${tierInfo.name}</div>
+            <div class="league-card-tier">${escapeHtml(tierInfo.name)}</div>
             <div class="league-card-record">${formatRecordValue(disc, value)}</div>
           </div>`;
         }
@@ -4373,7 +4387,7 @@
       
       document.getElementById('league-header').innerHTML = `
         <div class="league-header-emoji">${tierInfo.emoji}</div>
-        <div class="league-header-title">${tierInfo.name} 리그</div>
+        <div class="league-header-title">${escapeHtml(tierInfo.name)} 리그</div>
         <div class="league-header-subtitle">${displayDisc}</div>
         <div class="league-header-range">${range}</div>
       `;
@@ -4631,7 +4645,7 @@
               <div class="checklist-icon ${item.done ? 'done' : 'undone'}">
                 <i class="fas fa-${item.done ? 'check' : 'circle'}"></i>
               </div>
-              <span class="checklist-text ${item.done ? 'done' : ''}">${item.name}</span>
+              <span class="checklist-text ${item.done ? 'done' : ''}">${escapeHtml(item.name)}</span>
               <span class="checklist-badge" style="min-width: 40px; text-align: right;">${attemptsText}</span>
             </div>
           `;
@@ -4666,7 +4680,7 @@
               <div class="checklist-icon ${item.done ? 'done' : 'undone'}">
                 <i class="fas fa-${item.done ? 'check' : 'circle'}"></i>
               </div>
-              <span class="checklist-text">${item.name} ≥ ${item.target}</span>
+              <span class="checklist-text">${escapeHtml(item.name)} ≥ ${escapeHtml(item.target)}</span>
               <span class="checklist-badge" style="min-width: 50px; text-align: right;">${currentDisplay}</span>
             </div>
           `;
@@ -4792,10 +4806,10 @@
         let html = '';
         for (const r of upcoming) {
           const s = r.schedules;
-          html += `<div class="card schedule-card" onclick="openScheduleDetail('${r.reg_id}')" style="cursor: pointer;">
+          html += `<div class="card schedule-card" onclick="openScheduleDetail('${jsStr(r.reg_id)}')" style="cursor: pointer;">
             <div class="schedule-info">
               <div class="schedule-time">${formatDate(s.date)} ${formatTime(s.time)}</div>
-              <div class="schedule-location">${s.location} · ${r.purpose}</div>
+              <div class="schedule-location">${escapeHtml(s.location)} · ${escapeHtml(r.purpose)}</div>
             </div>
             <i class="fas fa-chevron-right schedule-arrow"></i>
           </div>`;
@@ -4919,15 +4933,15 @@
             <div class="schedule-location">${participantText}</div>
           </div>
           <div style="display: flex; gap: 8px;">
-            <button class="icon-btn" onclick="openScheduleForm('${s.schedule_id}')"><i class="fas fa-pen"></i></button>
-            <button class="icon-btn" onclick="deleteSchedule('${s.schedule_id}')"><i class="fas fa-trash"></i></button>
+            <button class="icon-btn" onclick="openScheduleForm('${jsStr(s.schedule_id)}')"><i class="fas fa-pen"></i></button>
+            <button class="icon-btn" onclick="deleteSchedule('${jsStr(s.schedule_id)}')"><i class="fas fa-trash"></i></button>
           </div>
         </div>
         <div style="display: flex; gap: 8px;">
-          <button class="btn btn-secondary btn-small" style="flex: 1;" onclick="openParticipants('${s.schedule_id}')">
+          <button class="btn btn-secondary btn-small" style="flex: 1;" onclick="openParticipants('${jsStr(s.schedule_id)}')">
             <i class="fas fa-users"></i> 참가자
           </button>
-          <button class="btn btn-primary btn-small" style="flex: 1;" onclick="openLessonRecordInput('${s.schedule_id}')">
+          <button class="btn btn-primary btn-small" style="flex: 1;" onclick="openLessonRecordInput('${jsStr(s.schedule_id)}')">
             <i class="fas fa-pen"></i> 기록 입력
           </button>
         </div>
@@ -5072,7 +5086,7 @@
         // 일정 바는 더 이상 사용하지 않음 (CSS에서 숨김 처리)
         let bars = '';
         
-        html += `<div class="${classes}" onclick="selectCalendarDate('${dateStr}')">${day}${bars}</div>`;
+        html += `<div class="${classes}" onclick="selectCalendarDate('${jsStr(dateStr)}')">${day}${bars}</div>`;
       }
       
       // 다음 달 날짜
@@ -5239,7 +5253,7 @@
           else if (schedule.available) classes += ' has-available';
         }
         
-        html += `<div class="${classes}" onclick="selectStudentCalendarDate('${dateStr}')">${day}</div>`;
+        html += `<div class="${classes}" onclick="selectStudentCalendarDate('${jsStr(dateStr)}')">${day}</div>`;
       }
       
       // 다음 달 날짜
@@ -5288,10 +5302,10 @@
       // 신청한 일정 표시
       for (const r of myDaySchedules) {
         const s = r.schedules;
-        html += `<div class="card schedule-card" style="cursor: pointer;" onclick="openScheduleDetail('${r.reg_id}')">
+        html += `<div class="card schedule-card" style="cursor: pointer;" onclick="openScheduleDetail('${jsStr(r.reg_id)}')">
           <div class="schedule-info">
             <div class="schedule-time">${formatTime(s.time)}</div>
-            <div class="schedule-location">${s.location} · ${s.users?.name || '강사'}</div>
+            <div class="schedule-location">${escapeHtml(s.location)} · ${escapeHtml(s.users?.name || '강사')}</div>
           </div>
           <span class="my-schedule-badge">${r.purpose === '펀다이빙' ? '펀다이빙' : '강습'}</span>
         </div>`;
@@ -5302,9 +5316,9 @@
         html += `<div class="card schedule-card">
           <div class="schedule-info">
             <div class="schedule-time">${formatTime(s.time)}</div>
-            <div class="schedule-location">${s.location} · ${s.users?.name || '강사'}</div>
+            <div class="schedule-location">${escapeHtml(s.location)} · ${escapeHtml(s.users?.name || '강사')}</div>
           </div>
-          <button class="btn btn-small btn-primary" onclick="openRegisterSheet('${s.schedule_id}')">신청</button>
+          <button class="btn btn-small btn-primary" onclick="openRegisterSheet('${jsStr(s.schedule_id)}')">신청</button>
         </div>`;
       }
       
@@ -5317,12 +5331,12 @@
           
           html += `<div class="card schedule-card">
             <div class="schedule-info">
-              <div class="schedule-time"><i class="fas fa-lungs" style="color: var(--warning);"></i> ${t.name}</div>
-              <div class="schedule-location">${t.description || '드라이 트레이닝'}</div>
+              <div class="schedule-time"><i class="fas fa-lungs" style="color: var(--warning);"></i> ${escapeHtml(t.name)}</div>
+              <div class="schedule-location">${escapeHtml(t.description || '드라이 트레이닝')}</div>
             </div>
             ${todayDone 
               ? `<span style="color: var(--success); font-size: 13px;"><i class="fas fa-check-circle"></i> 완료</span>`
-              : `<button class="btn btn-small btn-primary" onclick="quickDryRecord('${t.dry_id}')">체크</button>`
+              : `<button class="btn btn-small btn-primary" onclick="quickDryRecord('${jsStr(t.dry_id)}')">체크</button>`
             }
           </div>`;
         }
@@ -5445,7 +5459,7 @@
       
       let html = '';
       for (const loc of topLocations) {
-        html += `<button type="button" class="frequent-loc-btn" onclick="selectFrequentLocation('${loc}')">${loc}</button>`;
+        html += `<button type="button" class="frequent-loc-btn" onclick="selectFrequentLocation('${jsStr(loc)}')">${loc}</button>`;
       }
       container.innerHTML = html;
     }
@@ -5585,7 +5599,7 @@ async function loadParticipants() {
     function renderParticipantCard(p) {
       const isAbsent = p.attendance === 'N';
       const externalBadge = p.is_external
-        ? `<span style="font-size:11px;color:var(--warning);margin-left:4px;">(${p.user_type})</span>`
+        ? `<span style="font-size:11px;color:var(--warning);margin-left:4px;">(${escapeHtml(p.user_type)})</span>`
         : '';
     
       // 아바타 우측 하단 자격증 레벨 뱃지
@@ -5632,7 +5646,7 @@ async function loadParticipants() {
             </div>
             ${recordLine}
           </div>
-          <button class="btn-icon-delete" onclick="openAttendanceSheet('${p.reg_id}','${p.attendance}')" title="출석/삭제">
+          <button class="btn-icon-delete" onclick="openAttendanceSheet('${jsStr(p.reg_id)}','${jsStr(p.attendance)}')" title="출석/삭제">
             <i class="fas fa-times"></i>
           </button>
         </div>`;
@@ -5723,13 +5737,13 @@ async function loadParticipants() {
           <div class="bottom-sheet-handle"></div>
           <div class="bottom-sheet-content">
             <div class="bottom-sheet-title" style="font-size:16px;">참가자 처리</div>
-            <button class="btn btn-secondary" style="margin-bottom:8px;" onclick="setAttendance('${regId}','Y')">
+            <button class="btn btn-secondary" style="margin-bottom:8px;" onclick="setAttendance('${jsStr(regId)}','Y')">
               <i class="fas fa-check" style="color:var(--success);margin-right:8px;"></i>출석
             </button>
-            <button class="btn btn-secondary" style="margin-bottom:8px;" onclick="setAttendance('${regId}','N')">
+            <button class="btn btn-secondary" style="margin-bottom:8px;" onclick="setAttendance('${jsStr(regId)}','N')">
               <i class="fas fa-times" style="color:var(--error);margin-right:8px;"></i>불참
             </button>
-            <button class="btn btn-danger" onclick="deleteParticipantFromSheet('${regId}')">
+            <button class="btn btn-danger" onclick="deleteParticipantFromSheet('${jsStr(regId)}')">
               <i class="fas fa-trash" style="margin-right:8px;"></i>삭제
             </button>
             <button class="btn btn-outline" style="margin-top:8px;" onclick="closeAttendanceSheet()">취소</button>
@@ -5865,12 +5879,12 @@ async function loadParticipants() {
               badge = `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:#E8F5E9;color:#2E7D32;font-weight:600;">${count}명 등록됨</span>`;
             }
             
-            html += `<div class="schedule-select-item" onclick="selectScheduleForParticipant('${s.schedule_id}')">
+            html += `<div class="schedule-select-item" onclick="selectScheduleForParticipant('${jsStr(s.schedule_id)}')">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                 <div style="font-weight:600;">${formatDate(s.date)} ${formatTime(s.time)}</div>
                 ${badge}
               </div>
-              <div style="color:var(--text-secondary);font-size:14px;">${s.location}</div>
+              <div style="color:var(--text-secondary);font-size:14px;">${escapeHtml(s.location)}</div>
             </div>`;
           }
           document.getElementById('recent-schedule-list').innerHTML = html;
@@ -5925,14 +5939,14 @@ async function openAddParticipant() {
         let memberHtml = '';
         for (const s of allMembers) {
           const isExisting = existingIds.has(s.user_id);
-          const levelText = s.in_training_level ? `Lv${s.in_training_level}` : '';
+          const levelText = s.in_training_level ? `Lv${escapeHtml(s.in_training_level)}` : '';
           const existingText = isExisting ? ' · 등록됨' : '';
           memberHtml += `<div class="multi-select-item ${isExisting ? 'disabled' : ''}" 
-            onclick="${isExisting ? '' : `toggleMemberSelect('${s.user_id}')`}"
-            id="member-item-${s.user_id}"
+            onclick="${isExisting ? '' : `toggleMemberSelect('${jsStr(s.user_id)}')`}"
+            id="member-item-${escapeHtml(s.user_id)}"
             style="${isExisting ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
-            <input type="checkbox" ${isExisting ? 'disabled' : ''} id="member-cb-${s.user_id}">
-            <span class="item-name">${s.name}${levelText ? ' · ' + levelText : ''}${existingText}</span>
+            <input type="checkbox" ${isExisting ? 'disabled' : ''} id="member-cb-${escapeHtml(s.user_id)}">
+            <span class="item-name">${escapeHtml(s.name)}${levelText ? ' · ' + levelText : ''}${existingText}</span>
           </div>`;
         }
         memberContainer.innerHTML = memberHtml || '<div style="padding: 16px; text-align: center; color: var(--text-tertiary);">등록된 강습생이 없습니다</div>';
@@ -5944,11 +5958,11 @@ async function openAddParticipant() {
           const isExisting = existingIds.has(g.user_id);
           const existingText = isExisting ? ' · 등록됨' : '';
           guestHtml += `<div class="multi-select-item ${isExisting ? 'disabled' : ''}" 
-            onclick="${isExisting ? '' : `toggleGuestSelect('${g.user_id}')`}"
-            id="guest-item-${g.user_id}"
+            onclick="${isExisting ? '' : `toggleGuestSelect('${jsStr(g.user_id)}')`}"
+            id="guest-item-${escapeHtml(g.user_id)}"
             style="${isExisting ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
-            <input type="checkbox" ${isExisting ? 'disabled' : ''} id="guest-cb-${g.user_id}">
-            <span class="item-name">${g.name} · ${g.user_type}${existingText}</span>
+            <input type="checkbox" ${isExisting ? 'disabled' : ''} id="guest-cb-${escapeHtml(g.user_id)}">
+            <span class="item-name">${escapeHtml(g.name)} · ${escapeHtml(g.user_type)}${existingText}</span>
           </div>`;
         }
         guestContainer.innerHTML = guestHtml || '<div style="padding: 20px; text-align: center; color: var(--text-tertiary);">등록된 체험/외부강습생이 없습니다</div>';
@@ -6266,11 +6280,11 @@ async function openAddParticipant() {
             html += `<div class="card schedule-card">
               <div class="schedule-info">
                 <div class="schedule-time">${formatDate(s.date)} ${formatTime(s.time)}</div>
-                <div class="schedule-location">${s.location} · ${s.users?.name || '강사'}</div>
+                <div class="schedule-location">${escapeHtml(s.location)} · ${escapeHtml(s.users?.name || '강사')}</div>
               </div>
               ${isRegistered 
-                ? `<span class="my-schedule-badge" style="cursor: pointer;" onclick="cancelRegistration('${myReg?.reg_id}')">${myReg?.purpose === '펀다이빙' ? '펀다이빙' : '강습'} 신청완료</span>` 
-                : `<button class="btn btn-small btn-primary" onclick="openRegisterSheet('${s.schedule_id}')">신청</button>`
+                ? `<span class="my-schedule-badge" style="cursor: pointer;" onclick="cancelRegistration('${jsStr(myReg?.reg_id)}')">${myReg?.purpose === '펀다이빙' ? '펀다이빙' : '강습'} 신청완료</span>` 
+                : `<button class="btn btn-small btn-primary" onclick="openRegisterSheet('${jsStr(s.schedule_id)}')">신청</button>`
               }
             </div>`;
           }
@@ -6283,12 +6297,12 @@ async function openAddParticipant() {
           const sortedPast = pastMySchedules.sort((a, b) => b.schedules.date.localeCompare(a.schedules.date));
           for (const r of sortedPast) {
             const s = r.schedules;
-            html += `<div class="card schedule-card" style="cursor: pointer;" onclick="openScheduleDetail('${r.reg_id}')">
+            html += `<div class="card schedule-card" style="cursor: pointer;" onclick="openScheduleDetail('${jsStr(r.reg_id)}')">
               <div class="schedule-info">
                 <div class="schedule-time">${formatDate(s.date)} ${formatTime(s.time)}</div>
-                <div class="schedule-location">${s.location} · ${s.users?.name || '강사'}</div>
+                <div class="schedule-location">${escapeHtml(s.location)} · ${escapeHtml(s.users?.name || '강사')}</div>
               </div>
-              <span style="color: var(--text-tertiary); font-size: 13px;">${r.purpose} <i class="fas fa-chevron-right"></i></span>
+              <span style="color: var(--text-tertiary); font-size: 13px;">${escapeHtml(r.purpose)} <i class="fas fa-chevron-right"></i></span>
             </div>`;
           }
         }
@@ -6457,11 +6471,11 @@ async function openAddParticipant() {
           </div>
           <div style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary);">
             <i class="fas fa-map-marker-alt"></i>
-            <span>${s.location}</span>
+            <span>${escapeHtml(s.location)}</span>
           </div>
           <div style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary); margin-top: 4px;">
             <i class="fas fa-user"></i>
-            <span>${s.users?.name || '강사'}</span>
+            <span>${escapeHtml(s.users?.name || '강사')}</span>
           </div>
           ${participantsHtml}
           ${disciplinesHtml}
@@ -6926,12 +6940,12 @@ async function openAddParticipant() {
             badge = `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:#E8F5E9;color:#2E7D32;font-weight:600;">✓ 입력됨</span>`;
           }
           
-          html += `<div class="schedule-select-item" onclick="openLessonRecordInput('${s.schedule_id}'); closeBottomSheet('sheet-select-schedule');">
+          html += `<div class="schedule-select-item" onclick="openLessonRecordInput('${jsStr(s.schedule_id)}'); closeBottomSheet('sheet-select-schedule');">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
               <div style="font-weight:600;">${formatDate(s.date)} ${formatTime(s.time)}</div>
               ${badge}
             </div>
-            <div style="color:var(--text-secondary);font-size:14px;">${s.location}${participantCount > 0 ? ` · ${participantCount}명` : ''}</div>
+            <div style="color:var(--text-secondary);font-size:14px;">${escapeHtml(s.location)}${participantCount > 0 ? ` · ${participantCount}명` : ''}</div>
           </div>`;
         }
         document.getElementById('recent-schedule-list').innerHTML = html;
@@ -7045,7 +7059,7 @@ async function openAddParticipant() {
       for (const p of batchParticipants) {
         html += `
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-            <span style="min-width: 60px; font-size: 14px; color: var(--text-secondary);">${p.name}</span>
+            <span style="min-width: 60px; font-size: 14px; color: var(--text-secondary);">${escapeHtml(p.name)}</span>
             <input type="text" class="input" style="flex: 1; padding: 10px 12px;" 
               id="batch-note-${p.reg_id}" 
               value="${p.note_instructor || ''}" 
@@ -7190,19 +7204,19 @@ async function openAddParticipant() {
       // 기록 종목
       for (const disc of batchDisciplines) {
         const active = disc === currentBatchDiscipline ? 'active' : '';
-        html += `<button class="batch-disc-tag ${active}" onclick="selectBatchDiscipline('${disc}')">${disc}</button>`;
+        html += `<button class="batch-disc-tag ${active}" onclick="selectBatchDiscipline('${jsStr(disc)}')">${disc}</button>`;
       }
       
       // Lv3 스킬 먼저
       for (const skill of lv3Skills) {
         const active = currentBatchDiscipline === skill ? 'active' : '';
-        html += `<button class="batch-skill-tag lv3 ${active}" onclick="selectBatchDiscipline('${skill}')">${skill}</button>`;
+        html += `<button class="batch-skill-tag lv3 ${active}" onclick="selectBatchDiscipline('${jsStr(skill)}')">${skill}</button>`;
       }
       
       // Lv2 스킬
       for (const skill of lv2Skills) {
         const active = currentBatchDiscipline === skill ? 'active' : '';
-        html += `<button class="batch-skill-tag lv2 ${active}" onclick="selectBatchDiscipline('${skill}')">${skill}</button>`;
+        html += `<button class="batch-skill-tag lv2 ${active}" onclick="selectBatchDiscipline('${jsStr(skill)}')">${skill}</button>`;
       }
       
       html += '</div>';
@@ -7363,7 +7377,7 @@ async function openAddParticipant() {
         // 모든 참여자 표시 (강습/펀다이빙 구분 없음)
         
         bodyHtml += `<tr data-reg-id="${p.reg_id}">
-          <td class="col-name">${p.name}</td>`;
+          <td class="col-name">${escapeHtml(p.name)}</td>`;
         
         if (isSkillDiscipline) {
           // 스킬 종목: Y/N 버튼
@@ -7374,7 +7388,7 @@ async function openAddParticipant() {
             const failClass = val === 'N' ? 'fail' : '';
             bodyHtml += `<td>
               <button class="skill-check-btn ${successClass} ${failClass}" 
-                      onclick="toggleSkillAttempt('${p.reg_id}', ${i}, this)"
+                      onclick="toggleSkillAttempt('${jsStr(p.reg_id)}', ${i}, this)"
                       data-attempt="${i}">
                 ${val === 'Y' ? '✓' : val === 'N' ? '✗' : '-'}
               </button>
@@ -7389,7 +7403,7 @@ async function openAddParticipant() {
             bodyHtml += `<td><input type="number" value="${val}" data-attempt="${i}" placeholder="-"></td>`;
           }
           bodyHtml += `<td></td>`;
-          bodyHtml += `<td><input type="text" class="note-input" value="${records.note || ''}" data-note="true" placeholder=""></td>
+          bodyHtml += `<td><input type="text" class="note-input" value="${escapeHtml(records.note || '')}" data-note="true" placeholder=""></td>
           </tr>`;
         }
       }
@@ -7975,7 +7989,7 @@ async function openAddParticipant() {
         html += `<div class="card" style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; padding: 12px;">
           <input type="text" class="input" style="flex: 0.4;" placeholder="YYMMDD" value="${d.date}" 
                  onchange="bulkDates[${idx}].date = this.value">
-          <input type="text" class="input" style="flex: 0.6;" placeholder="장소" value="${d.location}"
+          <input type="text" class="input" style="flex: 0.6;" placeholder="장소" value="${escapeHtml(d.location)}"
                  onchange="bulkDates[${idx}].location = this.value">
           ${bulkDates.length > 1 ? `<button class="attempt-delete" onclick="removeBulkDateRow(${idx})"><i class="fas fa-times"></i></button>` : ''}
         </div>`;
@@ -8597,7 +8611,7 @@ async function openAddParticipant() {
             <div class="frenzel-ranking-item ${isMe ? 'me' : ''} ${todayClass}">
               <div class="frenzel-rank ${rankClass}">${idx + 1}</div>
               <div class="frenzel-info">
-                <div class="frenzel-name">${s.name}${isMe ? ' (나)' : ''} ${fireEmoji}</div>
+                <div class="frenzel-name">${escapeHtml(s.name)}${isMe ? ' (나)' : ''} ${fireEmoji}</div>
                 <div class="frenzel-detail">${s.count}회 참여${streakText}</div>
               </div>
               <div class="frenzel-score">
@@ -8774,16 +8788,16 @@ async function openAddParticipant() {
             <div class="swipe-card">
               <div class="swipe-card-image">
                 ${step.image_url 
-                  ? `<img src="${step.image_url}" alt="${step.title}">`
+                  ? `<img src="${escapeHtml(step.image_url)}" alt="${escapeHtml(step.title)}">`
                   : `<i class="fas fa-image placeholder"></i>`
                 }
               </div>
               <div class="swipe-card-content">
                 <div class="swipe-card-title">
                   <span class="swipe-card-step">${idx + 1}</span>
-                  ${step.title}
+                  ${escapeHtml(step.title)}
                 </div>
-                ${step.description ? `<div class="swipe-card-desc">${step.description}</div>` : ''}
+                ${step.description ? `<div class="swipe-card-desc">${escapeHtml(step.description)}</div>` : ''}
                 ${step.tips ? `<div class="swipe-card-tips"><div class="tips-header"><i class="fas fa-lightbulb"></i> Tips</div><div class="tips-content">${step.tips}</div></div>` : ''}
               </div>
             </div>
@@ -8897,15 +8911,15 @@ async function openAddParticipant() {
           html += `<div class="card" style="margin-bottom: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: start;">
               <div style="flex: 1;">
-                <div style="font-weight: 600; margin-bottom: 4px;">${d.name}</div>
-                <div style="font-size: 13px; color: var(--text-secondary);">${d.description || '설명 없음'}</div>
+                <div style="font-weight: 600; margin-bottom: 4px;">${escapeHtml(d.name)}</div>
+                <div style="font-size: 13px; color: var(--text-secondary);">${escapeHtml(d.description || '설명 없음')}</div>
                 <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 8px;">
                   <i class="fas fa-users"></i> 참여자 ${participantCount}명
                 </div>
               </div>
               <div style="display: flex; gap: 8px;">
-                <button class="icon-btn" onclick="openDryForm('${d.dry_id}')"><i class="fas fa-pen"></i></button>
-                <button class="icon-btn" onclick="deleteDryTraining('${d.dry_id}')"><i class="fas fa-trash"></i></button>
+                <button class="icon-btn" onclick="openDryForm('${jsStr(d.dry_id)}')"><i class="fas fa-pen"></i></button>
+                <button class="icon-btn" onclick="deleteDryTraining('${jsStr(d.dry_id)}')"><i class="fas fa-trash"></i></button>
               </div>
             </div>
           </div>`;
@@ -9102,11 +9116,11 @@ async function openAddParticipant() {
         const hasSteps = categoryStepCounts[cat.category_id] > 0;
         const isReady = hasSteps;
         
-        html += `<div class="image-category-card ${!isReady ? 'not-ready' : ''}" onclick="${isReady ? `openImageTrainingDetail('${cat.category_id}')` : 'showToast(\'준비 중입니다\')'}">
+        html += `<div class="image-category-card ${!isReady ? 'not-ready' : ''}" onclick="${isReady ? `openImageTrainingDetail('${jsStr(cat.category_id)}')` : 'showToast(\'준비 중입니다\')'}">
           <div class="category-icon">${cat.icon || '📖'}</div>
           <div class="category-info">
-            <div class="category-name">${cat.name} ${!isReady ? '<span class="preparing-badge">준비중</span>' : ''}</div>
-            <div class="category-desc">${cat.description || ''}</div>
+            <div class="category-name">${escapeHtml(cat.name)} ${!isReady ? '<span class="preparing-badge">준비중</span>' : ''}</div>
+            <div class="category-desc">${escapeHtml(cat.description || '')}</div>
           </div>
           <i class="fas fa-chevron-right category-arrow"></i>
         </div>`;
@@ -9163,16 +9177,16 @@ async function openAddParticipant() {
             <div class="swipe-card">
               <div class="swipe-card-image">
                 ${step.image_url 
-                  ? `<img src="${step.image_url}" alt="${step.title}">`
+                  ? `<img src="${escapeHtml(step.image_url)}" alt="${escapeHtml(step.title)}">`
                   : `<i class="fas fa-image placeholder"></i>`
                 }
               </div>
               <div class="swipe-card-content">
                 <div class="swipe-card-title">
                   <span class="swipe-card-step">${step.step_order}</span>
-                  ${step.title}
+                  ${escapeHtml(step.title)}
                 </div>
-                ${step.description ? `<div class="swipe-card-desc">${step.description}</div>` : ''}
+                ${step.description ? `<div class="swipe-card-desc">${escapeHtml(step.description)}</div>` : ''}
                 ${step.tips ? `<div class="swipe-card-tips"><div class="tips-header"><i class="fas fa-lightbulb"></i> Tips</div><div class="tips-content">${step.tips}</div></div>` : ''}
               </div>
             </div>
@@ -9353,11 +9367,11 @@ async function openAddParticipant() {
       
       let html = '';
       for (const cat of filteredCategories) {
-        html += `<div class="image-category-card" onclick="openInstructorImageDetail('${cat.category_id}')">
+        html += `<div class="image-category-card" onclick="openInstructorImageDetail('${jsStr(cat.category_id)}')">
           <div class="category-icon">${cat.icon || '📖'}</div>
           <div class="category-info">
-            <div class="category-name">${cat.name}</div>
-            <div class="category-desc">${cat.description || ''}</div>
+            <div class="category-name">${escapeHtml(cat.name)}</div>
+            <div class="category-desc">${escapeHtml(cat.description || '')}</div>
           </div>
           <i class="fas fa-chevron-right category-arrow"></i>
         </div>`;
@@ -9411,16 +9425,16 @@ async function openAddParticipant() {
             <div class="swipe-card">
               <div class="swipe-card-image">
                 ${step.image_url 
-                  ? `<img src="${step.image_url}" alt="${step.title}">`
+                  ? `<img src="${escapeHtml(step.image_url)}" alt="${escapeHtml(step.title)}">`
                   : `<i class="fas fa-image placeholder"></i>`
                 }
               </div>
               <div class="swipe-card-content">
                 <div class="swipe-card-title">
                   <span class="swipe-card-step">${step.step_order}</span>
-                  ${step.title}
+                  ${escapeHtml(step.title)}
                 </div>
-                ${step.description ? `<div class="swipe-card-desc">${step.description}</div>` : ''}
+                ${step.description ? `<div class="swipe-card-desc">${escapeHtml(step.description)}</div>` : ''}
                 ${step.tips ? `<div class="swipe-card-tips"><div class="tips-header"><i class="fas fa-lightbulb"></i> Tips</div><div class="tips-content">${step.tips}</div></div>` : ''}
               </div>
             </div>
@@ -9585,17 +9599,17 @@ async function openAddParticipant() {
           
           for (const t of myTrainings) {
             const isDone = completedIds.includes(t.dry_id);
-            myHtml += `<div class="card" style="margin-bottom: 12px; cursor: pointer;" onclick="openDryDetail('${t.dry_id}')">
+            myHtml += `<div class="card" style="margin-bottom: 12px; cursor: pointer;" onclick="openDryDetail('${jsStr(t.dry_id)}')">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div style="flex: 1;">
-                  <div style="font-weight: 600; margin-bottom: 4px;">${t.name}</div>
-                  <div style="font-size: 13px; color: var(--text-secondary);">${t.description || ''}</div>
+                  <div style="font-weight: 600; margin-bottom: 4px;">${escapeHtml(t.name)}</div>
+                  <div style="font-size: 13px; color: var(--text-secondary);">${escapeHtml(t.description || '')}</div>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                  <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); openDryDetail('${t.dry_id}')">설명</button>
+                  <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); openDryDetail('${jsStr(t.dry_id)}')">설명</button>
                   ${isDone 
                     ? `<span style="color: var(--success); font-size: 13px; padding: 10px 16px;"><i class="fas fa-check-circle"></i> 완료</span>`
-                    : `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); quickDryRecord('${t.dry_id}')">체크</button>`
+                    : `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); quickDryRecord('${jsStr(t.dry_id)}')">체크</button>`
                   }
                 </div>
               </div>
@@ -9704,18 +9718,18 @@ async function openAddParticipant() {
 
     // 드라이 트레이닝 카드 렌더링 (공용)
     function renderDryCard(t, isParticipating) {
-      return `<div class="card" style="margin-bottom: 12px; cursor: pointer;" onclick="openDryDetail('${t.dry_id}')">
+      return `<div class="card" style="margin-bottom: 12px; cursor: pointer;" onclick="openDryDetail('${jsStr(t.dry_id)}')">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
           <div style="flex: 1;">
-            <div style="font-weight: 600; margin-bottom: 4px;">${t.name}</div>
-            <div style="font-size: 13px; color: var(--text-secondary);">${t.description || ''}</div>
-            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">by ${t.users?.name || '강사'}</div>
+            <div style="font-weight: 600; margin-bottom: 4px;">${escapeHtml(t.name)}</div>
+            <div style="font-size: 13px; color: var(--text-secondary);">${escapeHtml(t.description || '')}</div>
+            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">by ${escapeHtml(t.users?.name || '강사')}</div>
           </div>
           <div style="display: flex; gap: 8px;">
-            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); openDryDetail('${t.dry_id}')">설명</button>
+            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); openDryDetail('${jsStr(t.dry_id)}')">설명</button>
             ${isParticipating 
-              ? `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); quickDryRecord('${t.dry_id}')">체크</button>`
-              : `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); joinDryTraining('${t.dry_id}')">참여하기</button>`
+              ? `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); quickDryRecord('${jsStr(t.dry_id)}')">체크</button>`
+              : `<button class="btn btn-primary btn-small" onclick="event.stopPropagation(); joinDryTraining('${jsStr(t.dry_id)}')">참여하기</button>`
             }
           </div>
         </div>
@@ -9858,13 +9872,13 @@ async function openAddParticipant() {
           
           for (const t of myTrainings) {
             const isDone = completedIds.includes(t.dry_id);
-            html += `<div class="card" style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="openDryDetail('${t.dry_id}')">
-              <span>${t.name}</span>
+            html += `<div class="card" style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="openDryDetail('${jsStr(t.dry_id)}')">
+              <span>${escapeHtml(t.name)}</span>
               <div style="display: flex; gap: 8px;">
-                <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); openDryDetail('${t.dry_id}')">설명</button>
+                <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); openDryDetail('${jsStr(t.dry_id)}')">설명</button>
                 ${isDone 
                   ? `<span style="color: var(--success); font-size: 13px;"><i class="fas fa-check-circle"></i> 완료</span>`
-                  : `<button class="btn btn-small btn-primary" onclick="event.stopPropagation(); quickDryRecord('${t.dry_id}')">체크</button>`
+                  : `<button class="btn btn-small btn-primary" onclick="event.stopPropagation(); quickDryRecord('${jsStr(t.dry_id)}')">체크</button>`
                 }
               </div>
             </div>`;
@@ -9933,9 +9947,9 @@ function renderCertImage() {
     // 이미지가 있으면 표시
     container.innerHTML = `
       <div style="position: relative;">
-        <img src="${currentUser.cert_image_url}" 
+        <img src="${escapeHtml(currentUser.cert_image_url)}" 
              style="width: 100%; border-radius: 12px; cursor: pointer;"
-             onclick="viewCertImage('${currentUser.cert_image_url}')"
+             onclick="viewCertImage('${jsStr(currentUser.cert_image_url)}')"
              alt="자격증">
         <button onclick="deleteCertImage()" 
                 style="position: absolute; top: 8px; right: 8px; 
@@ -9977,7 +9991,7 @@ async function uploadCertImage(event) {
   try {
     // 파일명 생성
     const fileExt = file.name.split('.').pop();
-    const fileName = `${currentUser.user_id}_${Date.now()}.${fileExt}`;
+    const fileName = `${escapeHtml(currentUser.user_id)}_${Date.now()}.${fileExt}`;
     
     // Supabase Storage에 업로드
     const { data, error } = await db.storage
