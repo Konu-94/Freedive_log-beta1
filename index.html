@@ -3649,6 +3649,16 @@
       return (d.getMonth()+1) + '월 ' + d.getDate() + '일 (' + days[d.getDay()] + ')';
     }
 
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function formatTime(timeStr) {
       if (!timeStr) return '';
       const parts = timeStr.split(':');
@@ -3759,18 +3769,18 @@
         const regList = (regs || []).map(r => {
           const s = r.schedules;
           return `<div style="font-size:13px;color:var(--text-secondary);padding:4px 0;border-bottom:1px solid var(--divider);">
-            ${s?.date || ''} · ${s?.location || ''} · ${r.purpose} ${r.lesson_level ? 'Lv' + r.lesson_level : ''}
+            ${escapeHtml(s?.date || '')} · ${escapeHtml(s?.location || '')} · ${escapeHtml(r.purpose || '')} ${r.lesson_level ? 'Lv' + escapeHtml(r.lesson_level) : ''}
           </div>`;
         }).join('');
     
         html += `<div class="card" style="margin-bottom:12px;">
-          <div style="font-weight:600;margin-bottom:4px;">${u.name}</div>
+          <div style="font-weight:600;margin-bottom:4px;">${escapeHtml(u.name)}</div>
           <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;">
-            ${u.user_type}${u.in_training_level ? ' · Lv' + u.in_training_level : ''}
+            ${escapeHtml(u.user_type)}${u.in_training_level ? ' · Lv' + escapeHtml(u.in_training_level) : ''}
           </div>
           ${regList || '<div style="font-size:13px;color:var(--text-tertiary);">강습 이력 없음</div>'}
           <button class="btn btn-primary" style="margin-top:12px;" 
-            onclick="confirmMergeUser('${u.user_id}')">
+            onclick="confirmMergeUser('${escapeHtml(u.user_id)}')">
             이 계정이 제 계정이에요
           </button>
         </div>`;

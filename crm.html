@@ -1041,6 +1041,16 @@ function handleLogout() {
   localStorage.removeItem('crm_user');
   location.reload();
 }
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
  
 // ══ NAVIGATION ══
 function showPage(id) {
@@ -1126,11 +1136,11 @@ function renderStudentCard(u) {
   const lv = u.in_training_level||u.cert_level||'X';
   const cls = lv==='2'||lv===2?'avatar-lv2':lv==='3'||lv===3?'avatar-lv3':'avatar-gray';
   const lvBadge = lv==='2'||lv===2?'<span class="badge badge-lv2">Lv2</span>':lv==='3'||lv===3?'<span class="badge badge-lv3">Lv3</span>':'<span class="badge badge-gray">입문</span>';
-  return `<div class="student-card" onclick="openStudentModal('${u.user_id}')">
-    <div class="student-avatar ${cls}">${u.name.charAt(0)}</div>
+  return `<div class="student-card" onclick="openStudentModal('${escapeHtml(u.user_id)}')">
+    <div class="student-avatar ${cls}">${escapeHtml(u.name ? u.name.charAt(0) : '')}</div>
     <div class="student-info">
-      <div class="student-name">${u.name}</div>
-      <div class="student-meta">${u.phone||''} · ${u.user_type}</div>
+      <div class="student-name">${escapeHtml(u.name)}</div>
+      <div class="student-meta">${escapeHtml(u.phone||'')} · ${escapeHtml(u.user_type)}</div>
     </div>
     ${lvBadge}
   </div>`;
@@ -1247,13 +1257,13 @@ function renderStudentsTable(list) {
 function renderCell(col, u, lv, lessonCnt, certIssued) {
   if (isEditMode && col.editable) return `<td>${renderEditCell(col,u)}</td>`;
   switch(col.key) {
-    case 'name': return `<td style="font-weight:600;">${u.name}</td>`;
-    case 'gender': return `<td style="color:var(--text3);">${u.gender||'-'}</td>`;
-    case 'birth_date': return `<td style="color:var(--text3);">${u.birth_date?u.birth_date.slice(0,10):'-'}</td>`;
-    case 'phone': return `<td style="color:var(--text3);">${u.phone||'-'}</td>`;
-    case 'region': return `<td style="color:var(--text3);">${Array.isArray(u.region)?u.region.join(', '):(u.region||'-')}</td>`;
+    case 'name': return `<td style="font-weight:600;">${escapeHtml(u.name)}</td>`;
+    case 'gender': return `<td style="color:var(--text3);">${escapeHtml(u.gender||'-')}</td>`;
+    case 'birth_date': return `<td style="color:var(--text3);">${escapeHtml(u.birth_date?u.birth_date.slice(0,10):'-')}</td>`;
+    case 'phone': return `<td style="color:var(--text3);">${escapeHtml(u.phone||'-')}</td>`;
+    case 'region': return `<td style="color:var(--text3);">${escapeHtml(Array.isArray(u.region)?u.region.join(', '):(u.region||'-'))}</td>`;
     case 'level': return `<td>${lv==='2'?'<span class="badge badge-lv2">Lv2</span>':lv==='3'?'<span class="badge badge-lv3">Lv3</span>':'<span class="badge badge-gray">입문</span>'}</td>`;
-    case 'user_type': return `<td>${u.user_type==='강습생'?'<span class="badge badge-blue">회원</span>':`<span class="badge badge-gray">${u.user_type}</span>`}</td>`;
+    case 'user_type': return `<td>${u.user_type==='강습생'?'<span class="badge badge-blue">회원</span>':`<span class="badge badge-gray">${escapeHtml(u.user_type)}</span>`}</td>`;
     case 'lesson_count': return `<td style="color:var(--text3);">${lessonCnt}회</td>`;
     case 'tuition_status': {
       const s=u.tuition_status||'pending';
@@ -1264,20 +1274,20 @@ function renderCell(col, u, lv, lessonCnt, certIssued) {
       if (certIssued==='needed') return `<td><span class="badge badge-red">발급필요</span></td>`;
       return `<td><span style="color:var(--text3);font-size:12px;">-</span></td>`;
     }
-    case 'created_at': return `<td style="color:var(--text3);">${u.created_at?u.created_at.slice(0,10):'-'}</td>`;
+    case 'created_at': return `<td style="color:var(--text3);">${escapeHtml(u.created_at?u.created_at.slice(0,10):'-')}</td>`;
     default: return '<td>-</td>';
   }
 }
  
 function renderEditCell(col, u) {
   const val = u[col.key]||'';
-  const onChange = `onchange="markEdit('${u.user_id}','${col.key}',this.value)"`;
-  const inp = (v) => `<input class="form-input" style="padding:4px 8px;font-size:13px;min-width:80px;" value="${v}" ${onChange}>`;
-  const sel = (opts, cur) => `<select class="form-input" style="padding:4px;font-size:12px;" ${onChange}>${opts.map(([v,l])=>`<option value="${v}" ${cur===v?'selected':''}>${l}</option>`).join('')}</select>`;
+  const onChange = `onchange="markEdit('${escapeHtml(u.user_id)}','${escapeHtml(col.key)}',this.value)"`;
+  const inp = (v) => `<input class="form-input" style="padding:4px 8px;font-size:13px;min-width:80px;" value="${escapeHtml(v)}" ${onChange}>`;
+  const sel = (opts, cur) => `<select class="form-input" style="padding:4px;font-size:12px;" ${onChange}>${opts.map(([v,l])=>`<option value="${escapeHtml(v)}" ${cur===v?'selected':''}>${escapeHtml(l)}</option>`).join('')}</select>`;
   switch(col.key) {
     case 'name': return inp(val);
     case 'gender': return sel([['','선택'],['남','남'],['여','여']], val);
-    case 'birth_date': return `<input class="form-input" type="date" style="padding:4px 8px;font-size:12px;" value="${val}" ${onChange}>`;
+    case 'birth_date': return `<input class="form-input" type="date" style="padding:4px 8px;font-size:12px;" value="${escapeHtml(val)}" ${onChange}>`;
     case 'phone': return inp(val);
     case 'region': return sel([['','선택'],['포항','포항'],['서울','서울'],['부산','부산'],['대구','대구'],['기타','기타']], Array.isArray(u.region)?u.region[0]:val);
     case 'user_type': return sel([['체험','체험'],['강습생','강습생'],['외부강습생','외부강습생']], val);
