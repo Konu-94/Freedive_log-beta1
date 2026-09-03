@@ -226,5 +226,6 @@ Play Console의 "앱 태그"는 미리 정해진 목록에서 최대 5개를 고
 - [ ] 스크린샷 4장 업로드 (`store-assets/screenshot-1-home.png` ~ `screenshot-4-records.png`)
 - [ ] 그래픽 이미지 업로드 (`store-assets/graphic-1024x500.png`)
 - [ ] 개인정보처리방침 URL 연결 (`privacy.html` 배포 주소)
+- [ ] 개발자 연락처 이메일 입력 (`teamkonu.admin@gmail.com`)
 - [ ] 데이터 세이프티 양식 작성 (`PLAY_DATA_SAFETY.md` 참고)
 - [ ] 콘텐츠 등급 설문 완료
