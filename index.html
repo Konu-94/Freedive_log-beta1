@@ -3199,6 +3199,16 @@
     </div>
 
         <button class="btn btn-danger" style="margin-top: 20px;" onclick="logout()">로그아웃</button>
+
+        <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--divider); text-align: center;">
+          <button onclick="deleteAccount()"
+            style="background: none; border: none; color: var(--text-tertiary); font-size: 13px; text-decoration: underline; cursor: pointer; padding: 8px;">
+            회원 탈퇴
+          </button>
+          <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">
+            계정과 모든 기록이 삭제되며 복구할 수 없습니다
+          </div>
+        </div>
       </div>
     </div>
 
@@ -4116,6 +4126,49 @@
       showScreen('screen-login');
       document.getElementById('login-phone').value = '';
       document.getElementById('login-userid').value = '';
+    }
+
+    // 회원 탈퇴 (App Store 가이드라인 5.1.1(v) — 앱 내 계정 삭제)
+    async function deleteAccount() {
+      if (isGuestMode) {
+        showToast('게스트 모드에서는 사용할 수 없습니다');
+        return;
+      }
+      if (!currentUser) return;
+
+      // 1차 확인 — 무엇이 지워지는지 명시
+      if (!confirm(
+        '정말 탈퇴하시겠습니까?\n\n' +
+        '· 계정 정보\n' +
+        '· 다이빙 기록, 강습 이력, 진도\n' +
+        '· 등록한 장비 정보\n\n' +
+        '위 데이터가 모두 삭제되며 복구할 수 없습니다.'
+      )) return;
+
+      // 2차 확인 — 본인 확인용으로 아이디를 직접 입력받는다
+      const typed = prompt(`확인을 위해 아이디("${currentUser.user_id}")를 입력해주세요.`);
+      if (typed === null) return;
+      if (typed.trim() !== currentUser.user_id) {
+        showToast('아이디가 일치하지 않습니다');
+        return;
+      }
+
+      showToast('탈퇴 처리 중...');
+
+      try {
+        const { data, error } = await db.rpc('delete_account', {
+          p_user_id: currentUser.user_id,
+          p_phone: currentUser.phone
+        });
+
+        if (error) throw error;
+
+        alert('탈퇴가 완료되었습니다.\n그동안 이용해주셔서 감사합니다.');
+        logout();
+      } catch (err) {
+        console.error('탈퇴 오류:', err);
+        showToast('탈퇴 실패: ' + (err.message || '잠시 후 다시 시도해주세요'));
+      }
     }
 
     // ==================== 강사 대시보드 ====================
