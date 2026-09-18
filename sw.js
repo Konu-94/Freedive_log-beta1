@@ -1,7 +1,7 @@
 // DiveLog Service Worker
 // ⚠️ index.html 등 앱 파일을 수정해 배포할 때마다 아래 CACHE_VERSION 숫자를 올려주세요.
 //    올리지 않으면 낡은 캐시가 정리되지 않습니다.
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `divelog-${CACHE_VERSION}`;
 const OFFLINE_URL = './offline.html';
 

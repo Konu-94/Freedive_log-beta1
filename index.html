@@ -3200,6 +3200,13 @@
 
         <button class="btn btn-danger" style="margin-top: 20px;" onclick="logout()">로그아웃</button>
 
+        <div style="margin-top: 24px; text-align: center;">
+          <a href="privacy.html"
+            style="color: var(--text-secondary); font-size: 13px; text-decoration: underline;">
+            개인정보처리방침
+          </a>
+        </div>
+
         <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--divider); text-align: center;">
           <button onclick="deleteAccount()"
             style="background: none; border: none; color: var(--text-tertiary); font-size: 13px; text-decoration: underline; cursor: pointer; padding: 8px;">
@@ -4156,6 +4163,15 @@
       showToast('탈퇴 처리 중...');
 
       try {
+        // 자격증 이미지는 Storage 에 있어 RPC 가 지우지 못하므로 먼저 삭제한다.
+        if (currentUser.cert_image_url) {
+          const fileName = currentUser.cert_image_url.split('/').pop();
+          const { error: storageErr } = await db.storage
+            .from('certifications')
+            .remove([fileName]);
+          if (storageErr) console.error('자격증 이미지 삭제 실패:', storageErr);
+        }
+
         const { data, error } = await db.rpc('delete_account', {
           p_user_id: currentUser.user_id,
           p_phone: currentUser.phone
