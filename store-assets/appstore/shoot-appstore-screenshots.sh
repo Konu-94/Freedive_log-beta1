@@ -24,12 +24,20 @@ window.addEventListener('load', async () => {
   const q = new URLSearchParams(location.search);
   const screen = q.get('screen') || 'screen-student-home';
   try {
-    await handleGuestLogin();
-    // 게스트 배너와 토스트는 스토어 스크린샷에 불필요하므로 제거
+    // 심사용 데모 계정으로 로그인 (게스트 모드는 배너가 붙고 데이터가 빈약하다)
+    const { data, error } = await db.rpc('login_user', { p_phone: '010-0000-0000', p_user_id: 'divelog' });
+    const user = (data && data.length > 0) ? data[0] : null;
+    if (error || !user) throw new Error('데모 계정 로그인 실패');
+    currentUser = user;
+    isGuestMode = false;
+    localStorage.setItem('divelog_user', JSON.stringify(currentUser));
+    localStorage.removeItem('divelog_guest_mode');
     document.querySelectorAll('.guest-banner').forEach(el => el.remove());
     const toast = document.getElementById('toast');
     if (toast) { toast.className = 'toast'; toast.style.display = 'none'; }
     showScreen(screen);
+    // 화면별 로더가 끝난 뒤에 실행해야 선택 상태가 덮어써지지 않는다
+    await new Promise(r => setTimeout(r, 2500));
     const extra = q.get('call');
     if (extra && typeof window[extra] === 'function') await window[extra]();
     const js = q.get('js');
@@ -64,7 +72,7 @@ shoot () { # $1=파일명 $2=화면id $3=화면 진입 후 호출할 함수(선�
 }
 
 shoot appstore-1-home.png            screen-student-home
-shoot appstore-2-schedule.png        screen-student-schedule
+shoot appstore-2-schedule.png        screen-student-schedule  ''  "selectStudentCalendarDate('2026-09-27')"
 shoot appstore-3-dry-training.png    screen-dry-training
 shoot appstore-4-records.png         screen-my-records
 shoot appstore-5-image-training.png  screen-dry-training    ''  "openImageTrainingDetail('duck_dive')"
