@@ -33,6 +33,9 @@
       --lv3-light: #E8F5E9;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* 안드로이드(Chrome/TWA)에서 화면을 아래로 당기면 새로고침되는 기본 동작을 막는다.
+       기록 일괄 입력처럼 저장 전 값이 많은 화면에서 실수로 당기면 입력이 전부 날아간다. */
+    html, body { overscroll-behavior-y: contain; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
