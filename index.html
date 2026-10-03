@@ -46,8 +46,11 @@
     .app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg); position: relative; padding-bottom: 80px; }
     .screen { display: none; }
     .screen.active { display: block; }
-    .screen.swipe-screen { display: none; flex-direction: column; height: 100vh; padding-bottom: 0; }
+    .screen.swipe-screen { display: none; flex-direction: column; height: 100dvh; padding-bottom: 0; }
     .screen.swipe-screen.active { display: flex; }
+    /* 스와이프 상세 화면에는 하단 탭바가 없으므로, .app 이 탭바용으로 비워둔
+       padding-bottom 80px 이 그대로 빈 공간으로 남는다. 그때만 제거한다. */
+    .app:has(> .screen.swipe-screen.active) { padding-bottom: 0; }
     .header { background: var(--surface); padding: 12px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--divider); }
     .header-back { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: none; font-size: 20px; color: var(--text-primary); cursor: pointer; border-radius: 12px; }
     .header-title { font-size: 18px; font-weight: 600; flex: 1; }
