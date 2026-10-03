@@ -8924,6 +8924,11 @@ async function openAddParticipant() {
     // 터치 스와이프 설정
     function setupDrySwipeTouch() {
       const container = document.getElementById('dry-swipe-container');
+
+      // 리스너 중복 등록 방지 (setupSwipeTouch 와 동일한 이유)
+      if (container.dataset.swipeReady) return;
+      container.dataset.swipeReady = '1';
+
       let startX = 0;
       let isDragging = false;
       
@@ -9292,7 +9297,12 @@ async function openAddParticipant() {
     // 스와이프 터치 이벤트 설정
     function setupSwipeTouch(containerId) {
       const container = document.getElementById(containerId);
-      
+
+      // 컨테이너는 재생성되지 않고 안쪽 내용만 교체되므로, 상세 화면을 열 때마다
+      // 리스너가 쌓여 한 번 스와이프에 여러 칸이 넘어갔다. 최초 1회만 등록한다.
+      if (container.dataset.swipeReady) return;
+      container.dataset.swipeReady = '1';
+
       container.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
       }, { passive: true });
@@ -9540,7 +9550,11 @@ async function openAddParticipant() {
     // 강사용 스와이프 터치
     function setupInstructorSwipeTouch() {
       const container = document.getElementById('instructor-swipe-container');
-      
+
+      // 리스너 중복 등록 방지 (setupSwipeTouch 와 동일한 이유)
+      if (container.dataset.swipeReady) return;
+      container.dataset.swipeReady = '1';
+
       container.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
       }, { passive: true });
