@@ -3567,14 +3567,22 @@
           currentUser = user;
           isGuestMode = savedGuestMode === 'true';
 
-          if (isGuestMode) {
-            showScreen('screen-student-home');
-            enableGuestOverlay();
-          } else if (user.user_type === '강사') {
-            showScreen('screen-instructor-home');
-          } else {
-            showScreen('screen-student-home');
-          }
+          const homeScreen = (!isGuestMode && user.user_type === '강사')
+            ? 'screen-instructor-home'
+            : 'screen-student-home';
+
+          // 새로고침 전에 보던 탭으로 돌아간다. 강사/수강생 탭 구성이 다르므로
+          // 저장된 화면이 해당 역할의 탭이 아니면 홈으로 보낸다.
+          const savedScreen = localStorage.getItem('divelog_screen');
+          const target = (savedScreen
+            && RESTORABLE_SCREENS.includes(savedScreen)
+            && document.getElementById(savedScreen)
+            && isScreenAllowedFor(savedScreen, user, isGuestMode))
+              ? savedScreen
+              : homeScreen;
+
+          showScreen(target);
+          if (isGuestMode) enableGuestOverlay();
           screenHistory = []; // 시작 화면이므로 뒤로 갈 곳이 없다
 
           // 서버 정보로 갱신 (실패해도 로그인은 유지)
@@ -3651,6 +3659,27 @@
       setTimeout(() => t.classList.remove('show'), 3000);
     }
 
+    // 새로고침 후 복원할 수 있는 화면 (하단 탭으로 바로 갈 수 있는 것들).
+    // 상세 화면은 currentScheduleId, swipeSteps 처럼 저장되지 않는 값에 기대고 있어
+    // 복원하면 빈 화면이 뜬다. 그래서 탭 화면만 기억한다.
+    const RESTORABLE_SCREENS = [
+      'screen-student-home', 'screen-instructor-home',
+      'screen-student-schedule', 'screen-schedule-manage',
+      'screen-dry-training', 'screen-dry-manage',
+      'screen-my-records', 'screen-mypage'
+    ];
+
+    // 역할별 탭 구성이 다르다. 강사가 수강생 탭으로, 또는 그 반대로 복원되면
+    // 탭바와 내용이 어긋나므로 복원 대상인지 먼저 확인한다.
+    const INSTRUCTOR_ONLY_SCREENS = ['screen-instructor-home', 'screen-schedule-manage', 'screen-dry-manage'];
+    const STUDENT_ONLY_SCREENS = ['screen-student-home', 'screen-student-schedule', 'screen-dry-training'];
+
+    function isScreenAllowedFor(screenId, user, guestMode) {
+      const isInstructor = !guestMode && user.user_type === '강사';
+      if (isInstructor) return !STUDENT_ONLY_SCREENS.includes(screenId);
+      return !INSTRUCTOR_ONLY_SCREENS.includes(screenId);
+    }
+
     function showScreen(id) {
       const currentScreen = document.querySelector('.screen.active');
       if (currentScreen && currentScreen.id !== id) {
@@ -3659,7 +3688,11 @@
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       window.scrollTo(0, 0);
-      
+
+      if (RESTORABLE_SCREENS.includes(id)) {
+        try { localStorage.setItem('divelog_screen', id); } catch (e) {}
+      }
+
       // 화면별 로드 함수 호출
       if (id === 'screen-instructor-home') loadInstructorDashboard();
       else if (id === 'screen-student-home') loadStudentDashboard();
@@ -4160,6 +4193,7 @@
       // 자동 로그인 정보 삭제
       localStorage.removeItem('divelog_user');
       localStorage.removeItem('divelog_guest_mode');
+      localStorage.removeItem('divelog_screen');
       disableGuestOverlay();
       showScreen('screen-login');
       document.getElementById('login-phone').value = '';
