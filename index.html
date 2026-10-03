@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>DiveLog</title>
+  <script>
+    // 저장된 로그인 정보가 있으면 로그인 화면이 한 프레임도 보이지 않게 한다.
+    // 실제 복원은 DOMContentLoaded 에서 하는데, CDN 스크립트를 기다리느라
+    // 그 전에 최초 페인트가 일어나 로그인 화면이 깜빡인다.
+    try {
+      if (localStorage.getItem('divelog_user')) {
+        document.documentElement.classList.add('session-boot');
+      }
+    } catch (e) {} // 비공개 브라우징 등에서 localStorage 접근이 막힐 수 있다
+  </script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
   <!-- Supabase JS SDK -->
@@ -33,6 +43,8 @@
       --lv3-light: #E8F5E9;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* 세션 복원 중에만 적용된다. 복원 판단이 끝나면 session-boot 가 제거된다. */
+    html.session-boot #screen-login { display: none !important; }
     /* 안드로이드(Chrome/TWA)에서 화면을 아래로 당기면 새로고침되는 기본 동작을 막는다.
        기록 일괄 입력처럼 저장 전 값이 많은 화면에서 실수로 당기면 입력이 전부 날아간다. */
     html, body { overscroll-behavior-y: contain; }
@@ -3548,43 +3560,35 @@
       if (savedUser) {
         try {
           const user = JSON.parse(savedUser);
-          // DB에서 최신 정보 확인
-          const { data, error } = await db
-            .from('users')
-            .select('*')
-            .eq('user_id', user.user_id)
-            .single();
-          
-          if (data && !error) {
-            currentUser = data;
-            // 최신 정보로 localStorage 업데이트
-            localStorage.setItem('divelog_user', JSON.stringify(currentUser));
-            
-            // 게스트 모드 확인
-            if (savedGuestMode === 'true') {
-              isGuestMode = true;
-              showScreen('screen-student-home');
-              enableGuestOverlay();
-              return;
-            }
-            
-            if (currentUser.user_type === '강사') {
-              showScreen('screen-instructor-home');
-            } else {
-              showScreen('screen-student-home');
-            }
-            return;
+
+          // 저장된 정보로 화면을 먼저 띄운다. 서버 응답을 기다리면 그동안
+          // 로그인 화면이 깜빡이고, 네트워크가 끊겨 있으면 조회가 실패해
+          // 멀쩡한 로그인 정보까지 지워진다.
+          currentUser = user;
+          isGuestMode = savedGuestMode === 'true';
+
+          if (isGuestMode) {
+            showScreen('screen-student-home');
+            enableGuestOverlay();
+          } else if (user.user_type === '강사') {
+            showScreen('screen-instructor-home');
           } else {
-            // 유효하지 않은 저장된 사용자 정보 삭제
-            localStorage.removeItem('divelog_user');
-            localStorage.removeItem('divelog_guest_mode');
+            showScreen('screen-student-home');
           }
+          screenHistory = []; // 시작 화면이므로 뒤로 갈 곳이 없다
+
+          // 서버 정보로 갱신 (실패해도 로그인은 유지)
+          refreshCurrentUser(user.user_id);
         } catch (e) {
+          console.error('저장된 로그인 정보가 손상됨:', e);
           localStorage.removeItem('divelog_user');
           localStorage.removeItem('divelog_guest_mode');
         }
       }
-      
+
+      // 복원 판단이 끝났으므로 로그인 화면을 다시 쓸 수 있게 한다
+      document.documentElement.classList.remove('session-boot');
+
       const phoneInput = document.getElementById('login-phone');
       
       // 전화번호 자동 포맷팅 (뒷자리만)
@@ -3617,6 +3621,27 @@
         }
       }, true);
     });
+
+    // 저장된 세션을 서버 정보로 갱신한다.
+    // 조회 실패(네트워크 오류 등)와 "계정이 실제로 없음"을 구분해야 한다.
+    // 둘을 같게 처리하면 신호가 약한 곳에서 멀쩡한 계정이 로그아웃된다.
+    async function refreshCurrentUser(userId) {
+      try {
+        const { data, error } = await db
+          .from('users')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle(); // 0건이어도 에러를 내지 않아 위 둘을 구분할 수 있다
+
+        if (error) return;              // 조회 실패 → 저장된 정보로 계속 사용
+        if (!data) { logout(); return; } // 계정이 삭제됨 → 로그아웃
+
+        currentUser = data;
+        localStorage.setItem('divelog_user', JSON.stringify(currentUser));
+      } catch (e) {
+        console.error('사용자 정보 갱신 실패:', e); // 네트워크 예외도 무시하고 유지
+      }
+    }
 
     // ==================== 유틸리티 함수 ====================
     function showToast(msg) {
